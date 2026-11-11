@@ -561,6 +561,22 @@ abstract class ScreenshotBase(private val device: String) {
         shot("10_adventures") { AdventuresTab(v) }
     }
 
+    /** A finished adventure: the Adventures button says so and wiggles until it's claimed. */
+    @Test fun adventureReady() {
+        val base = sampleState()
+        val now = System.currentTimeMillis()
+        val done = ActiveAdventure(
+            Adventure("demo", "Riverside Park", "Recover a lost relic near Riverside Park", 2, 12, 60 * 60_000L),
+            base.monsters.drop(3).take(2).map { it.uid },
+            now - 2 * 60 * 60_000L,
+            0.72,
+        )
+        val v = vm(base.copy(adventures = listOf(done)))
+        // Caught mid-wiggle.
+        shot("10b_adventure_ready", advanceMs = 200) { com.monsterquest.app.ui.MonstersScreen(v) }
+        rule.onNodeWithText("Adventures (1!)").assertExists()
+    }
+
     /** Every monster's artwork, for reviewing the designs. */
     @Test fun bestiary() {
         shot("11_bestiary") {

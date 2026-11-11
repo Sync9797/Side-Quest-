@@ -70,6 +70,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -116,11 +117,25 @@ fun MonstersScreen(vm: GameViewModel) {
             SmallButton("Collection", { tab = 0 }, Modifier.weight(1f), outlined = tab != 0)
             SmallButton("Journal", { tab = 1 }, Modifier.weight(1f), outlined = tab != 1)
             val away = vm.state.adventures.size
+            // Tick so a finished adventure is noticed while this screen is open.
+            var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+            LaunchedEffect(away) {
+                while (away > 0) {
+                    now = System.currentTimeMillis()
+                    kotlinx.coroutines.delay(5_000)
+                }
+            }
+            val ready = vm.state.adventures.count { it.done(now) }
+            // A finished adventure makes the button wiggle until it's claimed (not while you're on the tab).
             SmallButton(
-                "Adventures" + if (away > 0) " ($away)" else "",
+                when {
+                    ready > 0 -> "Adventures ($ready!)"
+                    away > 0 -> "Adventures ($away)"
+                    else -> "Adventures"
+                },
                 { tab = 2 },
-                Modifier.weight(1.2f),
-                outlined = tab != 2,
+                Modifier.weight(1.2f).wobble(ready > 0 && tab != 2),
+                outlined = tab != 2 && ready == 0,
             )
         }
         when (tab) {

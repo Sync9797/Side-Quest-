@@ -32,6 +32,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -251,4 +253,33 @@ fun HealPreviewBar(hp: Int, after: Int, maxHp: Int) {
         if (healed > now) drawRect(gain.copy(alpha = 0.4f), size = size.copy(width = size.width * healed))
         drawRect(color, size = size.copy(width = size.width * now))
     }
+}
+
+/**
+ * A playful wiggle every couple of seconds while [active], to say "something
+ * is waiting here" (a finished adventure). Only rotation changes, drawn on
+ * its own layer, so the button's contents don't recompose each frame.
+ */
+@Composable
+fun Modifier.wobble(active: Boolean): Modifier {
+    if (!active) return this
+    val angle = androidx.compose.animation.core.rememberInfiniteTransition(label = "wobble").animateFloat(
+        initialValue = 0f,
+        targetValue = 0f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.keyframes {
+                durationMillis = 2_200
+                0f at 0
+                -6f at 90
+                6f at 210
+                -5f at 330
+                4f at 450
+                -2f at 560
+                0f at 660
+                0f at 2_200
+            },
+        ),
+        label = "wobbleAngle",
+    )
+    return this.then(androidx.compose.ui.Modifier.graphicsLayer { rotationZ = angle.value })
 }
