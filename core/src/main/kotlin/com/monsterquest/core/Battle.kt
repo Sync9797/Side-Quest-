@@ -917,6 +917,41 @@ class Battle(
     /** HP a healing spell restores when [caster] casts it (before capping at full). */
     fun spellHeal(caster: Combatant, skill: Skill): Int = ((skill.power + caster.magic * 1.5) * (1 + caster.healPct / 100.0)).roundToInt()
 
+    /**
+     * HP each ally [skill] restores when [caster] casts it now (before capping at
+     * full), with its path and mastery; null for spells that don't heal.
+     * Mend, Cleanse and their paths heal the target; Healing Circle and
+     * Sanctuary heal everyone ([healsEveryone]).
+     */
+    fun healPreview(caster: Combatant, skill: Skill): Int? {
+        val path = if (caster.isHero) spellPaths[skill.id] ?: 0 else 0
+        val m = if (caster.isHero) spellMastery[skill.id] ?: 0 else 0
+        val base = spellHeal(caster, skill)
+        val factor = when (skill.kind) {
+            SkillKind.HEAL -> if (path == 1) SpellMastery.purifyBoost(m) else 1.0
+            SkillKind.CLEANSE -> when (path) {
+                1 -> SpellMastery.sanctuaryShare(m)
+                2 -> SpellMastery.restorationBoost(m)
+                else -> 1.0
+            }
+            SkillKind.MEND_ALL -> when (path) {
+                1 -> SpellMastery.purifyBoost(m)
+                2 -> SpellMastery.radiantBoost(m)
+                else -> 1.0
+            }
+            else -> return null
+        }
+        return (base * factor).roundToInt()
+    }
+
+    /** Whether [skill] heals every ally rather than just its target. */
+    fun healsEveryone(caster: Combatant, skill: Skill): Boolean =
+        skill.kind == SkillKind.MEND_ALL || (skill.kind == SkillKind.CLEANSE && caster.isHero && spellPaths[skill.id] == 1)
+
+    /** Overflow (Mend's second path): the share of healing past full HP that becomes a shield, or null. */
+    fun overflowShare(caster: Combatant, skill: Skill): Double? =
+        if (skill.kind == SkillKind.HEAL && caster.isHero && spellPaths[skill.id] == 2) SpellMastery.overflowShare(spellMastery[skill.id] ?: 0) else null
+
     /** Berries you could feed the foe (on the Tame menu). */
     fun berries(): List<Item> = Item.entries.filter { it.kind == ItemKind.BAIT && count(it) > 0 }
 

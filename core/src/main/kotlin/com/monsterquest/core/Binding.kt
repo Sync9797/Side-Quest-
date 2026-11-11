@@ -220,16 +220,41 @@ object Binding {
         return ((1 - t) / 0.5).coerceIn(0.0, 1.0)
     }
 
+    /**
+     * How tightly the trace follows the line, 0..1: the average gap between
+     * the two (both ways), against [CLOSE_GAP]. Wobbles that still pass
+     * [accuracy] cost here, so only a steady hand scores high.
+     */
+    fun closeness(glyph: Glyph, trace: List<GlyphPoint>): Double {
+        if (trace.size < 2) return 0.0
+        val g = resample(glyph.points, 128)
+        val t = resample(trace, 128)
+        val gap = (t.sumOf { nearest(it, g).toDouble() } + g.sumOf { nearest(it, t).toDouble() }) / (2.0 * 128)
+        return (1 - gap / CLOSE_GAP).coerceIn(0.0, 1.0)
+    }
+
+    /** An average gap this big (unit square) scores no closeness at all. */
+    private const val CLOSE_GAP = 0.05
+
+    /**
+     * The trace's score, 0..1: [accuracy] (on the glyph, all of it, no
+     * scribbling) scaled by [closeness] (how steady) and [speed]. Perfect
+     * takes a steady hand and a quick stroke; a fair attempt is Good.
+     */
+    fun score(glyph: Glyph, trace: List<GlyphPoint>, durationMs: Long): Double {
+        val acc = accuracy(glyph, trace)
+        if (acc <= 0.0) return 0.0
+        return acc * (0.4 + 0.6 * closeness(glyph, trace)) * (0.7 + 0.3 * speed(glyph, durationMs))
+    }
+
     /** The grade for tracing [glyph] as [trace] (unit-square points) in [durationMs]. */
     fun grade(glyph: Glyph, trace: List<GlyphPoint>, durationMs: Long): TraceGrade {
-        // Speed only counts for the part of the glyph you actually traced.
-        val acc = accuracy(glyph, trace)
-        val score = 0.75 * acc + 0.25 * speed(glyph, durationMs) * acc
+        val score = score(glyph, trace, durationMs)
         return when {
             score >= 0.85 -> TraceGrade.PERFECT
-            score >= 0.6 -> TraceGrade.STRONG
-            score >= 0.4 -> TraceGrade.GOOD
-            score >= 0.2 -> TraceGrade.FAINT
+            score >= 0.7 -> TraceGrade.STRONG
+            score >= 0.5 -> TraceGrade.GOOD
+            score >= 0.28 -> TraceGrade.FAINT
             else -> TraceGrade.FIZZLE
         }
     }

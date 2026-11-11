@@ -202,7 +202,7 @@ private val topics = listOf(
         listOf(
             section(
                 "Taming",
-                "Get a monster below 50% HP, press Tame, pick a Binding Crystal and trace its glyph in one stroke. Your trace is graded: Fizzle (0.3x odds), Faint (0.65x), Good, Strong (1.3x) or Perfect (1.6x). Scribbling fizzles.",
+                "Get a monster below 50% HP, press Tame, pick a Binding Crystal and trace its glyph in one stroke. Your trace is graded: Fizzle (0.3x odds), Faint (0.65x), Good, Strong (1.3x) or Perfect (1.6x). It counts how much of the glyph you cover, how close you stay to the line and how quickly you finish: a fair attempt is Good, a small wobble Strong, and Perfect takes a steady hand and a quick stroke. Scribbling fizzles.",
                 "Snap Bind: on the very first turn of a wild fight you can gamble a crystal on a strong catch, even at full health. Land it and the rest scatter; miss and they double down.",
                 "Berries (Sweet 1.5x, Golden 2.5x) before a cast make it likelier. Every cast has a 2% critical catch.",
             ),
@@ -248,6 +248,8 @@ private val topics = listOf(
                 "Spells",
                 "Learn a spell with 3 spell pages (from shrines, chests, champions and Scholar's Tomes), then rank it up on the Hero tab with more pages and gold. Rank 2 opens at hero level 10, rank 3 at 20, rank 4 at 30 and rank 5 at 40.",
                 "Spell paths: at rank 5 every spell can follow one of two paths, for example a bolt that splits to hit every foe or one that hits harder and burns, shocks or poisons; Mend can cure status or turn extra healing into a shield; Aegis can be bigger or cover the whole team. Each path has 5 mastery ranks (pages and gold) that open from level 45 to 65. Switching paths costs 1,000 gold and keeps your mastery.",
+                "Attack spells grow with you: a Mage who puts most points into Magic hits a little harder than a first-form monster of their level with a rank-3 bolt, and about as hard as a fully evolved one at rank 5.",
+                "In battle, healing spells show how much they'll heal (with your path and mastery), and the target list shows each ally's HP bar filling.",
                 "Bolts of every type, Mud Sling, and support magic: Mend (heal), Aegis (a shield worth half your max HP, more as it ranks up), Fortify (Defense), Haste (Speed), Empower (Attack), Cleanse (cures status and lowered stats) and Healing Circle (heals the whole team).",
                 "Energy comes back slowly, faster by walking, at once with a Mana Draught, or with a full night's sleep.",
             ),

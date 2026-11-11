@@ -66,7 +66,12 @@ data class BattleView(
     /** Uses left of each of the current monster's moves (PP), by move id. */
     val movePp: Map<String, Int> = emptyMap(),
     /** HP each of the current fighter's healing spells restores, by spell id. */
+    /** HP each healing spell would restore (per ally it reaches), by spell id. */
     val spellHeals: Map<String, Int> = emptyMap(),
+    /** Healing spells that reach every ally (Healing Circle, Sanctuary). */
+    val spellHealsAll: Set<String> = emptySet(),
+    /** Overflow: share of healing past full HP that becomes a shield, by spell id. */
+    val spellOverflow: Map<String, Double> = emptyMap(),
     /** The foes struck first (a monster or a thug jumped you). */
     val ambush: Boolean = false,
     /** Snap Bind (first turn only): each crystal you have, how many, and its odds. Empty when it's not available. */
@@ -122,7 +127,9 @@ data class BattleView(
                 castRoll = b.lastCast,
                 castId = b.castCount,
                 movePp = cur?.let { c -> c.moves.associate { it.id to c.ppLeft(it) } }.orEmpty(),
-                spellHeals = cur?.let { c -> b.spellsFor(c).filter { it.kind == com.monsterquest.core.SkillKind.HEAL }.associate { it.id to b.spellHeal(c, it) } }.orEmpty(),
+                spellHeals = cur?.let { c -> b.spellsFor(c).mapNotNull { sp -> b.healPreview(c, sp)?.let { sp.id to it } }.toMap() }.orEmpty(),
+                spellHealsAll = cur?.let { c -> b.spellsFor(c).filter { b.healsEveryone(c, it) }.map { it.id }.toSet() }.orEmpty(),
+                spellOverflow = cur?.let { c -> b.spellsFor(c).mapNotNull { sp -> b.overflowShare(c, sp)?.let { sp.id to it } }.toMap() }.orEmpty(),
                 ambush = b.ambush,
                 snapOdds = if (b.snapAvailable) {
                     Item.entries.filter { it.kind == com.monsterquest.core.ItemKind.CAPTURE && it != Item.PERFECT_ORB && b.count(it) > 0 }

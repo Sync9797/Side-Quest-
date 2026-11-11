@@ -206,7 +206,7 @@ object Spells {
     const val AEGIS_PCT_PER_RANK = 10
 
     private fun bolt(id: String, name: String, element: Element, flavor: String) =
-        Skill(id, name, element, SkillKind.MAGICAL, 24, mpCost = 4, powerPerRank = 7, description = flavor)
+        Skill(id, name, element, SkillKind.MAGICAL, 24, mpCost = 4, powerPerRank = 3, description = flavor)
 
     val all = listOf(
         bolt("ember_bolt", "Ember Bolt", Element.FIRE, "A spark copied from a fire-drake's breath."),
@@ -217,7 +217,7 @@ object Spells {
         bolt("shadow_bolt", "Shadow Bolt", Element.CORRUPT, "A sliver of the dark that gloomwisps carry."),
         bolt("stone_bolt", "Stone Bolt", Element.EARTH, "A thrown shard, shaped like a Mosscub's rock."),
         Skill(
-            MUD_SLING, "Mud Sling", Element.EARTH, SkillKind.MAGICAL, 12, mpCost = 3, powerPerRank = 4,
+            MUD_SLING, "Mud Sling", Element.EARTH, SkillKind.MAGICAL, 12, mpCost = 3, powerPerRank = 2,
             description = "A splat of mud in the foe's eyes: little damage, but its accuracy drops $MUD_SLING_ACCURACY% " +
                 "(stacks up to ${MUD_SLING_ACCURACY * MUD_SLING_STACKS}%).",
         ),
@@ -266,12 +266,37 @@ object Spells {
     /** Stages Fortify, Haste and Empower give: +1, +2 at rank 3, +3 at rank 5. */
     fun fortifyStages(rank: Int): Int = 1 + (rank - 1) / 2
 
-    /** The spell as it works for this hero right now: power from rank and mastery. */
+    /**
+     * Attack spells grow with the hero, the way monsters' moves get stronger
+     * as they level: a Mage who puts most points into Magic hits a little
+     * harder than a first-form monster of their level with a rank-3 bolt, and
+     * about as hard as a fully evolved one at rank 5. Tuned against monsters'
+     * best moves at each level (monster moves jump in power around level 30
+     * and 40, so the scale does too).
+     */
+    fun spellScale(heroLevel: Int): Double {
+        val l = heroLevel.coerceAtLeast(1).toDouble()
+        val points = SPELL_SCALE
+        val i = points.indexOfFirst { it.first >= l }
+        if (i <= 0) return if (i == 0) points.first().second else points.last().second
+        val (l0, s0) = points[i - 1]
+        val (l1, s1) = points[i]
+        return s0 + (s1 - s0) * (l - l0) / (l1 - l0)
+    }
+
+    /** Hero level -> attack spell multiplier (straight lines between the points). */
+    private val SPELL_SCALE = listOf(1.0 to 3.9, 25.0 to 3.9, 30.0 to 4.6, 35.0 to 4.7, 40.0 to 5.8)
+
+    /** The spell as it works for this hero right now: power from rank and mastery (and, for attack spells, level). */
     fun ranked(skill: Skill, rank: Int, heroLevel: Int): Skill {
         val r = rank.coerceIn(1, MAX_RANK)
-        val power = if (skill.kind in STAGE_SPELLS) fortifyStages(r)
-        else if (skill.kind == SkillKind.AEGIS) skill.power + skill.powerPerRank * (r - 1)
-        else ((skill.power + skill.powerPerRank * (r - 1)) * mastery(heroLevel)).roundToInt()
+        val base = skill.power + skill.powerPerRank * (r - 1)
+        val power = when {
+            skill.kind in STAGE_SPELLS -> fortifyStages(r)
+            skill.kind == SkillKind.AEGIS -> base
+            skill.kind == SkillKind.MAGICAL -> (base * mastery(heroLevel) * spellScale(heroLevel)).roundToInt()
+            else -> (base * mastery(heroLevel)).roundToInt()
+        }
         return skill.copy(power = power)
     }
 

@@ -1093,7 +1093,15 @@ private fun ActionPanel(
                     ) {
                         GIcon(sp.spellIcon(), Modifier.size(16.dp), sp.spellColor())
                         Spacer(Modifier.width(6.dp))
-                        Text("${sp.name}  •  ${sp.mpCost} energy  •  ${sp.spellEffect()}")
+                        // Healing spells say how much they restore right now (path and mastery included).
+                        val effect = b.spellHeals[sp.id]?.let { n ->
+                            when {
+                                sp.id in b.spellHealsAll -> (if (sp.kind == com.monsterquest.core.SkillKind.CLEANSE) "cures and " else "") + "heals everyone $n HP"
+                                sp.kind == com.monsterquest.core.SkillKind.CLEANSE -> "cures, heals $n HP"
+                                else -> "heals $n HP"
+                            }
+                        } ?: sp.spellEffect()
+                        Text("${sp.name}  •  ${sp.mpCost} energy  •  $effect")
                     }
                 }
                 BackButton(onMenu)
@@ -1206,7 +1214,12 @@ private fun ActionPanel(
             is Menu.Target -> {
                 val item = menu.item
                 val spell = menu.spell
-                Text("Choose a target", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val healsAll = spell != null && spell.id in b.spellHealsAll
+                Text(
+                    if (healsAll) "Heals your whole team: pick anyone to cast it" else "Choose a target",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 b.allies.forEach { a ->
                     val valid = when {
                         item?.kind == ItemKind.REVIVE -> !a.alive
@@ -1226,14 +1239,17 @@ private fun ActionPanel(
                         // How far a healing potion or spell would fill their HP bar.
                         val healAmount = when {
                             item?.kind == ItemKind.HEAL_HP -> com.monsterquest.core.GameEngine.potionHeal(item, a.maxHp)
-                            spell?.kind == com.monsterquest.core.SkillKind.HEAL -> b.spellHeals[spell.id]
+                            spell != null -> b.spellHeals[spell.id]
                             else -> null
                         }
                         if (healAmount != null && a.alive) {
                             val after = minOf(a.maxHp, a.hp + healAmount)
+                            // Overflow turns healing past full HP into a shield.
+                            val shield = spell?.let { b.spellOverflow[it.id] }?.let { share -> ((a.hp + healAmount - a.maxHp).coerceAtLeast(0) * share).toInt() } ?: 0
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    a.name + if (after > a.hp) "  ${a.hp} → $after HP (+${after - a.hp})" else "  Full HP",
+                                    a.name + (if (after > a.hp) "  ${a.hp} → $after HP (+${after - a.hp})" else "  Full HP") +
+                                        if (shield > 0) "  +$shield shield" else "",
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )

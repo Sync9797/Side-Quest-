@@ -378,10 +378,12 @@ class GameTest {
         // (Ward's plain shield is gone: Aegis replaced it in 3.7.)
         assertEquals(SUPPORT_KINDS - SkillKind.SHIELD, Spells.all.map { it.kind }.toSet() - SkillKind.MAGICAL)
         assertTrue(Spells.all.none { sp -> Moves.all.any { it.id == sp.id } })
-        // Weaker than monster moves at first; mastery grows with level.
+        // Attack spells grow with the hero (see MagicBalanceTest); healing stops growing once mastered.
         val ember = Spells.byId("ember_bolt")!!
         assertTrue(Spells.ranked(ember, 1, 1).power < Spells.ranked(ember, 1, 25).power)
-        assertEquals(Spells.ranked(ember, 1, 25).power, Spells.ranked(ember, 1, 60).power)
+        assertTrue(Spells.ranked(ember, 1, 25).power < Spells.ranked(ember, 1, 60).power)
+        val mend = Spells.byId("mend")!!
+        assertEquals(Spells.ranked(mend, 1, 25).power, Spells.ranked(mend, 1, 60).power)
         assertTrue(Spells.ranked(ember, 5, 25).power > Spells.ranked(ember, 1, 25).power)
 
         var s = started()
