@@ -42,6 +42,10 @@ jobs:
         shell: bash
         run: ./gradlew :app:assembleRelease 2>&1 | tee build.log
 
+      - name: Build AI Widget Maker APK
+        shell: bash
+        run: ./gradlew :widgetmaker:testDebugUnitTest :widgetmaker:assembleRelease 2>&1 | tee -a build.log
+
       # Logs need a GitHub login to view; push them to a branch so failures can
       # be diagnosed from anywhere.
       - name: Publish build log on failure
@@ -62,6 +66,26 @@ jobs:
         with:
           name: SideQuest-apk
           path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload AI Widget Maker APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WidgetMaker-apk
+          path: widgetmaker/build/outputs/apk/release/widgetmaker-release.apk
+
+      # The widget maker gets its own always-current release to install from a phone.
+      - name: Publish AI Widget Maker release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp widgetmaker/build/outputs/apk/release/widgetmaker-release.apk AIWidgetMaker.apk
+          gh release delete widget-maker-latest --yes --cleanup-tag || true
+          gh release create widget-maker-latest AIWidgetMaker.apk \
+            --title "AI Widget Maker (latest build, $(git rev-parse --short HEAD))" \
+            --notes "Download AIWidgetMaker.apk on your Android phone and open it to install." \
+            --latest=false \
+            --target "${GITHUB_SHA}"
 
       # On every push to main, publish the APK as the "latest" release so it can
       # be downloaded straight from your phone's browser.

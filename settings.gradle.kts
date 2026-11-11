@@ -30,4 +30,6 @@ include(":core")
 // machines without one.
 if (System.getenv("CORE_ONLY") == null) {
     include(":app")
+    // AI Widget Maker: a separate app that designs home-screen (and lock-screen) widgets with Claude.
+    include(":widgetmaker")
 }

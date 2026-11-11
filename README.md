@@ -99,6 +99,8 @@ The in-game Help screen covers everything in detail.
   `CORE_ONLY=1 ./gradlew :core:test`.
 - `app/`: the Android app (Jetpack Compose, MapLibre map, widget, step counter,
   phone-free service).
+- `widgetmaker/`: **AI Widget Maker**, a separate app that designs home-screen
+  and lock-screen widgets with Claude. See [`widgetmaker/README.md`](widgetmaker/README.md).
 - `tools/beasts/`: the source for the evolved monsters' art (`BeastArt.kt`).
 - `docs/`: ideas for later.
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Widget Maker</string>
+    <string name="widget_name">AI widget</string>
+    <string name="widget_description">A widget you designed by describing it.</string>
+</resources>

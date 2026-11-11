@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AI Widget Maker widget. "keyguard" lets it appear on lock screens that accept
+  third-party widgets (Android 16+ devices that support them, and Samsung One UI
+  where the installed version allows it). Home screens ignore that flag.
+  configuration_optional: placed without the picker, it shows your newest design.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:initialKeyguardLayout="@layout/glance_default_loading_layout"
+    android:configure="com.sidequest.widgetmaker.ui.ChooseDesignActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    android:minWidth="110dp"
+    android:minHeight="50dp"
+    android:minResizeWidth="80dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen|keyguard" />
