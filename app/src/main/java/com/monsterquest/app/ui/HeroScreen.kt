@@ -334,7 +334,7 @@ fun HeroScreen(vm: GameViewModel) {
         Spells.all.forEach { base ->
             val rank = h.spellRank(base.id)
             val known = rank > 0
-            val sk = Spells.ranked(base, rank.coerceAtLeast(1), h.level)
+            val sk = Spells.ranked(base, rank.coerceAtLeast(1), h.level, h.heroClass)
             val pages = s.spellPages[base.id] ?: 0
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -511,7 +511,7 @@ private fun classEffects(cls: HeroClass, bonus: Double): String {
     return when (cls) {
         HeroClass.NONE -> "Neutral: no strengths and no weaknesses."
         HeroClass.WARRIOR -> "+$b% Attack, +$b% Speed, −$half% Magic"
-        HeroClass.MAGE -> "+$b% Magic, +$b% Defense, −$half% Attack"
+        HeroClass.MAGE -> "+$b% Magic, +$b% Defense, −$half% Attack, attack spells cost ${com.monsterquest.core.Spells.MAGE_ATTACK_DISCOUNT_PCT}% less Energy"
         HeroClass.ROGUE -> "+$b% Speed, $half% chance to dodge attacks"
     }
 }

@@ -206,7 +206,7 @@ object Spells {
     const val AEGIS_PCT_PER_RANK = 10
 
     private fun bolt(id: String, name: String, element: Element, flavor: String) =
-        Skill(id, name, element, SkillKind.MAGICAL, 24, mpCost = 4, powerPerRank = 3, description = flavor)
+        Skill(id, name, element, SkillKind.MAGICAL, 24, mpCost = 10, powerPerRank = 3, description = flavor)
 
     val all = listOf(
         bolt("ember_bolt", "Ember Bolt", Element.FIRE, "A spark copied from a fire-drake's breath."),
@@ -217,7 +217,7 @@ object Spells {
         bolt("shadow_bolt", "Shadow Bolt", Element.CORRUPT, "A sliver of the dark that gloomwisps carry."),
         bolt("stone_bolt", "Stone Bolt", Element.EARTH, "A thrown shard, shaped like a Mosscub's rock."),
         Skill(
-            MUD_SLING, "Mud Sling", Element.EARTH, SkillKind.MAGICAL, 12, mpCost = 3, powerPerRank = 2,
+            MUD_SLING, "Mud Sling", Element.EARTH, SkillKind.MAGICAL, 12, mpCost = 7, powerPerRank = 2,
             description = "A splat of mud in the foe's eyes: little damage, but its accuracy drops $MUD_SLING_ACCURACY% " +
                 "(stacks up to ${MUD_SLING_ACCURACY * MUD_SLING_STACKS}%).",
         ),
@@ -287,8 +287,23 @@ object Spells {
     /** Hero level -> attack spell multiplier (straight lines between the points). */
     private val SPELL_SCALE = listOf(1.0 to 3.9, 25.0 to 3.9, 30.0 to 4.6, 35.0 to 4.7, 40.0 to 5.8)
 
-    /** The spell as it works for this hero right now: power from rank and mastery (and, for attack spells, level). */
-    fun ranked(skill: Skill, rank: Int, heroLevel: Int): Skill {
+    /** Mages pay this much less Energy for attack spells, in percent. */
+    const val MAGE_ATTACK_DISCOUNT_PCT = 25
+
+    /** Energy [skill] costs a hero of [heroClass]: Mages cast attack spells for less. */
+    fun energyCost(skill: Skill, heroClass: HeroClass): Int =
+        if (heroClass == HeroClass.MAGE && skill.kind == SkillKind.MAGICAL) {
+            (skill.mpCost * (100 - MAGE_ATTACK_DISCOUNT_PCT) / 100.0).roundToInt().coerceAtLeast(1)
+        } else {
+            skill.mpCost
+        }
+
+    /**
+     * The spell as it works for this hero right now: power from rank and
+     * mastery (and, for attack spells, level), and its Energy cost for
+     * [heroClass].
+     */
+    fun ranked(skill: Skill, rank: Int, heroLevel: Int, heroClass: HeroClass = HeroClass.NONE): Skill {
         val r = rank.coerceIn(1, MAX_RANK)
         val base = skill.power + skill.powerPerRank * (r - 1)
         val power = when {
@@ -297,7 +312,7 @@ object Spells {
             skill.kind == SkillKind.MAGICAL -> (base * mastery(heroLevel) * spellScale(heroLevel)).roundToInt()
             else -> (base * mastery(heroLevel)).roundToInt()
         }
-        return skill.copy(power = power)
+        return skill.copy(power = power, mpCost = energyCost(skill, heroClass))
     }
 
     /** Pages needed to go from [rank] to the next rank. */

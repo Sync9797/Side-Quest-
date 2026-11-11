@@ -2,6 +2,7 @@ package com.monsterquest.core
 
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -42,5 +43,24 @@ class MagicBalanceTest {
                 assertTrue(r5 in 0.9..1.15, "level $lvl: rank 5 is ${"%.2f".format(r5)}x a final form")
             }
         }
+    }
+
+    @Test
+    fun strongerSpellsCostMoreEnergyAndMagesPayLess() {
+        val bolt = Spells.byId("ember_bolt")!!
+        val mend = Spells.byId("mend")!!
+        val adventurer = Hero(level = 30, knownSpells = setOf("ember_bolt", "mend", Spells.MUD_SLING))
+        val mage = adventurer.copy(heroClass = HeroClass.MAGE, classChosen = true)
+        val warrior = adventurer.copy(heroClass = HeroClass.WARRIOR, classChosen = true)
+        fun cost(h: Hero, id: String) = h.spells().first { it.id == id }.mpCost
+        assertEquals(10, cost(adventurer, "ember_bolt"))
+        assertEquals(10, cost(warrior, "ember_bolt"))
+        assertEquals(8, cost(mage, "ember_bolt"))
+        assertEquals(7, cost(adventurer, Spells.MUD_SLING))
+        assertEquals(5, cost(mage, Spells.MUD_SLING))
+        // Healing isn't stronger, so it costs the same for everyone.
+        assertEquals(mend.mpCost, cost(adventurer, "mend"))
+        assertEquals(mend.mpCost, cost(mage, "mend"))
+        assertTrue(bolt.mpCost > mend.mpCost)
     }
 }

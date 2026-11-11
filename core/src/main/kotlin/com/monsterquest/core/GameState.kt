@@ -73,7 +73,7 @@ data class Hero(
     fun spellRank(id: String): Int = if (id in knownSpells) (spellRanks[id] ?: 1).coerceIn(1, Spells.MAX_RANK) else 0
 
     /** Known spells at their current rank and the hero's mastery. */
-    fun spells(): List<Skill> = Spells.all.filter { it.id in knownSpells }.map { Spells.ranked(it, spellRank(it.id), level) }
+    fun spells(): List<Skill> = Spells.all.filter { it.id in knownSpells }.map { Spells.ranked(it, spellRank(it.id), level, heroClass) }
 
     /**
      * Class strength in percent: 3% at level 5, +1.5% per level after, capped
