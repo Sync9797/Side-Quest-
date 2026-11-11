@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -171,9 +172,12 @@ fun EggsSection(vm: com.monsterquest.app.GameViewModel) {
         )
     }
     eggs.forEach { egg ->
-        GameCard(Modifier.padding(vertical = 3.dp)) {
+        // A ready egg glows (and its card is edged in gold) until it's hatched.
+        GameCard(Modifier.padding(vertical = 3.dp), border = if (egg.ready) Gold else null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                com.monsterquest.app.ui.art.MonsterArt(egg.species, Modifier.size(40.dp), silhouette = !egg.ready, shiny = egg.ready && egg.shiny)
+                Box(Modifier.size(48.dp).readyGlow(egg.ready), contentAlignment = Alignment.Center) {
+                    com.monsterquest.app.ui.art.MonsterArt(egg.species, Modifier.size(40.dp), silhouette = !egg.ready, shiny = egg.ready && egg.shiny)
+                }
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text("${egg.species.name} egg", fontWeight = FontWeight.SemiBold)
@@ -185,7 +189,8 @@ fun EggsSection(vm: com.monsterquest.app.GameViewModel) {
                             else -> String.format(Locale.US, "Warming: %.1f / %.1f km", egg.walkedMeters / 1000, egg.meters / 1000)
                         } + if (egg.incubated) " • Incubated" else "",
                         fontSize = 12.sp,
-                        color = if (warming || egg.ready) MaterialTheme.colorScheme.onSurfaceVariant else HpYellow,
+                        color = if (egg.ready) Gold else if (warming) MaterialTheme.colorScheme.onSurfaceVariant else HpYellow,
+                        fontWeight = if (egg.ready) FontWeight.SemiBold else FontWeight.Normal,
                     )
                     if (!egg.ready) Bar(egg.progress.toFloat(), if (warming) Gold else MaterialTheme.colorScheme.outline, Modifier.fillMaxWidth().padding(top = 3.dp), heightDp = 5)
                 }

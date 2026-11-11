@@ -561,6 +561,21 @@ abstract class ScreenshotBase(private val device: String) {
         shot("10_adventures") { AdventuresTab(v) }
     }
 
+    /** Eggs on Home: a ready one glows (gold edge, Hatch button), one still warming. */
+    @Test fun eggsReady() {
+        val base = sampleState()
+        val ready = com.monsterquest.core.Eggs.gift(Bestiary.get("emberkit"), Random(4), 3).let { it.copy(walkedMeters = it.meters) }
+        val warming = com.monsterquest.core.Eggs.gift(Bestiary.get("drizzlet"), Random(5), 3).let { it.copy(walkedMeters = it.meters * 0.4) }
+        val v = vm(base.copy(eggs = listOf(ready, warming)))
+        shot("10c_eggs_ready", advanceMs = 600) {
+            androidx.compose.foundation.layout.Column(
+                androidx.compose.ui.Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFF0D171A)).padding(16.dp),
+            ) { com.monsterquest.app.ui.EggsSection(v) }
+        }
+        rule.onNodeWithText("Ready to hatch!").assertExists()
+        rule.onNodeWithText("Hatch").assertExists()
+    }
+
     /** A finished adventure: the Adventures button says so and wiggles until it's claimed. */
     @Test fun adventureReady() {
         val base = sampleState()

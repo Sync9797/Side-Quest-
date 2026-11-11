@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.Color
@@ -282,4 +283,36 @@ fun Modifier.wobble(active: Boolean): Modifier {
         label = "wobbleAngle",
     )
     return this.then(androidx.compose.ui.Modifier.graphicsLayer { rotationZ = angle.value })
+}
+
+/**
+ * A soft glow that breathes behind the content while [active] (an egg ready
+ * to hatch). Drawn behind on its own, so only the glow redraws each frame.
+ */
+@Composable
+fun Modifier.readyGlow(active: Boolean, color: Color = Gold): Modifier {
+    if (!active) return this
+    val pulse = androidx.compose.animation.core.rememberInfiniteTransition(label = "glow").animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.9f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(1_100),
+            androidx.compose.animation.core.RepeatMode.Reverse,
+        ),
+        label = "glowPulse",
+    )
+    return this.then(
+        androidx.compose.ui.Modifier.drawBehind {
+            val r = size.minDimension * (0.62f + 0.12f * pulse.value)
+            drawCircle(
+                androidx.compose.ui.graphics.Brush.radialGradient(
+                    listOf(color.copy(alpha = 0.75f * pulse.value), color.copy(alpha = 0.25f * pulse.value), Color.Transparent),
+                    center = center,
+                    radius = r,
+                ),
+                radius = r,
+                center = center,
+            )
+        },
+    )
 }
