@@ -25,6 +25,8 @@
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- AI Widget Maker: told when the game changes, so its Monster Quest widgets update. -->
+        <package android:name="com.sidequest.widgetmaker" />
         <!-- "Walk here": open walking directions in the phone's map app. -->
         <package android:name="com.google.android.apps.maps" />
         <intent>
@@ -67,6 +69,11 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+        <!-- A read-only summary (eggs, adventures, steps, sleep) for AI Widget Maker's widgets; only that app may read it. -->
+        <provider
+            android:name=".widget.SummaryProvider"
+            android:authorities="com.monsterquest.app.summary"
+            android:exported="true" />
         <service
             android:name=".focus.FocusService"
             android:exported="false"

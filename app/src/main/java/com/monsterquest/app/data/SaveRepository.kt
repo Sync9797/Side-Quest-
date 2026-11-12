@@ -7,6 +7,7 @@ import java.io.File
 
 /** Saves the whole game as one JSON file in app-private storage. */
 class SaveRepository(context: Context) {
+    private val app = context.applicationContext
     private val file = File(context.filesDir, "save.json")
     private val tmp = File(context.filesDir, "save.json.tmp")
 
@@ -23,6 +24,8 @@ class SaveRepository(context: Context) {
         tmp.writeText(state.toJson())
         tmp.renameTo(file)
         keepDailyBackup()
+        // AI Widget Maker's Monster Quest widgets update right away.
+        com.monsterquest.app.widget.SummaryProvider.ping(app)
     }
 
     /**
