@@ -11,6 +11,30 @@ import java.time.ZoneId
 object Health {
     /** A good day's walking (the calendar marks days that reach it). */
     const val STEP_GOAL = 5_000
+    /** One glass of water in milliliters, in the player's units (8 oz is about 236.6 ml). */
+    fun glassMl(imperial: Boolean): Double = if (imperial) GLASS_OZ * 29.5735 else GLASS_ML.toDouble()
+
+    /**
+     * Water from Health Connect (milliliters per epoch day, from every app,
+     * the game's own glasses included): each day counts as many glasses as
+     * that is, or what the game already had if that's more (glasses logged
+     * before syncing was on). Each day keeps the goal it had.
+     */
+    fun syncWater(state: GameState, mlByDay: Map<Long, Double>, glassMl: Double): GameState {
+        if (mlByDay.isEmpty()) return state
+        var water = state.water
+        var goals = state.waterGoalByDay
+        for ((day, ml) in mlByDay) {
+            val glasses = Math.round(ml / glassMl).toInt().coerceIn(0, MAX_GLASSES)
+            val n = maxOf(glasses, water[day] ?: 0)
+            if (n > 0) {
+                water = water + (day to n)
+                if (day !in goals) goals = goals + (day to state.waterGoal)
+            }
+        }
+        return if (water == state.water && goals == state.waterGoalByDay) state else state.copy(water = water, waterGoalByDay = goals)
+    }
+
     /** One glass of water: 8 oz, or 250 ml in metric. */
     const val GLASS_ML = 250
     const val GLASS_OZ = 8

@@ -249,6 +249,25 @@ private fun WaterSection(vm: GameViewModel, glasses: Int) {
         Text("$goal glasses", fontSize = 13.sp)
         TextButton(onClick = { vm.setWaterGoal(goal + 1) }, enabled = goal < Health.WATER_GOALS.last) { Text("+") }
     }
+    // Two-way sync with Health Connect (Samsung Health, Fitbit, Google Fit...).
+    val permission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.health.connect.client.PermissionController.createRequestPermissionResultContract(),
+    ) { vm.refreshWater() }
+    LaunchedEffect(Unit) { vm.refreshWater() }
+    when (vm.waterAllowed) {
+        true -> Text(
+            "Synced with Health Connect: water from other apps counts here, and glasses you add here go there.",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        false -> SmallButton(
+            "Sync water with Health Connect",
+            { permission.launch(com.monsterquest.app.data.HealthSteps.waterPermissions) },
+            Modifier.fillMaxWidth().padding(top = 4.dp),
+            outlined = true,
+        )
+        null -> {}
+    }
 }
 
 /**

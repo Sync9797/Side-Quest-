@@ -72,4 +72,24 @@ class HealthTest {
         assertEquals(listOf(false, true, false, true, true), history.map { it.met })
         assertEquals(9, history[3].glasses)
     }
+
+    @Test
+    fun waterFromHealthConnectFillsTheTracker() {
+        val d0 = day.toEpochDay()
+        var s = Health.addWater(GameState(), 3, at(9), zone)
+        val ml = Health.glassMl(imperial = false)
+        // Today: 5 glasses' worth in Health Connect (ours included); yesterday: a 750 ml bottle; two days ago: a sip.
+        s = Health.syncWater(s, mapOf(d0 to 5 * ml, d0 - 1 to 750.0, d0 - 2 to 40.0), ml)
+        assertEquals(5, Health.glasses(s, d0))
+        assertEquals(3, Health.glasses(s, d0 - 1))
+        assertEquals(0, Health.glasses(s, d0 - 2))
+        assertEquals(s.waterGoal, Health.waterGoalOn(s, d0 - 1))
+        // Glasses logged before syncing aren't lost when Health Connect has fewer.
+        s = Health.addWater(s, 4, at(15), zone)
+        s = Health.syncWater(s, mapOf(d0 to 5 * ml), ml)
+        assertEquals(9, Health.glasses(s, d0))
+        // Imperial glasses are 8 oz.
+        assertEquals(236.6, Health.glassMl(imperial = true), 0.1)
+        assertEquals(s, Health.syncWater(s, emptyMap(), ml))
+    }
 }

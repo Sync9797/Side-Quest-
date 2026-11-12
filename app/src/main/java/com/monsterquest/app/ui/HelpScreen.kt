@@ -119,6 +119,7 @@ private val topics = listOf(
                 "Your first party slot is your buddy: it finds its line's candy as you walk (every mile for Common monsters, up to 10 for Legendary).",
                 "Eggs: a male and a female of the same line (level 20+) can make one; adventures and nomads bring some too. Carry 5, but walking warms only 3 at a time (tap Warm to swap one in). An Incubator (800 gold) halves an egg's distance once.",
                 "The Health card shows steps by hour, water (just for you, no rewards) and sleep. Each morning a recap shows yesterday.",
+                "Water syncs with Health Connect once you allow it (Sync water on the Health card): water logged in Samsung Health, Fitbit or other apps counts here (the last 30 days), each glass you add goes there too, and − takes back the last glass the game added (other apps' entries can only be changed in those apps).",
                 "Water history: the History tab under the water tracker lists each day's glasses against that day's goal, with your current and best streak of goal days. The calendar on Home marks goal days with a blue dot, and the water streak above it opens the history. Changing your goal never rewrites past days.",
                 "Everyone rests on their own: 5% HP an hour; fainted monsters wake after about 2 hours.",
             ),

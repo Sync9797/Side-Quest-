@@ -47,6 +47,9 @@ import kotlinx.coroutines.withContext
 /** What a shrine just gave you. */
 data class LootPopup(val title: String, val rewards: List<com.monsterquest.core.Reward>, val id: Long = System.nanoTime())
 
+/** Days of water history read from Health Connect on each sync. */
+private const val WATER_SYNC_DAYS = 30L
+
 /** How often the real weather is looked up again. */
 private const val WEATHER_REFRESH_MS = 20 * 60_000L
 
@@ -535,6 +538,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         com.monsterquest.core.Torches.morning(state, System.currentTimeMillis())?.let(::apply)
         // Pull in last night's sleep, then show the morning recap if it's the first open today.
         refreshSleep(thenRecap = true)
+        refreshWater()
         val f = state.focus ?: return
         when (FocusStore.outcome(getApplication(), f.id)) {
             FocusStore.Outcome.FAILED -> endFocus(success = false)
@@ -741,7 +745,43 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Water tracker (no rewards): +1 / −1 glass today. */
-    fun addWater(delta: Int) = set(com.monsterquest.core.Health.addWater(state, delta, System.currentTimeMillis()))
+    fun addWater(delta: Int) {
+        val before = com.monsterquest.core.Health.glasses(state, java.time.LocalDate.now().toEpochDay())
+        set(com.monsterquest.core.Health.addWater(state, delta, System.currentTimeMillis()))
+        val changed = com.monsterquest.core.Health.glasses(state, java.time.LocalDate.now().toEpochDay()) - before
+        if (changed == 0 || waterAllowed != true) return
+        // Mirror the change in Health Connect.
+        val app = getApplication<android.app.Application>()
+        val ml = com.monsterquest.core.Health.glassMl(state.settings.imperialUnits)
+        viewModelScope.launch {
+            if (changed > 0) {
+                repeat(changed) { HealthSteps.addWater(app, ml) }
+            } else {
+                var removed = 0
+                repeat(-changed) { if (HealthSteps.removeLastWater(app)) removed++ }
+                // Glasses logged in another app can only be taken back there; the next sync restores them.
+                if (removed < -changed) message = "That water was logged in another app: remove it there (Samsung Health, Fit...)."
+            }
+        }
+    }
+
+    /** Whether water syncs with Health Connect (null: Health Connect isn't available). */
+    var waterAllowed by mutableStateOf<Boolean?>(null)
+        private set
+
+    /** Reads the last 30 days of water from Health Connect (when allowed) into the tracker. */
+    fun refreshWater() {
+        viewModelScope.launch {
+            val app = getApplication<android.app.Application>()
+            waterAllowed = HealthSteps.waterAllowed(app)
+            if (waterAllowed == true) {
+                HealthSteps.waterByDay(app, WATER_SYNC_DAYS)?.let { byDay ->
+                    val s = com.monsterquest.core.Health.syncWater(state, byDay, com.monsterquest.core.Health.glassMl(state.settings.imperialUnits))
+                    if (s != state) set(s)
+                }
+            }
+        }
+    }
     fun setWaterGoal(goal: Int) = set(com.monsterquest.core.Health.setWaterGoal(state, goal))
 
     /** Reads today's steps from Health Connect when that's the chosen source. */

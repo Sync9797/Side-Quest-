@@ -6,6 +6,8 @@ import android.net.Uri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.units.Volume
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.records.metadata.DataOrigin
@@ -136,4 +138,62 @@ object HealthSteps {
             )
         }
     }.getOrNull()
+
+    // ---- water -------------------------------------------------------------------
+
+    /** Read and write: water logged elsewhere shows in the game, and glasses added in the game reach Health Connect. */
+    val waterPermissions = setOf(
+        HealthPermission.getReadPermission(HydrationRecord::class),
+        HealthPermission.getWritePermission(HydrationRecord::class),
+    )
+
+    /** Whether the game may sync water; null when Health Connect isn't available at all. */
+    suspend fun waterAllowed(context: Context): Boolean? = runCatching {
+        if (sdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) return null
+        HealthConnectClient.getOrCreate(context).permissionController.getGrantedPermissions().containsAll(waterPermissions)
+    }.getOrNull()
+
+    /** Milliliters of water logged on each of the last [days] days (epoch day -> ml), from every app; null if unreadable. */
+    suspend fun waterByDay(context: Context, days: Long, zone: ZoneId = ZoneId.systemDefault()): Map<Long, Double>? = runCatching {
+        if (sdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) return null
+        val today = LocalDate.now(zone)
+        val start = today.minusDays(days - 1).atStartOfDay(zone).toInstant()
+        val records = HealthConnectClient.getOrCreate(context).readRecords(
+            ReadRecordsRequest(HydrationRecord::class, TimeRangeFilter.between(start, Instant.now())),
+        ).records
+        records.groupBy { it.startTime.atZone(zone).toLocalDate().toEpochDay() }
+            .mapValues { (_, rs) -> rs.sumOf { it.volume.inMilliliters } }
+    }.getOrNull()
+
+    /** Logs [ml] of water just now. Returns whether it was saved. */
+    suspend fun addWater(context: Context, ml: Double): Boolean = runCatching {
+        if (sdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) return false
+        val end = Instant.now()
+        val start = end.minusSeconds(60)
+        val offset = ZoneId.systemDefault().rules.getOffset(end)
+        HealthConnectClient.getOrCreate(context).insertRecords(
+            listOf(HydrationRecord(startTime = start, startZoneOffset = offset, endTime = end, endZoneOffset = offset, volume = Volume.milliliters(ml))),
+        )
+        true
+    }.getOrDefault(false)
+
+    /**
+     * Takes back the latest water the game logged today (other apps' entries
+     * can only be changed in those apps). Returns whether one was removed.
+     */
+    suspend fun removeLastWater(context: Context, zone: ZoneId = ZoneId.systemDefault()): Boolean = runCatching {
+        if (sdkStatus(context) != HealthConnectClient.SDK_AVAILABLE) return false
+        val client = HealthConnectClient.getOrCreate(context)
+        val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+        val ours = client.readRecords(
+            ReadRecordsRequest(
+                HydrationRecord::class,
+                TimeRangeFilter.between(start, Instant.now()),
+                dataOriginFilter = setOf(DataOrigin(context.packageName)),
+            ),
+        ).records
+        val last = ours.maxByOrNull { it.endTime } ?: return false
+        client.deleteRecords(HydrationRecord::class, listOf(last.metadata.id), emptyList())
+        true
+    }.getOrDefault(false)
 }

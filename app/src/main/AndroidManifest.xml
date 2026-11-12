@@ -22,6 +22,9 @@
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <!-- Optional: last night's sleep for the Health card and the morning recap. -->
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <!-- Optional: water synced both ways with Health Connect. -->
+    <uses-permission android:name="android.permission.health.READ_HYDRATION" />
+    <uses-permission android:name="android.permission.health.WRITE_HYDRATION" />
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
