@@ -111,6 +111,10 @@ fun rarityColor(r: Rarity) = when (r) {
 fun MonstersScreen(vm: GameViewModel) {
     // 0 = collection, 1 = journal, 2 = adventures
     var tab by rememberSaveable { mutableStateOf(0) }
+    // A widget asked for a sub-tab (2 = Adventures).
+    androidx.compose.runtime.LaunchedEffect(vm.monstersTabRequest) {
+        vm.monstersTabRequest?.let { tab = it; vm.monstersTabRequest = null }
+    }
     BackHandler(enabled = tab != 0) { tab = 0 }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {

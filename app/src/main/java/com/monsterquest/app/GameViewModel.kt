@@ -221,6 +221,33 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Kept so the preferences listener isn't garbage-collected. */
     private val reminderTapListener = com.monsterquest.app.reminders.ReminderActions.listen(app) { applyReminderTaps() }
 
+    /** Same for buttons on AI Widget Maker's Monster Quest widgets. */
+    private val widgetTapListener = com.monsterquest.app.widget.WidgetActions.listen(app) { applyWidgetTaps() }
+
+    /** Quest done, adventure claimed, egg hatched from a widget: applied with the game's own rules, at the time of the tap. */
+    fun applyWidgetTaps() {
+        val taps = com.monsterquest.app.widget.WidgetActions.drain(getApplication())
+        if (taps.isEmpty()) return
+        var s = state
+        val notes = mutableListOf<String>()
+        val rewards = mutableListOf<com.monsterquest.core.Reward>()
+        for (a in taps) {
+            val u = com.monsterquest.app.widget.WidgetActions.apply(s, a)
+            s = u.state
+            notes += u.message
+            rewards += u.rewards
+        }
+        set(s)
+        message = notes.filter { it.isNotBlank() }.joinToString(" ")
+        if (rewards.isNotEmpty()) showRewards("From your widget", rewards)
+    }
+
+    /** A screen to open, asked for by a widget ("eggs", "adventures", "quests"); the UI clears it once it's there. */
+    var openTarget by mutableStateOf<String?>(null)
+
+    /** The Monsters screen's sub-tab to switch to, then cleared. */
+    var monstersTabRequest by mutableStateOf<Int?>(null)
+
     /** Applies Done / Skip taps from notifications, each at the time it was tapped. */
     fun applyReminderTaps() {
         val taps = com.monsterquest.app.reminders.ReminderActions.drain(getApplication())
@@ -500,6 +527,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         regenerate()
         // Done / Skip taps from reminder notifications while the game was closed, then re-arm the alarms.
         applyReminderTaps()
+        // Buttons tapped on widgets while the game was closed.
+        applyWidgetTaps()
         rescheduleReminders()
         GameEngine.dailyRecovery(state, System.currentTimeMillis())?.let(::apply)
         // The morning's torches for the dungeons.
