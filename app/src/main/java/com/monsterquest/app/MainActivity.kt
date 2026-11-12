@@ -119,11 +119,20 @@ class MainActivity : ComponentActivity() {
         window.attributes = attrs
     }
 
+    /** A widget can ask for a screen: eggs, adventures or quests. */
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_OPEN)?.let { vm.openTarget = it }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The system splash (the crest) while the app starts, then the game's loading screen.
         installSplashScreen()
         super.onCreate(savedInstanceState)
         val coldStart = savedInstanceState == null
+        // Opened from a widget that asked for a screen.
+        if (coldStart) intent?.getStringExtra(EXTRA_OPEN)?.let { vm.openTarget = it }
 
         // Health Connect has no live updates, so poll it while the game is open.
         lifecycleScope.launch {
@@ -190,5 +199,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        /** Which screen to open: "eggs", "adventures" or "quests" (from AI Widget Maker's widgets). */
+        const val EXTRA_OPEN = "open"
     }
 }

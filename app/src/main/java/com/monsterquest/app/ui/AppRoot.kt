@@ -155,6 +155,17 @@ private fun AppScreens(vm: GameViewModel, initialTab: Tab, initialSettings: Bool
 
     var tab by rememberSaveable { mutableStateOf(initialTab) }
     var settingsOpen by rememberSaveable { mutableStateOf(initialSettings) }
+    // A widget asked for a screen: eggs are in the Bag, adventures under Monsters.
+    androidx.compose.runtime.LaunchedEffect(vm.openTarget) {
+        when (vm.openTarget) {
+            "eggs" -> tab = Tab.BAG
+            "adventures" -> { tab = Tab.MONSTERS; vm.monstersTabRequest = 2 }
+            "quests" -> tab = Tab.QUESTS
+            else -> return@LaunchedEffect
+        }
+        settingsOpen = false
+        vm.openTarget = null
+    }
     // Back steps out of Settings, then from any tab to Quests; only Back on Quests leaves the app.
     BackHandler(enabled = !settingsOpen && tab != Tab.QUESTS) { tab = Tab.QUESTS }
     BackHandler(enabled = settingsOpen) { settingsOpen = false }
