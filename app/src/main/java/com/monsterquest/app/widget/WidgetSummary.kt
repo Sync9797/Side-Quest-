@@ -69,13 +69,14 @@ object WidgetSummary {
                 })
             }
         })
-        // The next quests: calendar ones by start time, then to-dos by due date and priority.
+        // The quests in the same order as the Quests screen lists them.
         put("quests", buildJsonArray {
-            nextQuests(state, nowMs).take(5).forEach { t ->
+            activeList(state, nowMs, zone).take(5).forEach { t ->
                 add(buildJsonObject {
                     put("id", t.id)
                     put("title", t.title)
-                    put("when", whenLabel(t.startMs ?: t.dueMs, nowMs, zone))
+                    // "Overdue" by the same rule the Quests screen uses (a calendar event once it has ended).
+                    put("when", if (com.monsterquest.core.Planner.isOverdue(t, nowMs)) "Overdue" else whenLabel(t.dueAt, nowMs, zone))
                     put("calendar", t.source == TaskSource.CALENDAR)
                     put("difficulty", t.difficulty.name.lowercase())
                 })
@@ -121,13 +122,16 @@ object WidgetSummary {
         }
     }
 
-    private fun nextQuests(state: GameState, nowMs: Long): List<QuestTask> {
-        val open = state.tasks.filter { !it.completed }
-        val calendar = open.filter { it.source == TaskSource.CALENDAR && (it.endMs ?: it.startMs ?: 0) >= nowMs }.sortedBy { it.startMs }
-        val manual = open.filter { it.source != TaskSource.CALENDAR }
-        val todos = manual.filter { it.dueMs != null }.sortedBy { it.dueMs } + manual.filter { it.dueMs == null }.sortedByDescending { it.priority.ordinal }
-        // Whatever comes first in time leads; undated to-dos follow.
-        return (calendar + todos).sortedBy { it.startMs ?: it.dueMs ?: Long.MAX_VALUE }
+    /**
+     * The open quests exactly as the Quests screen lists them, from the same [Planner.sections]: tasks
+     * without a date first, then the scheduled ones by group (overdue, happening now, due within the
+     * hour, later today, tomorrow, this week, later). The widget used to sort them its own way, and
+     * left out calendar events that had ended unchecked, which the screen shows as overdue.
+     */
+    internal fun activeList(state: GameState, nowMs: Long, zone: ZoneId): List<QuestTask> {
+        val sections = com.monsterquest.core.Planner.sections(state.tasks, nowMs, zone)
+        val undated = sections.firstOrNull { it.group == com.monsterquest.core.Planner.Group.NO_DATE }?.tasks.orEmpty()
+        return undated + sections.filter { it.group != com.monsterquest.core.Planner.Group.NO_DATE }.flatMap { it.tasks }
     }
 
     /** "Today 3 PM", "Tomorrow", "Sat 9 AM", "Nov 20", or "" when it has no time. */

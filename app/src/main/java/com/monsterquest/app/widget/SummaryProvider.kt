@@ -71,18 +71,35 @@ class SummaryProvider : ContentProvider() {
         const val WIDGET_MAKER = "com.sidequest.widgetmaker"
         private val READERS = setOf(WIDGET_MAKER)
         private const val CHANGED = "com.sidequest.widgetmaker.GAME_CHANGED"
+        private const val PING_GAP_MS = 15_000L
         @Volatile private var lastPing = 0L
+        @Volatile private var trailing = false
 
         /** The game as widgets see it: the save, with reminder and widget taps still waiting to be applied. */
         fun current(context: Context) =
             WidgetActions.applyTo(context, com.monsterquest.app.reminders.ReminderActions.applyTo(context, SaveRepository(context).load()))
 
-        /** Tells the widget app the game changed (at most every 15 seconds unless [force]), so its widgets update. */
+        /**
+         * Tells the widget app the game changed, so its widgets update: at most every 15 seconds unless
+         * [force]. A change inside those 15 seconds is sent when they're up rather than dropped, so a
+         * quest added or ticked off right after another still reaches the widget.
+         */
         fun ping(context: Context, force: Boolean = false) {
+            val app = context.applicationContext
             val now = System.currentTimeMillis()
-            if (!force && now - lastPing < 15_000) return
+            val wait = PING_GAP_MS - (now - lastPing)
+            if (!force && wait > 0) {
+                if (!trailing) {
+                    trailing = true
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        trailing = false
+                        ping(app, force = true)
+                    }, wait)
+                }
+                return
+            }
             lastPing = now
-            runCatching { context.sendBroadcast(Intent(CHANGED).setPackage(WIDGET_MAKER)) }
+            runCatching { app.sendBroadcast(Intent(CHANGED).setPackage(WIDGET_MAKER)) }
         }
     }
 }
