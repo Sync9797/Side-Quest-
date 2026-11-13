@@ -185,14 +185,15 @@ abstract class ScreenshotBase(private val device: String) {
         // Due within the hour: the to-do in 20 minutes and the dentist in an hour.
         rule.onNodeWithText("2 quests due within the hour").assertExists()
         // Tap today on the calendar: just today's quests. Tap it again: everything.
-        val today = java.time.LocalDate.now().dayOfMonth.toString()
+        // Today's calendar cell, by its tag (its number alone can match other text late in the day).
+        val today = androidx.compose.ui.test.hasTestTag("calendar-day-${java.time.LocalDate.now()}")
         // The calendar sits below This week, possibly past the screen's edge: click through semantics.
-        rule.onAllNodes(androidx.compose.ui.test.hasText(today) and androidx.compose.ui.test.hasClickAction())[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        rule.onAllNodes(today)[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("02c_quests_day", 1_000)
         rule.onNodeWithText("Show all").assertExists()
         if (app.resources.configuration.screenWidthDp >= 600) {
             // Side by side, the calendar stays in view: tap the day again.
-            rule.onAllNodes(androidx.compose.ui.test.hasText(today) and androidx.compose.ui.test.hasClickAction())[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            rule.onAllNodes(today)[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         } else {
             // On a phone the list scrolled to the day's quests: Show all goes back.
             rule.onNodeWithText("Show all").performClick()

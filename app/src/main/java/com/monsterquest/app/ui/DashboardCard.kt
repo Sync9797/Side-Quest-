@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -128,7 +129,11 @@ fun DashboardCard(vm: GameViewModel, selectedDay: Long? = null, onSelectDay: ((L
             Row(Modifier.fillMaxWidth()) {
                 (0 until 7).forEach { i ->
                     val date = week.getOrNull(i)
-                    val tap = if (date != null && onSelectDay != null) Modifier.clickable { onSelectDay(date.toEpochDay()) } else Modifier
+                    val tap = if (date != null && onSelectDay != null) {
+                        Modifier.testTag("calendar-day-$date").clickable { onSelectDay(date.toEpochDay()) }
+                    } else {
+                        Modifier
+                    }
                     Box(Modifier.weight(1f).aspectRatio(1.25f).then(tap), contentAlignment = Alignment.Center) {
                         if (date != null) {
                             val day = date.toEpochDay()
