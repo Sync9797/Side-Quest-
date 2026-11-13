@@ -198,7 +198,11 @@ abstract class ScreenshotBase(private val device: String) {
             // On a phone the list scrolled to the day's quests: Show all goes back.
             rule.onNodeWithText("Show all").performClick()
         }
-        rule.mainClock.advanceTimeBy(500)
+        // The day's list animates away: give it up to 3 seconds.
+        repeat(6) {
+            if (rule.onAllNodesWithText("Show all").fetchSemanticsNodes().isNotEmpty()) rule.mainClock.advanceTimeBy(500)
+        }
+        rule.waitForIdle()
         rule.onNodeWithText("Show all").assertDoesNotExist()
     }
 
