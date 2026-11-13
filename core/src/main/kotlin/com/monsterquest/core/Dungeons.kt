@@ -29,6 +29,8 @@ enum class RoomKind(val label: String, val hint: String) {
     FOUNTAIN("Fairy fountain", "Restores you and your monsters"),
     EMPTY("Quiet room", "Nothing at all"),
     BOSS("Champion", "The dungeon's champion"),
+    /** Leads nowhere: always looks unknown until lit. Light a torch to find the way on, or turn back. */
+    DEAD_END("Dead end", "Leads nowhere, unless a torch finds the way"),
     /** The tutorial's first room: choose your starter. */
     STARTER("Starter's chamber", "Choose your first monster"),
     ;
@@ -89,6 +91,14 @@ data class DungeonRun(
     val bagFullAtStart: Boolean = false,
     /** Hidden doors you've lit a torch to look behind ([Dungeons.doorKey]). */
     val scouted: Set<Int> = emptySet(),
+    /** A torch burns until this step: dark rooms before it show their doors. */
+    val litUntil: Int = 0,
+    /** Times you turned back from a dead end: each gives the room behind you fresh doors. */
+    val detours: Int = 0,
+    /** Waiting on a choice: a dead end behind this door (true = left). */
+    val deadEnd: Boolean? = null,
+    /** Waiting on a choice: a dark vault behind this door (true = left). */
+    val vault: Boolean? = null,
 ) {
     val atBoss: Boolean get() = step >= dungeon.rooms
 }
@@ -202,9 +212,10 @@ object Dungeons {
         RoomKind.TREASURY to 18,
         RoomKind.FOUNTAIN to 13 - 2 * stars,
         RoomKind.EMPTY to 16 - 2 * stars,
+        RoomKind.DEAD_END to if (stars >= 2) 1 + stars else 0,
     )
 
-    private fun rng(run: DungeonRun, salt: Int) = Random(run.dungeon.seed * 31 + run.step * 1_009L + salt)
+    private fun rng(run: DungeonRun, salt: Int) = Random(run.dungeon.seed * 31 + run.step * 1_009L + run.detours * 7_919L + salt)
 
     /** The two doors at this step (left, right): drawn at random for the difficulty, never both the same. */
     fun doors(run: DungeonRun): Pair<RoomKind, RoomKind> {
@@ -223,13 +234,43 @@ object Dungeons {
         return left to draw(left)
     }
 
-    /** A door's key for [DungeonRun.scouted]: the step and the side. */
-    fun doorKey(step: Int, left: Boolean): Int = step * 2 + if (left) 0 else 1
+    /** A door's key for [DungeonRun.scouted]: the step, the side and the detour (a turned-back room has new doors). */
+    fun doorKey(step: Int, left: Boolean, detours: Int = 0): Int = detours * 1_000 + step * 2 + if (left) 0 else 1
 
-    /** Whether a door's sign is hidden ("?"): more often in harder dungeons (from 18% to 50%), until you light a torch to look. */
-    fun hidden(run: DungeonRun, left: Boolean): Boolean =
-        !run.atBoss && !run.dungeon.tutorial && doorKey(run.step, left) !in run.scouted &&
-            rng(run, if (left) 2 else 3).nextDouble() < 0.1 + 0.08 * run.dungeon.stars
+    /** A torch lights this many rooms of a dark dungeon. */
+    const val TORCH_ROOMS = 3
+
+    /**
+     * The deep half of a 4- or 5-star dungeon is pitch dark: every door shows
+     * "?" unless a torch is burning ([lightWay]).
+     */
+    fun dark(run: DungeonRun): Boolean =
+        !run.atBoss && !run.dungeon.tutorial && run.dungeon.stars >= 4 && run.step >= run.dungeon.rooms / 2
+
+    /** A torch is burning here (lit for [TORCH_ROOMS] rooms). */
+    fun lit(run: DungeonRun): Boolean = run.step < run.litUntil
+
+    /**
+     * Whether a door's sign is hidden ("?"): more often in harder dungeons
+     * (18% to 50%), every door in the dark ([dark]), and always a dead end;
+     * a torch shows what's behind.
+     */
+    fun hidden(run: DungeonRun, left: Boolean): Boolean {
+        if (run.atBoss || run.dungeon.tutorial || doorKey(run.step, left, run.detours) in run.scouted) return false
+        val room = doors(run).let { if (left) it.first else it.second }
+        if (lit(run)) return false
+        if (room == RoomKind.DEAD_END || dark(run)) return true
+        return rng(run, if (left) 2 else 3).nextDouble() < 0.1 + 0.08 * run.dungeon.stars
+    }
+
+    /** Lights a torch that burns for [TORCH_ROOMS] rooms: every door in them shows what's behind. */
+    fun lightWay(state: GameState): Update {
+        val run = state.dungeonRun ?: return Update(state, "You're not in a dungeon.")
+        if (lit(run)) return Update(state, "Your torch is still burning.")
+        val (s, r) = lightTorch(state, run) ?: return Update(state, "You have no torches to light.")
+        val lit = r.copy(litUntil = run.step + TORCH_ROOMS, last = "You light a torch. It will burn for $TORCH_ROOMS rooms.")
+        return Update(s.copy(dungeonRun = lit), lit.last)
+    }
 
     /** Torches you can light inside: the ones you carry plus any found in this dungeon. */
     fun torchesAtHand(state: GameState): Int = state.torches + (state.dungeonRun?.torches ?: 0)
@@ -247,7 +288,7 @@ object Dungeons {
         if (!hidden(run, left)) return Update(state, "You can already see what's behind that door.")
         val (s, r) = lightTorch(state, run) ?: return Update(state, "You have no torches to light.")
         val room = doors(run).let { if (left) it.first else it.second }
-        val seen = r.copy(scouted = r.scouted + doorKey(run.step, left), last = "Your torch shows the way: behind the door is ${if (room == RoomKind.TRAP) "a ${trapAt(run, left).label.lowercase()}" else "a ${room.label.lowercase()}"}.")
+        val seen = r.copy(scouted = r.scouted + doorKey(run.step, left, run.detours), last = "Your torch shows the way: behind the door is ${if (room == RoomKind.TRAP) "a ${trapAt(run, left).label.lowercase()}" else "a ${room.label.lowercase()}"}.")
         return Update(s.copy(dungeonRun = seen), seen.last)
     }
 
@@ -409,9 +450,49 @@ object Dungeons {
         return when {
             room.isFight -> Update(state.copy(dungeonRun = run.copy(fighting = room)), "")
             room == RoomKind.TRAP -> Update(state, "") // the player decides first (see [springTrap])
+            // A dead end or a dark vault: the player decides what to do (see [deadEnd] and [openVault]).
+            room == RoomKind.DEAD_END -> Update(state.copy(dungeonRun = run.copy(deadEnd = left)), "A dead end! The passage stops at a blank wall.")
+            room == RoomKind.TREASURY && isVault(run, left) -> Update(state.copy(dungeonRun = run.copy(vault = left)), "A vault, too dark to see into.")
             room == RoomKind.STARTER -> Update(state, "") // chosen on its own screen (see [pickStarter])
             else -> resolve(state, run, room, rng)
         }
+    }
+
+    /**
+     * At a dead end: light a torch to find the hidden way on, or turn back.
+     * Turning back costs a room: you're one room further from the champion,
+     * facing new doors.
+     */
+    fun deadEnd(state: GameState, useTorch: Boolean): Update {
+        val run = state.dungeonRun ?: return Update(state, "")
+        if (run.deadEnd == null) return Update(state, "")
+        if (useTorch) {
+            val (s, r) = lightTorch(state, run) ?: return Update(state, "You have no torches to light.")
+            return advance(s, r.copy(deadEnd = null), "Your torch flickers in a draft: a hidden passage behind the wall leads on.")
+        }
+        val back = run.copy(deadEnd = null, step = (run.step - 1).coerceAtLeast(0), detours = run.detours + 1, litUntil = 0,
+            last = "You turn back the way you came. The halls seem to have shifted: new doors wait.")
+        return Update(state.copy(dungeonRun = back), back.last)
+    }
+
+    /** Whether a treasury behind a door is a dark vault (more often in harder dungeons). */
+    fun isVault(run: DungeonRun, left: Boolean): Boolean =
+        !run.dungeon.tutorial && rng(run, if (left) 30 else 31).nextDouble() < 0.25 + 0.05 * run.dungeon.stars
+
+    /** At a dark vault: light a torch for the rich chest, or grope for the plain one. */
+    fun openVault(state: GameState, useTorch: Boolean, rng: Random = Random.Default): Update {
+        val run = state.dungeonRun ?: return Update(state, "")
+        if (run.vault == null) return Update(state, "")
+        var s = state
+        var r = run.copy(vault = null)
+        if (useTorch) {
+            val lit = lightTorch(state, r) ?: return Update(state, "You have no torches to light.")
+            s = lit.first
+            r = lit.second
+        }
+        val (r2, text, loot) = treasure(s, r, rng, rich = useTorch)
+        val intro = if (useTorch) "Torchlight fills the vault: a rich chest! " else "You feel your way to a chest in the dark. "
+        return advance(s, r2, intro + text.removePrefix("A treasury! ")).copy(rewards = loot, rewardTitle = if (useTorch) "Torchlit vault" else "Treasury")
     }
 
     private fun resolve(state: GameState, run: DungeonRun, room: RoomKind, rng: Random): Update = when (room) {
@@ -432,7 +513,8 @@ object Dungeons {
     }
 
     /** A chest: gold, and often potions, crystals, spell pages, torches, now and then gear. Better in harder dungeons. */
-    private fun treasure(state: GameState, run: DungeonRun, rng: Random): Triple<DungeonRun, String, List<Reward>> {
+    /** A chest's loot; a [rich] one (a torchlit vault) holds twice the gold, more of everything and better gear. */
+    private fun treasure(state: GameState, run: DungeonRun, rng: Random, rich: Boolean = false): Triple<DungeonRun, String, List<Reward>> {
         val d = run.dungeon
         if (d.tutorial) {
             // Everything you need for the rooms ahead.
@@ -446,15 +528,15 @@ object Dungeons {
         var r = run
         val found = mutableListOf<String>()
         val loot = mutableListOf<Reward>()
-        val gold = d.level * (4 + d.stars * 2) + rng.nextInt(20)
+        val gold = (d.level * (4 + d.stars * 2) + rng.nextInt(20)) * (if (rich) 2 else 1)
         r = r.copy(gold = r.gold + gold)
         found += "$gold gold"
         loot += Reward.Gold(gold)
         fun item(i: Item, n: Int) {
             r = r.copy(items = r.items + (i to (r.items[i] ?: 0) + n)); found += "${i.label}${if (n > 1) " x$n" else ""}"; loot += Reward.Items(i, n)
         }
-        if (rng.nextDouble() < 0.5) item(listOf(Item.POTION, Item.GREATER_POTION, Item.MANA_DRAUGHT).random(rng), 1 + rng.nextInt(2))
-        if (rng.nextDouble() < 0.35) item(if (d.stars >= 3) Item.RESONANT_CRYSTAL else Item.BINDING_CRYSTAL, 1 + rng.nextInt(3))
+        if (rich || rng.nextDouble() < 0.5) item(listOf(Item.POTION, Item.GREATER_POTION, Item.MANA_DRAUGHT).random(rng), 1 + rng.nextInt(2) + (if (rich) 1 else 0))
+        if (rich || rng.nextDouble() < 0.35) item(if (d.stars >= 3 || rich) Item.RESONANT_CRYSTAL else Item.BINDING_CRYSTAL, 1 + rng.nextInt(3))
         if (rng.nextDouble() < 0.3 + 0.05 * d.stars) {
             val n = 1 + (if (rng.nextDouble() < d.stars / 6.0) 1 else 0)
             r = r.copy(torches = r.torches + n)
@@ -462,15 +544,15 @@ object Dungeons {
             loot += Reward.Torches(n)
         }
         val spells = GameEngine.pageCandidates(state)
-        if (spells.isNotEmpty() && rng.nextDouble() < 0.35) {
+        if (spells.isNotEmpty() && rng.nextDouble() < (if (rich) 0.7 else 0.35)) {
             val sp = spells.random(rng)
             val n = 1 + rng.nextInt(2)
             r = r.copy(pages = r.pages + (sp.id to (r.pages[sp.id] ?: 0) + n))
             found += "$n ${sp.name} page${if (n == 1) "" else "s"}"
             loot += Reward.Pages(sp.id, n, learned = false)
         }
-        if (rng.nextDouble() < 0.06 * d.stars) {
-            val g = Armory.roll(d.level, rng, luck = 10 * d.stars)
+        if (rng.nextDouble() < 0.06 * d.stars * (if (rich) 2.5 else 1.0)) {
+            val g = Armory.roll(d.level, rng, luck = 10 * d.stars + (if (rich) 20 else 0))
             r = r.copy(gear = r.gear + g)
             found += "${g.rarity.label} ${g.name}"
             loot += Reward.WeaponDrop(g)

@@ -256,4 +256,69 @@ class DungeonsTest {
         f = Dungeons.leave(f).state
         assertEquals(full.bagCount, f.bagCount)
     }
+
+    /** A run of a [stars]-star dungeon, trying seeds until [ok] holds at some step. */
+    private fun runWhere(stars: Int, ok: (DungeonRun) -> Boolean): DungeonRun {
+        val d = some(start(), stars)
+        return (0L until 400L).flatMap { seed -> (0 until d.rooms).map { DungeonRun(d.copy(seed = seed), step = it) } }.first(ok)
+    }
+
+    @Test
+    fun theDeepHalfOfHardDungeonsIsDarkUntilATorchBurns() {
+        val d5 = some(start(), 5)
+        assertTrue(!Dungeons.dark(DungeonRun(d5, step = 0)))
+        val deep = DungeonRun(d5, step = d5.rooms - 1)
+        assertTrue(Dungeons.dark(deep))
+        assertTrue(Dungeons.hidden(deep, true) && Dungeons.hidden(deep, false))
+        // Easier dungeons are never dark.
+        val d3 = some(start(), 3)
+        assertTrue(!Dungeons.dark(DungeonRun(d3, step = d3.rooms - 1)))
+        // One torch lights the next few rooms.
+        var s = start().copy(torches = 4, dungeonRun = deep.copy(step = d5.rooms / 2))
+        s = Dungeons.lightWay(s).state
+        assertEquals(3, s.torches)
+        val run = s.dungeonRun!!
+        for (k in 0 until Dungeons.TORCH_ROOMS) {
+            val at = run.copy(step = run.step + k)
+            if (!at.atBoss) assertTrue(!Dungeons.hidden(at, true) && !Dungeons.hidden(at, false), "lit at +$k")
+        }
+        // Once it burns out, the dark is back.
+        val after = run.copy(step = run.step + Dungeons.TORCH_ROOMS)
+        if (!after.atBoss) assertTrue(Dungeons.hidden(after, true))
+        // A second torch waits until the first burns out.
+        assertEquals(s, Dungeons.lightWay(s).state)
+    }
+
+    @Test
+    fun deadEndsLookUnknownAndCostARoomUnlessATorchFindsTheWay() {
+        val run = runWhere(4) { it.step >= 1 && Dungeons.doors(it).first == RoomKind.DEAD_END && !Dungeons.dark(it) }
+        assertTrue(Dungeons.hidden(run, true), "dead ends always look unknown")
+        var s = start().copy(torches = 3, dungeonRun = run)
+        s = Dungeons.openBlind(s, true).state
+        assertEquals(true, s.dungeonRun!!.deadEnd)
+        // A torch finds the way on.
+        val on = Dungeons.deadEnd(s, useTorch = true).state
+        assertEquals(run.step + 1, on.dungeonRun!!.step)
+        assertEquals(2, on.torches)
+        // Turning back loses a room, and the room behind has new doors.
+        val back = Dungeons.deadEnd(s, useTorch = false).state
+        assertEquals(run.step - 1, back.dungeonRun!!.step)
+        assertEquals(1, back.dungeonRun!!.detours)
+        assertEquals(3, back.torches)
+    }
+
+    @Test
+    fun aTorchlitVaultHoldsTheRichChest() {
+        val run = runWhere(3) { Dungeons.doors(it).first == RoomKind.TREASURY && Dungeons.isVault(it, true) && !Dungeons.hidden(it, true) }
+        var s = start().copy(torches = 3, dungeonRun = run)
+        s = Dungeons.open(s, true).state
+        assertEquals(true, s.dungeonRun!!.vault)
+        val rich = (1..20).map { Dungeons.openVault(s, true, Random(it)) }
+        val plain = (1..20).map { Dungeons.openVault(s, false, Random(it)) }
+        assertTrue(rich.all { it.state.torches == 2 && it.state.dungeonRun!!.step == run.step + 1 })
+        assertTrue(plain.all { it.state.torches == 3 })
+        assertTrue(rich.map { it.state.dungeonRun!!.gold }.average() > plain.map { it.state.dungeonRun!!.gold }.average() * 1.6)
+        assertTrue(rich.all { r -> r.state.dungeonRun!!.items.isNotEmpty() })
+        assertEquals("Torchlit vault", rich.first().rewardTitle)
+    }
 }

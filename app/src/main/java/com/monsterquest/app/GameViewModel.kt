@@ -1286,6 +1286,20 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Lights a torch at a trap and walks past it unhurt. */
     fun torchPastTrap(left: Boolean) = apply(com.monsterquest.core.Dungeons.torchPastTrap(state, left))
 
+    /** Lights a torch that burns for a few rooms of a dark dungeon. */
+    fun lightWay() = apply(com.monsterquest.core.Dungeons.lightWay(state))
+
+    /** At a dead end: a torch finds the way on; otherwise turn back. */
+    fun deadEnd(useTorch: Boolean) = apply(com.monsterquest.core.Dungeons.deadEnd(state, useTorch))
+
+    /** At a dark vault: a torch for the rich chest, or the plain one in the dark. */
+    fun openVault(useTorch: Boolean) {
+        val u = com.monsterquest.core.Dungeons.openVault(state, useTorch)
+        set(u.state)
+        if (u.rewards.isEmpty()) message = u.message
+        showRewards(u.rewardTitle, u.rewards)
+    }
+
     /** Lights a torch to see behind a hidden door. */
     fun scoutDoor(left: Boolean) = apply(com.monsterquest.core.Dungeons.scout(state, left))
 
@@ -1293,7 +1307,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun openDoorBlind(left: Boolean) {
         val u = com.monsterquest.core.Dungeons.openBlind(state, left)
         set(u.state)
-        if (u.message.isNotEmpty() && u.rewards.isEmpty()) message = u.message
+        // A dead end or a dark vault asks what to do on its own.
+        val asking = state.dungeonRun?.let { it.deadEnd != null || it.vault != null } == true
+        if (u.message.isNotEmpty() && u.rewards.isEmpty() && !asking) message = u.message
         showRewards(u.rewardTitle, u.rewards)
         if (state.dungeonRun?.fighting != null) startDungeonFight()
     }

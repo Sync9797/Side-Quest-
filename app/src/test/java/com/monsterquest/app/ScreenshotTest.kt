@@ -1303,6 +1303,15 @@ abstract class ScreenshotBase(private val device: String) {
         rule.onNodeWithText("Light a torch (you have 6)").assertExists()
         capture("43b_dungeon_trap", 500)
     }
+
+    /** Deep in a 5-star dungeon: pitch dark, every door unknown, and a torch to light the way. */
+    @Test fun dungeonDark() {
+        val d = com.monsterquest.core.Dungeon("dg:1:1:2", "Shadow Crypt", com.monsterquest.core.DungeonTheme.FORGE, 5, 30, 0.0, 0.0, seed = 3L)
+        val v = vm(sampleState().copy(torches = 4, dungeonRun = com.monsterquest.core.DungeonRun(d, step = d.rooms - 2)))
+        shot("44_dungeon_dark") { AppRoot(v) }
+        rule.onNodeWithText("Light a torch (lights 3 rooms)").assertExists()
+        rule.onAllNodesWithText("Unknown").fetchSemanticsNodes().let { check(it.size == 2) { "both doors dark" } }
+    }
 }
 
 /** Galaxy Z Fold cover screen (the narrowest common foldable). */

@@ -62,6 +62,7 @@ private fun RoomKind.icon(): GameIcon = when (this) {
     RoomKind.TREASURY -> GameIcon.CHEST
     RoomKind.FOUNTAIN -> GameIcon.DROP
     RoomKind.EMPTY -> GameIcon.MOON
+    RoomKind.DEAD_END -> GameIcon.CLOSE
     RoomKind.BOSS -> GameIcon.FIGHT
     RoomKind.STARTER -> GameIcon.MONSTERS
 }
@@ -74,6 +75,7 @@ private fun RoomKind.color(): Color = when (this) {
     RoomKind.TREASURY -> Color(0xFFEBC678)
     RoomKind.FOUNTAIN -> Color(0xFF7FD6C2)
     RoomKind.EMPTY -> Color(0xFF9AA3A1)
+    RoomKind.DEAD_END -> Color(0xFF8C7A6B)
     RoomKind.BOSS -> Color(0xFFFF6B5E)
     RoomKind.STARTER -> Gold
 }
@@ -177,6 +179,21 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                 Spacer(Modifier.height(8.dp))
                 Door(room, false, Modifier.fillMaxWidth(0.6f)) { if (room == RoomKind.TRAP) trapDoor = true else vm.openDoor(true) }
             } else {
+                // The deep half of a hard dungeon is pitch dark: a torch lights the way for a few rooms.
+                val dark = Dungeons.dark(run)
+                val lit = Dungeons.lit(run)
+                when {
+                    lit -> Text(
+                        "Your torch burns: ${run.litUntil - run.step} room${if (run.litUntil - run.step == 1) "" else "s"} of light left",
+                        color = Gold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                    )
+                    dark -> {
+                        Text("It's pitch dark. You can't see a single door sign.", color = Color.White, fontSize = 13.sp, textAlign = TextAlign.Center)
+                        Button(onClick = { vm.lightWay() }, enabled = torches > 0, modifier = Modifier.padding(vertical = 6.dp)) {
+                            Text(if (torches > 0) "Light a torch (lights ${Dungeons.TORCH_ROOMS} rooms)" else "No torches to light")
+                        }
+                    }
+                }
                 Text("Choose a door", color = Color.White, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(8.dp))
                 val (left, right) = Dungeons.doors(run)
@@ -248,6 +265,44 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                 }) { Text("Take the other door") }
                 else TextButton(onClick = { trapDoor = null }) { Text("Not yet") }
             },
+        )
+    }
+    // A dead end: light a torch to find the way on, or turn back (a room lost).
+    if (run.deadEnd != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("A dead end!") },
+            text = {
+                Text(
+                    "The passage stops at a blank wall. Light a torch to search for a hidden way on, or turn back: " +
+                        "you'll lose a room, and the halls behind you will have shifted to new doors.",
+                )
+            },
+            confirmButton = {
+                Button(onClick = { vm.deadEnd(useTorch = true) }, enabled = torches > 0) {
+                    Text(if (torches > 0) "Light a torch ($torches)" else "No torches to light")
+                }
+            },
+            dismissButton = { TextButton(onClick = { vm.deadEnd(useTorch = false) }) { Text("Turn back") } },
+        )
+    }
+    // A dark vault: a torch shows the rich chest; in the dark you find the plain one.
+    if (run.vault != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("A dark vault") },
+            text = {
+                Text(
+                    "Something glints in the dark, but you can't see what. Light a torch to find the rich chest " +
+                        "(twice the gold, more potions and crystals, better gear), or feel your way to the plain one.",
+                )
+            },
+            confirmButton = {
+                Button(onClick = { vm.openVault(useTorch = true) }, enabled = torches > 0) {
+                    Text(if (torches > 0) "Light a torch ($torches)" else "No torches to light")
+                }
+            },
+            dismissButton = { TextButton(onClick = { vm.openVault(useTorch = false) }) { Text("Feel in the dark") } },
         )
     }
     unknownDoor?.let { isLeft ->
