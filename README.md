@@ -24,7 +24,8 @@ Updates install over the previous version and keep your save.
 - **Phone-free sessions:** put the phone down for 15 to 120 minutes to win a
   loot box; long sessions give the best rewards.
 - **Walking:** every 1,000 steps lights a **torch**, and you get 3 each morning.
-  Torches open dungeons and pay for gym training. Walking also heals your team.
+  Torches open dungeons (2 to 6), light the way past traps and hidden doors inside,
+  and pay for gym training. Walking also heals your team.
 - **Weekly bounty:** walk 40,000 steps, finish two 60-minute phone-free
   sessions and complete 10 quests in a week for a guaranteed Rare or Epic piece
   of gear.

@@ -33,8 +33,8 @@ class TutorialDungeonTest {
                     assertTrue(s.dungeonRun != null)
                 }
                 room == RoomKind.TRAP -> {
-                    assertEquals(1.0, Dungeons.trapChance(s, s.dungeonRun!!.dungeon))
-                    s = Dungeons.springTrap(s, Random(guard)).state
+                    assertEquals(1.0, Dungeons.trapChance(s, s.dungeonRun!!, true))
+                    s = Dungeons.springTrap(s, true, Random(guard)).state
                 }
             }
         }

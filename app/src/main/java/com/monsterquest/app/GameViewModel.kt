@@ -1281,7 +1281,22 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun springTrap() = apply(com.monsterquest.core.Dungeons.springTrap(state))
+    fun springTrap(left: Boolean) = apply(com.monsterquest.core.Dungeons.springTrap(state, left))
+
+    /** Lights a torch at a trap and walks past it unhurt. */
+    fun torchPastTrap(left: Boolean) = apply(com.monsterquest.core.Dungeons.torchPastTrap(state, left))
+
+    /** Lights a torch to see behind a hidden door. */
+    fun scoutDoor(left: Boolean) = apply(com.monsterquest.core.Dungeons.scout(state, left))
+
+    /** Walks through a hidden door without looking: a trap behind it springs at once. */
+    fun openDoorBlind(left: Boolean) {
+        val u = com.monsterquest.core.Dungeons.openBlind(state, left)
+        set(u.state)
+        if (u.message.isNotEmpty() && u.rewards.isEmpty()) message = u.message
+        showRewards(u.rewardTitle, u.rewards)
+        if (state.dungeonRun?.fighting != null) startDungeonFight()
+    }
 
     /** Pharmacies, gyms and hospitals nearby. */
     fun facilitiesNear(): List<com.monsterquest.core.Venue> = com.monsterquest.core.Venues.facilities(venues, streets)

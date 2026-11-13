@@ -96,10 +96,10 @@ class VenuesTest {
 
     @Test
     fun everyNeighbourhoodHasEasyDungeonsAndFewHardOnes() {
-        // A full 3x3 block deals each difficulty from the deck: two easy ones, one 5-star.
-        for (d in 0L until 10L) for (br in -2L..2L) for (bc in -2L..2L) {
-            val stars = (0 until 3).flatMap { r -> (0 until 3).map { c -> Venues.starsFor(br * 3 + r to bc * 3 + c, d) } }
-            assertEquals(Venues.STAR_DECK.sorted(), stars.sorted())
+        // A full 3x3 block deals each difficulty from the deck for your level.
+        for (level in listOf(5, 20, 35, 60)) for (d in 0L until 10L) for (br in -2L..2L) for (bc in -2L..2L) {
+            val stars = (0 until 3).flatMap { r -> (0 until 3).map { c -> Venues.starsFor(br * 3 + r to bc * 3 + c, d, level) } }
+            assertEquals(Venues.starDeck(level).sorted(), stars.sorted())
         }
     }
 

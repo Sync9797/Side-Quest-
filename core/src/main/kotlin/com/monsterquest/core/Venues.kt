@@ -255,10 +255,17 @@ object Venues {
     const val FLOOR_DEN_M = 300.0
     const val FLOOR_TRADER_M = 500.0
     /**
-     * Every 3x3 block of dungeon cells (about 900 m across) shares this deck of
-     * difficulties, so each neighbourhood has easy ones and few of the hardest.
+     * Every 3x3 block of dungeon cells (about 900 m across) shares a deck of
+     * difficulties, so each neighbourhood has easier and harder ones. The deck
+     * grows tougher as you level: new heroes see mostly 1 to 3 stars, veterans
+     * mostly 4 and 5 (with an easier one or two still around).
      */
-    val STAR_DECK = listOf(1, 1, 2, 2, 3, 3, 4, 4, 5)
+    fun starDeck(heroLevel: Int): List<Int> = when {
+        heroLevel < 15 -> listOf(1, 1, 1, 2, 2, 2, 3, 3, 4)
+        heroLevel < 30 -> listOf(1, 1, 2, 2, 3, 3, 4, 4, 5)
+        heroLevel < 45 -> listOf(1, 2, 2, 3, 3, 4, 4, 5, 5)
+        else -> listOf(2, 3, 3, 4, 4, 4, 5, 5, 5)
+    }
 
     /** The cell of about [sizeM] meters a spot falls in. */
     fun cellOf(lat: Double, lon: Double, sizeM: Double): Pair<Long, Long> {
@@ -269,11 +276,11 @@ object Venues {
         return row to floor(lon / dLon).toLong()
     }
 
-    /** A venue dungeon's difficulty: its cell's card from its block's deck. */
-    fun starsFor(cell: Pair<Long, Long>, day: Long): Int {
+    /** A venue dungeon's difficulty: its cell's card from its block's deck (for a hero of [heroLevel]). */
+    fun starsFor(cell: Pair<Long, Long>, day: Long, heroLevel: Int): Int {
         val br = Math.floorDiv(cell.first, 3L)
         val bc = Math.floorDiv(cell.second, 3L)
-        val deck = STAR_DECK.shuffled(rng("stars:$br:$bc", day, 5))
+        val deck = starDeck(heroLevel).shuffled(rng("stars:$br:$bc", day, 5))
         return deck[(Math.floorMod(cell.first, 3L) * 3 + Math.floorMod(cell.second, 3L)).toInt()]
     }
 
@@ -309,7 +316,7 @@ object Venues {
         for ((cell, cands) in cells(setOf(VenueRole.DUNGEON), DUNGEON_CELL_M)) {
             val open = cands.filter { clear(it.lat, it.lon) }.toMutableList()
             val first = open.removeFirstOrNull() ?: continue
-            if (rng(first.id, day, 1).nextDouble() < DEN_TAKEOVER) denAt += first else dungeonAt += first to starsFor(cell, day)
+            if (rng(first.id, day, 1).nextDouble() < DEN_TAKEOVER) denAt += first else dungeonAt += first to starsFor(cell, day, state.hero.level)
             kept += first.lat to first.lon
             val second = open.firstOrNull { clear(it.lat, it.lon) } ?: continue
             if (rng(second.id, day, 7).nextDouble() < LEFTOVER_DEN_CHANCE) {

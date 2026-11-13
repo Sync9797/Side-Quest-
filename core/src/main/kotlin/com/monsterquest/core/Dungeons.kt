@@ -24,7 +24,7 @@ enum class RoomKind(val label: String, val hint: String) {
     MONSTERS("Monster lair", "Monsters to fight, and to tame"),
     ELITE("Alpha's den", "One big Alpha with perfect genes"),
     COMBAT("Guarded hall", "Cursed guardians (can't be tamed)"),
-    TRAP("Trap", "A risky trap: you'll see the odds first"),
+    TRAP("Trap", "A risky trap: you'll see the odds first, or light a torch to pass safely"),
     TREASURY("Treasury", "A chest of loot"),
     FOUNTAIN("Fairy fountain", "Restores you and your monsters"),
     EMPTY("Quiet room", "Nothing at all"),
@@ -56,7 +56,8 @@ data class Dungeon(
 ) {
     /** Rooms (each a choice of two doors) before the champion: more the harder it is. */
     val rooms: Int get() = if (tutorial) Dungeons.TUTORIAL_ROOMS.size else 2 + stars * 2
-    val torchCost: Int get() = if (tutorial) 0 else (stars + 1) / 2
+    /** Torches to enter: 2 for a 1-star dungeon, up to 6 for a 5-star one. */
+    val torchCost: Int get() = if (tutorial) 0 else stars + 1
     /** The champion's class (the boss is a hero, with monsters of the dungeon's type). */
     val bossClass: HeroClass get() = listOf(HeroClass.WARRIOR, HeroClass.MAGE, HeroClass.ROGUE)[Math.floorMod(seed, 3L).toInt()]
     /** The stat the champion's defeat raises for good. */
@@ -86,6 +87,8 @@ data class DungeonRun(
      * there's room. Otherwise everything comes home, even past the bag's size.
      */
     val bagFullAtStart: Boolean = false,
+    /** Hidden doors you've lit a torch to look behind ([Dungeons.doorKey]). */
+    val scouted: Set<Int> = emptySet(),
 ) {
     val atBoss: Boolean get() = step >= dungeon.rooms
 }
@@ -170,7 +173,7 @@ object Dungeons {
             val id = "dg:$day:$x:$y"
             if (id in state.dungeonsCleared) continue
             val theme = DungeonTheme.entries.random(r)
-            val stars = 1 + r.nextInt(5)
+            val stars = Venues.starDeck(state.hero.level).random(r)
             val level = (state.hero.level + (stars - 2) * 3 + r.nextInt(-1, 2)).coerceAtLeast(2)
             out += Dungeon(
                 id, theme.names.random(r), theme, stars, level,
@@ -220,9 +223,33 @@ object Dungeons {
         return left to draw(left)
     }
 
-    /** Whether a door's sign is hidden ("?"): more often in harder dungeons. */
+    /** A door's key for [DungeonRun.scouted]: the step and the side. */
+    fun doorKey(step: Int, left: Boolean): Int = step * 2 + if (left) 0 else 1
+
+    /** Whether a door's sign is hidden ("?"): more often in harder dungeons (from 18% to 50%), until you light a torch to look. */
     fun hidden(run: DungeonRun, left: Boolean): Boolean =
-        !run.atBoss && !run.dungeon.tutorial && rng(run, if (left) 2 else 3).nextDouble() < 0.08 * run.dungeon.stars
+        !run.atBoss && !run.dungeon.tutorial && doorKey(run.step, left) !in run.scouted &&
+            rng(run, if (left) 2 else 3).nextDouble() < 0.1 + 0.08 * run.dungeon.stars
+
+    /** Torches you can light inside: the ones you carry plus any found in this dungeon. */
+    fun torchesAtHand(state: GameState): Int = state.torches + (state.dungeonRun?.torches ?: 0)
+
+    /** Uses one torch: one found in this dungeon first, then one you brought. Null if there are none. */
+    private fun lightTorch(state: GameState, run: DungeonRun): Pair<GameState, DungeonRun>? = when {
+        run.torches > 0 -> state to run.copy(torches = run.torches - 1)
+        state.torches > 0 -> state.copy(torches = state.torches - 1) to run
+        else -> null
+    }
+
+    /** Lights a torch to see behind a hidden door. */
+    fun scout(state: GameState, left: Boolean): Update {
+        val run = state.dungeonRun ?: return Update(state, "You're not in a dungeon.")
+        if (!hidden(run, left)) return Update(state, "You can already see what's behind that door.")
+        val (s, r) = lightTorch(state, run) ?: return Update(state, "You have no torches to light.")
+        val room = doors(run).let { if (left) it.first else it.second }
+        val seen = r.copy(scouted = r.scouted + doorKey(run.step, left), last = "Your torch shows the way: behind the door is ${if (room == RoomKind.TRAP) "a ${trapAt(run, left).label.lowercase()}" else "a ${room.label.lowercase()}"}.")
+        return Update(s.copy(dungeonRun = seen), seen.last)
+    }
 
     /** Who fights in a room (the champion's monsters for the boss). */
     fun monstersFor(run: DungeonRun, room: RoomKind): List<Monster> {
@@ -295,29 +322,83 @@ object Dungeons {
         return Update(state.copy(torches = state.torches - d.torchCost, dungeonRun = run), run.last)
     }
 
-    /** A trap's odds: worse in harder dungeons, better for a quick hero (Rogues most of all). */
-    fun trapChance(state: GameState, d: Dungeon): Double {
-        if (d.tutorial) return 1.0
-        val base = 0.85 - 0.08 * (d.stars - 1)
-        val rogue = if (state.hero.heroClass == HeroClass.ROGUE) 0.12 else 0.0
-        val quick = (state.hero.attr(HeroAttribute.SPEED) - STARTING_ATTRIBUTE) * 0.01
-        return (base + rogue + quick).coerceIn(0.2, 0.95)
+    /** The trap behind a door: its kind is fixed for the run, so it's the same each time you look. */
+    fun trapAt(run: DungeonRun, left: Boolean): TrapKind {
+        val r = rng(run, if (left) 20 else 21)
+        // Harder dungeons lean toward the nastier traps.
+        val pool = TrapKind.entries.filter { it.minStars <= run.dungeon.stars }
+        return pool.random(r)
     }
 
-    private val trapFails = listOf(
-        "You stepped on a pressure plate and arrows flew at you!",
-        "The floor gave way and you tumbled into a pit of spikes!",
-        "A swinging blade sliced out of the wall!",
-        "Poison gas hissed from the cracks in the stones!",
-        "A boulder rolled down the corridor and clipped your team!",
-        "Flames burst from the vents in the floor!",
-    )
-    private val trapPasses = listOf(
-        "You spotted the tripwire and stepped over it.",
-        "You timed the swinging blades and slipped through.",
-        "You jammed the pressure plate with a stone. Safe!",
-        "You held your breath and dashed through the gas.",
-    )
+    /**
+     * A trap's odds of getting through unhurt: its kind, the dungeon's
+     * difficulty and a bit of luck (each trap is different), better for a
+     * quick hero (Rogues most of all). Never certain: light a torch for that.
+     */
+    fun trapChance(state: GameState, run: DungeonRun, left: Boolean): Double {
+        val d = run.dungeon
+        if (d.tutorial) return 1.0
+        val kind = trapAt(run, left)
+        val luck = rng(run, if (left) 22 else 23).nextDouble(-0.12, 0.12)
+        val base = 0.72 - 0.07 * (d.stars - 1) + kind.oddsShift + luck
+        val rogue = if (state.hero.heroClass == HeroClass.ROGUE) 0.08 else 0.0
+        val quick = ((state.hero.attr(HeroAttribute.SPEED) - STARTING_ATTRIBUTE) * 0.005).coerceIn(0.0, 0.1)
+        return (base + rogue + quick).coerceIn(MIN_TRAP_CHANCE, MAX_TRAP_CHANCE)
+    }
+
+    const val MIN_TRAP_CHANCE = 0.15
+    const val MAX_TRAP_CHANCE = 0.85
+
+    /** Share of max HP a sprung trap takes from everyone: more in harder dungeons and from nastier traps. */
+    fun trapDamagePct(d: Dungeon, kind: TrapKind): Double = (0.15 + 0.06 * d.stars) * kind.harm
+
+    /**
+     * Walks into a trap room: [trapChance] to get through unhurt, otherwise
+     * everyone takes damage (a monster with too little HP left is knocked
+     * out; the hero is left hanging on). Either way you go on.
+     */
+    fun springTrap(state: GameState, left: Boolean, rng: Random = Random.Default): Update {
+        val run = state.dungeonRun ?: return Update(state, "")
+        val kind = if (run.dungeon.tutorial) TrapKind.DARTS else trapAt(run, left)
+        val ok = rng.nextDouble() < trapChance(state, run, left)
+        if (ok) return advance(state, run, kind.pass)
+        // Each hit varies a little.
+        val pct = trapDamagePct(run.dungeon, kind) * rng.nextDouble(0.85, 1.15)
+        val heroHit = (state.hero.maxHp * pct).toInt()
+        val knocked = mutableListOf<String>()
+        val s = state.copy(
+            heroDamage = (state.heroDamage + heroHit).coerceAtMost(state.hero.maxHp - 1),
+            monsters = state.monsters.map { m ->
+                if (m.uid !in state.party || m.fainted) return@map m
+                val dmg = m.damage + (m.stats.hp * pct).toInt()
+                if (dmg >= m.stats.hp) {
+                    knocked += m.displayName
+                    m.copy(damage = 0, fainted = true)
+                } else {
+                    m.copy(damage = dmg)
+                }
+            },
+        )
+        val out = if (knocked.isEmpty()) "" else " ${knocked.joinToString()} ${if (knocked.size == 1) "is" else "are"} knocked out!"
+        return advance(s, run, "${kind.fail} Everyone loses ${(pct * 100).toInt()}% of their health.$out")
+    }
+
+    /** Lights a torch at a trap: you see every plate and wire, and pass through unhurt. */
+    fun torchPastTrap(state: GameState, left: Boolean): Update {
+        val run = state.dungeonRun ?: return Update(state, "")
+        val (s, r) = lightTorch(state, run) ?: return Update(state, "You have no torches to light.")
+        return advance(s, r, "You light a torch: the ${trapAt(run, left).label.lowercase()} lies bare in its glow, and you step around it unhurt.")
+    }
+
+    /**
+     * Walks through a door without looking: a hidden trap springs at once
+     * (no odds, no torch). Anything else plays out as usual.
+     */
+    fun openBlind(state: GameState, left: Boolean, rng: Random = Random.Default): Update {
+        val run = state.dungeonRun ?: return Update(state, "You're not in a dungeon.")
+        val room = doors(run).let { if (left) it.first else it.second }
+        return if (room == RoomKind.TRAP) springTrap(state, left, rng) else open(state, left, rng)
+    }
 
     /** Opens the door on the [left] or right. Fights hand over to a battle; the rest happen right here. */
     fun open(state: GameState, left: Boolean, rng: Random = Random.Default): Update {
@@ -331,23 +412,6 @@ object Dungeons {
             room == RoomKind.STARTER -> Update(state, "") // chosen on its own screen (see [pickStarter])
             else -> resolve(state, run, room, rng)
         }
-    }
-
-    /** Walks into a trap room: [trapChance] to get through unhurt, otherwise the team takes damage. Either way you go on. */
-    fun springTrap(state: GameState, rng: Random = Random.Default): Update {
-        val run = state.dungeonRun ?: return Update(state, "")
-        val ok = rng.nextDouble() < trapChance(state, run.dungeon)
-        if (ok) return advance(state, run, trapPasses.random(rng))
-        // Harder dungeons hurt more: a share of everyone's max HP.
-        val pct = 0.12 + 0.04 * run.dungeon.stars
-        val heroHit = (state.hero.maxHp * pct).toInt()
-        val s = state.copy(
-            heroDamage = (state.heroDamage + heroHit).coerceAtMost(state.hero.maxHp - 1),
-            monsters = state.monsters.map { m ->
-                if (m.uid !in state.party || m.fainted) m else m.copy(damage = (m.damage + (m.stats.hp * pct).toInt()).coerceAtMost(m.stats.hp - 1))
-            },
-        )
-        return advance(s, run, "${trapFails.random(rng)} Everyone loses ${(pct * 100).toInt()}% of their health.")
     }
 
     private fun resolve(state: GameState, run: DungeonRun, room: RoomKind, rng: Random): Update = when (room) {
@@ -545,4 +609,24 @@ object Dungeons {
         )
         return Update(granted.state, if (total.isEmpty()) "" else "Banked: ${total.joinToString()}.")
     }
+}
+
+/** The kinds of trap a dungeon hides: each with its own odds and bite. */
+enum class TrapKind(
+    val label: String,
+    /** Added to the odds of getting through unhurt. */
+    val oddsShift: Double,
+    /** How hard it hits, against an ordinary trap. */
+    val harm: Double,
+    /** Only in dungeons of at least this many stars. */
+    val minStars: Int,
+    val fail: String,
+    val pass: String,
+) {
+    DARTS("Dart wall", 0.1, 0.8, 1, "You stepped on a pressure plate and darts flew at you!", "You spotted the tripwire and stepped over it."),
+    PIT("Spike pit", 0.0, 1.0, 1, "The floor gave way and you tumbled into a pit of spikes!", "You tested the floor and found the hollow stones. Safe!"),
+    GAS("Poison gas", 0.05, 0.9, 2, "Poison gas hissed from the cracks in the stones!", "You held your breath and dashed through the gas."),
+    BLADES("Swinging blades", -0.05, 1.15, 2, "A swinging blade sliced out of the wall!", "You timed the swinging blades and slipped through."),
+    BOULDER("Rolling boulder", -0.1, 1.3, 3, "A boulder thundered down the corridor and crashed into your team!", "You heard the rumble and flattened yourselves in an alcove as the boulder rolled past."),
+    FLAMES("Flame vents", -0.15, 1.5, 4, "Flames roared up from the vents in the floor!", "You read the scorch marks and crossed between the bursts of flame."),
 }

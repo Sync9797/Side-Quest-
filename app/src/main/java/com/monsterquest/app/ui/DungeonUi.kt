@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.monsterquest.app.GameViewModel
 import com.monsterquest.app.ui.art.GIcon
 import com.monsterquest.app.ui.art.GameIcon
+import com.monsterquest.app.ui.art.IconText
 import com.monsterquest.app.ui.art.MonsterArt
 import com.monsterquest.core.Dungeon
 import com.monsterquest.core.DungeonRun
@@ -91,6 +92,9 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
         return
     }
     var trapDoor by remember { mutableStateOf<Boolean?>(null) }
+    // A hidden door picked: light a torch to look, or walk in blind.
+    var unknownDoor by remember { mutableStateOf<Boolean?>(null) }
+    val torches = Dungeons.torchesAtHand(s)
     var confirmLeave by remember { mutableStateOf(false) }
     // A room's fight was interrupted (the app closed): pick it back up.
     LaunchedEffect(run.fighting) { if (run.fighting != null) vm.startDungeonFight() }
@@ -181,11 +185,21 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                         val hidden = Dungeons.hidden(run, isLeft)
                         Door(
                             room, hidden, Modifier.weight(1f),
-                        ) { if (room == RoomKind.TRAP) trapDoor = isLeft else vm.openDoor(isLeft) }
+                        ) {
+                            when {
+                                hidden -> unknownDoor = isLeft
+                                room == RoomKind.TRAP -> trapDoor = isLeft
+                                else -> vm.openDoor(isLeft)
+                            }
+                        }
                     }
                 }
             }
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(12.dp))
+            if (!d.tutorial) {
+                IconText(GameIcon.FLAME, "$torches torch${if (torches == 1) "" else "es"} to light", tint = Gold, textColor = Color.White, fontSize = 13.sp)
+            }
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Found so far: ${run.gold} gold" + (if (run.torches > 0) ", ${run.torches} torches" else "") +
                     (if (run.items.isNotEmpty()) ", ${run.items.values.sum()} items" else "") +
@@ -200,24 +214,58 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
     }
 
     trapDoor?.let { isLeft ->
-        val chance = (Dungeons.trapChance(s, d) * 100).toInt()
+        val chance = (Dungeons.trapChance(s, run, isLeft) * 100).toInt()
+        val kind = Dungeons.trapAt(run, isLeft)
+        val harm = (Dungeons.trapDamagePct(d, kind) * 100).toInt()
         val (l, r) = Dungeons.doors(run)
         val other = if (isLeft) r else l
+        val otherHidden = Dungeons.hidden(run, !isLeft)
         AlertDialog(
             onDismissRequest = { trapDoor = null },
-            title = { Text("A trap!") },
+            title = { Text(if (d.tutorial) "A trap!" else "A trap: ${kind.label.lowercase()}!") },
             text = {
                 Text(
-                    "The floor is laced with traps. You have a $chance% chance to get through unhurt. " +
-                        "If it goes wrong, everyone takes damage, but you can keep going." +
-                        if (other != RoomKind.TRAP) " Or take the other door (${other.label.lowercase()})." else "",
+                    if (d.tutorial) "The floor is laced with traps. Here you'll get through safely; in real dungeons there's a risk, and a torch lights the way past."
+                    else "You have a $chance% chance to get through unhurt. If it goes wrong, everyone loses about $harm% of their health, and a monster with little left is knocked out. " +
+                        "A torch shows every plate and wire: light one to pass safely." +
+                        if (other != RoomKind.TRAP) " Or take the other door (${if (otherHidden) "unknown" else other.label.lowercase()})." else "",
                 )
             },
-            confirmButton = { Button(onClick = { trapDoor = null; vm.springTrap() }) { Text("Risk it ($chance%)") } },
+            confirmButton = {
+                Column(horizontalAlignment = Alignment.End) {
+                    if (!d.tutorial) {
+                        Button(onClick = { trapDoor = null; vm.torchPastTrap(isLeft) }, enabled = torches > 0) {
+                            Text(if (torches > 0) "Light a torch (you have $torches)" else "No torches to light")
+                        }
+                    }
+                    TextButton(onClick = { trapDoor = null; vm.springTrap(isLeft) }) { Text(if (d.tutorial) "Go on" else "Risk it ($chance%)") }
+                }
+            },
             dismissButton = {
-                if (other != RoomKind.TRAP) TextButton(onClick = { trapDoor = null; vm.openDoor(!isLeft) }) { Text("Take the other door") }
+                if (other != RoomKind.TRAP || otherHidden) TextButton(onClick = {
+                    trapDoor = null
+                    if (otherHidden) unknownDoor = !isLeft else vm.openDoor(!isLeft)
+                }) { Text("Take the other door") }
                 else TextButton(onClick = { trapDoor = null }) { Text("Not yet") }
             },
+        )
+    }
+    unknownDoor?.let { isLeft ->
+        AlertDialog(
+            onDismissRequest = { unknownDoor = null },
+            title = { Text("An unknown door") },
+            text = {
+                Text(
+                    "It's too dark to see what's behind it. Light a torch to look first, or walk in blind: " +
+                        "if it's a trap, it springs before you can react.",
+                )
+            },
+            confirmButton = {
+                Button(onClick = { unknownDoor = null; vm.scoutDoor(isLeft) }, enabled = torches > 0) {
+                    Text(if (torches > 0) "Light a torch to look ($torches)" else "No torches to light")
+                }
+            },
+            dismissButton = { TextButton(onClick = { unknownDoor = null; vm.openDoorBlind(isLeft) }) { Text("Walk in blind") } },
         )
     }
     if (confirmLeave) {
@@ -329,7 +377,7 @@ private fun TutorialGuide(room: RoomKind) {
     val text = when (room) {
         RoomKind.TREASURY -> "Behind this door is a treasury. Chests hold gold, crystals, potions, spell pages and sometimes torches. Open it: you'll need what's inside."
         RoomKind.MONSTERS -> "A monster lair. Wild monsters live in dungeons and dens. Weaken it, then press Tame, pick a Binding Crystal and trace the glyph in one stroke. (Here, every cast works.)"
-        RoomKind.TRAP -> "A trap room. In real dungeons you'll see your odds first and decide whether to risk it; if it goes wrong, everyone takes damage but you carry on. This one is safe."
+        RoomKind.TRAP -> "A trap room. In real dungeons you'll see your odds first: risk it, or light a torch to pass safely. If it goes wrong, everyone takes damage and a weak monster can be knocked out. This one is safe."
         RoomKind.COMBAT -> "A guarded hall. Cursed guardians defend dungeons. They can't be tamed: fight your way through together."
         RoomKind.FOUNTAIN -> "A fairy fountain. It restores you and your monsters to full strength. Rest up: the champion is next."
         else -> "Each room in a dungeon is a choice of two doors. Their signs tell you what's behind them (some are hidden)."

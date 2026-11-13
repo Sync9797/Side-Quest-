@@ -67,7 +67,7 @@ class DungeonsTest {
                     assertEquals(l, s.dungeonRun!!.fighting)
                     s = Dungeons.afterFight(s, BattleOutcome.WON, now, Random(guard), utc).state
                 }
-                l == RoomKind.TRAP -> s = Dungeons.springTrap(s, Random(guard)).state
+                l == RoomKind.TRAP -> s = Dungeons.springTrap(s, true, Random(guard)).state
             }
             assertEquals(run.step + 1, s.dungeonRun!!.step)
         }
@@ -100,12 +100,82 @@ class DungeonsTest {
         var s = start()
         val easy = some(s, 1)
         val hard = some(s, 5)
-        assertTrue(Dungeons.trapChance(s, easy) > Dungeons.trapChance(s, hard))
-        assertTrue(Dungeons.trapChance(s.copy(hero = s.hero.copy(heroClass = HeroClass.ROGUE)), hard) > Dungeons.trapChance(s, hard))
+        // Every trap has its own odds; harder dungeons are worse on average, and never certain.
+        fun odds(st: GameState, d: Dungeon) = (0 until d.rooms).flatMap { step ->
+            listOf(true, false).map { Dungeons.trapChance(st, DungeonRun(d, step = step), it) }
+        }
+        val easyOdds = odds(s, easy)
+        val hardOdds = odds(s, hard)
+        assertTrue(easyOdds.average() > hardOdds.average())
+        assertTrue((easyOdds + hardOdds).all { it in Dungeons.MIN_TRAP_CHANCE..Dungeons.MAX_TRAP_CHANCE })
+        assertTrue(hardOdds.toSet().size > 3, "traps vary: $hardOdds")
+        // A Rogue does better, and a fast hero too, but never past the cap.
+        val rogue = s.copy(hero = s.hero.copy(heroClass = HeroClass.ROGUE))
+        assertTrue(odds(rogue, hard).average() > hardOdds.average())
+        val speedy = rogue.copy(hero = rogue.hero.copy(attributes = rogue.hero.attributes + (HeroAttribute.SPEED to 200)))
+        assertTrue(odds(speedy, easy).all { it <= Dungeons.MAX_TRAP_CHANCE })
+        // A sprung trap hurts everyone, more in harder dungeons.
+        assertTrue(Dungeons.trapDamagePct(hard, TrapKind.FLAMES) > Dungeons.trapDamagePct(easy, TrapKind.DARTS))
         s = Dungeons.enter(s, hard).state
-        val hurt = (1..30).map { Dungeons.springTrap(s, Random(it)) }.first { it.state.heroDamage > 0 }
+        val hurt = (1..40).map { Dungeons.springTrap(s, true, Random(it)) }.first { it.state.heroDamage > 0 }
         assertTrue("!" in hurt.message)
         assertEquals(1, hurt.state.dungeonRun!!.step)
+    }
+
+    @Test
+    fun aBadTrapCanKnockOutAHurtMonster() {
+        var s = start()
+        s = Dungeons.enter(s, some(s, 5)).state
+        // Hanging on with 1 HP: the next failed trap knocks them out (the hero hangs on).
+        s = s.copy(monsters = s.monsters.map { it.copy(damage = it.stats.hp - 1) })
+        val hit = (1..40).map { Dungeons.springTrap(s, true, Random(it)) }.first { it.state.heroDamage > 0 }
+        assertTrue(hit.state.partyMonsters.all { it.fainted })
+        assertTrue("knocked out" in hit.message)
+        assertTrue(hit.state.heroDamage < hit.state.hero.maxHp)
+    }
+
+    @Test
+    fun torchesLightTheWayPastTrapsAndHiddenDoors() {
+        var s = start().copy(torches = 20)
+        s = Dungeons.enter(s, some(s, 5)).state
+        val torches = s.torches
+        // A torch at a trap: through unhurt, every time.
+        val past = Dungeons.torchPastTrap(s, true)
+        assertEquals(torches - 1, past.state.torches)
+        assertEquals(0, past.state.heroDamage)
+        assertEquals(1, past.state.dungeonRun!!.step)
+        // Torches found inside are used first.
+        val found = s.copy(dungeonRun = s.dungeonRun!!.copy(torches = 2))
+        assertEquals(1, Dungeons.torchPastTrap(found, true).state.dungeonRun!!.torches)
+        assertEquals(torches, Dungeons.torchPastTrap(found, true).state.torches)
+        // No torches, no light.
+        val none = s.copy(torches = 0)
+        assertEquals(none, Dungeons.torchPastTrap(none, true).state)
+        // Hidden doors: a torch shows what's behind.
+        var run = s.dungeonRun!!
+        var step = 0
+        while (!Dungeons.hidden(run.copy(step = step), true) && step < run.dungeon.rooms) step++
+        run = run.copy(step = step)
+        assertTrue(Dungeons.hidden(run, true), "a 5-star dungeon has hidden doors")
+        val looked = Dungeons.scout(s.copy(dungeonRun = run), true)
+        assertEquals(torches - 1, looked.state.torches)
+        assertTrue(!Dungeons.hidden(looked.state.dungeonRun!!, true))
+        assertTrue("behind the door" in looked.message)
+        // Walking in blind springs a hidden trap straight away.
+        val trapRun = (0 until 200).map { run.copy(dungeon = run.dungeon.copy(seed = it.toLong())) }
+            .first { Dungeons.hidden(it, true) && Dungeons.doors(it).first == RoomKind.TRAP }
+        val blind = Dungeons.openBlind(s.copy(dungeonRun = trapRun), true, Random(1))
+        assertEquals(trapRun.step + 1, blind.state.dungeonRun!!.step)
+    }
+
+    @Test
+    fun dungeonsCostMoreTorchesAndGetHarderAsYouLevel() {
+        val s = start()
+        assertEquals(2, some(s, 1).torchCost)
+        assertEquals(6, some(s, 5).torchCost)
+        assertTrue(Venues.starDeck(5).average() < Venues.starDeck(25).average())
+        assertTrue(Venues.starDeck(25).average() < Venues.starDeck(60).average())
+        assertTrue(Venues.starDeck(60).count { it >= 4 } >= 6)
     }
 
     @Test
@@ -126,10 +196,12 @@ class DungeonsTest {
         var s = start().copy(torches = 0)
         val d = some(s)
         assertEquals(s, Dungeons.enter(s, d).state)
-        s = Dungeons.enter(s.copy(torches = 5, heroDamage = 30), d).state
+        s = Dungeons.enter(s.copy(torches = 10, heroDamage = 30), d).state
         // Force a fountain behind the left door by trying runs until one has it.
-        val step = (0 until 30).first { Dungeons.doors(s.dungeonRun!!.copy(step = it)).first == RoomKind.FOUNTAIN }
-        s = s.copy(dungeonRun = s.dungeonRun!!.copy(step = step))
+        val run = (0L until 200L).map { seed -> s.dungeonRun!!.copy(dungeon = s.dungeonRun!!.dungeon.copy(seed = seed)) }
+            .flatMap { r -> (0 until r.dungeon.rooms).map { r.copy(step = it) } }
+            .first { Dungeons.doors(it).first == RoomKind.FOUNTAIN }
+        s = s.copy(dungeonRun = run)
         s = Dungeons.open(s, left = true).state
         assertEquals(0, s.heroDamage)
     }

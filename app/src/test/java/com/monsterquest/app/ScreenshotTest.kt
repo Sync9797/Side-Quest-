@@ -1287,6 +1287,22 @@ abstract class ScreenshotBase(private val device: String) {
         shot("42_dungeon_room") { AppRoot(v) }
         rule.onNodeWithText("Choose a door").assertExists()
     }
+
+    /** A trap: its kind, the odds, the damage, and a torch to pass safely. */
+    @Test fun dungeonTrap() {
+        // A 4-star run whose left door is a trap you can see.
+        val run = (0L until 400L).flatMap { seed ->
+            val d = com.monsterquest.core.Dungeon("dg:1:1:1", "Ember Forge", com.monsterquest.core.DungeonTheme.FORGE, 4, 14, 0.0, 0.0, seed = seed)
+            (0 until d.rooms).map { com.monsterquest.core.DungeonRun(d, step = it) }
+        }.first { com.monsterquest.core.Dungeons.doors(it).let { (l, r) -> l == com.monsterquest.core.RoomKind.TRAP && r != com.monsterquest.core.RoomKind.TRAP } && !com.monsterquest.core.Dungeons.hidden(it, true) && !com.monsterquest.core.Dungeons.hidden(it, false) }
+        val v = vm(sampleState().copy(torches = 6, dungeonRun = run))
+        shot("43_dungeon_trap_doors") { AppRoot(v) }
+        rule.onAllNodesWithText("Trap")[0].performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+        rule.mainClock.advanceTimeBy(300)
+        rule.waitForIdle()
+        rule.onNodeWithText("Light a torch (you have 6)").assertExists()
+        capture("43b_dungeon_trap", 500)
+    }
 }
 
 /** Galaxy Z Fold cover screen (the narrowest common foldable). */
