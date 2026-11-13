@@ -55,9 +55,11 @@ class WidgetSummaryTest {
         val json = WidgetSummary.of(state, today, now, zone)
         val quests = json["quests"] as JsonArray
         assertEquals(2, quests.size)
-        assertEquals("q1", quests[0].jsonObject["id"]!!.jsonPrimitive.content)
-        assertEquals("Today 3 PM", quests[0].jsonObject["when"]!!.jsonPrimitive.content)
-        assertEquals("", quests[1].jsonObject["when"]!!.jsonPrimitive.content)
+        // As the Quests screen lists them: the task without a date, then the scheduled one.
+        assertEquals("q2", quests[0].jsonObject["id"]!!.jsonPrimitive.content)
+        assertEquals("", quests[0].jsonObject["when"]!!.jsonPrimitive.content)
+        assertEquals("q1", quests[1].jsonObject["id"]!!.jsonPrimitive.content)
+        assertEquals("Today 3 PM", quests[1].jsonObject["when"]!!.jsonPrimitive.content)
         assertEquals("480", json["torchSteps"]!!.jsonPrimitive.content)
         assertEquals("e1", (json["eggs"] as JsonArray)[0].jsonObject["id"]!!.jsonPrimitive.content)
 
@@ -68,5 +70,32 @@ class WidgetSummaryTest {
         org.junit.Assert.assertFalse(WidgetActions.allowed(state, WidgetActions.Kind.CLAIM, "nope", now))
         val done = WidgetActions.apply(state, WidgetActions.Action(WidgetActions.Kind.COMPLETE, "q1", now)).state
         org.junit.Assert.assertTrue(done.tasks.first { it.id == "q1" }.completed)
+    }
+
+    @Test
+    fun questsFollowTheQuestsScreen() {
+        val zone = java.time.ZoneOffset.UTC
+        val today = LocalDate.of(2026, 11, 11)
+        fun at(h: Int, d: LocalDate = today) = d.atTime(h, 0).toInstant(zone).toEpochMilli()
+        val now = at(12)
+        val cal = com.monsterquest.core.TaskSource.CALENDAR
+        val tasks = listOf(
+            com.monsterquest.core.QuestTask("later", "Dentist", dueMs = at(9, today.plusDays(3))),
+            com.monsterquest.core.QuestTask("tonight", "Call mom", dueMs = at(19)),
+            com.monsterquest.core.QuestTask("nodate", "Read a chapter"),
+            // Ended unchecked: the screen shows it as overdue, so the widget does too.
+            com.monsterquest.core.QuestTask("missed", "Standup", startMs = at(9), endMs = at(10), source = cal),
+            com.monsterquest.core.QuestTask("now", "Lunch", startMs = at(11), endMs = at(13), source = cal),
+            com.monsterquest.core.QuestTask("done", "Old", completedAtMs = 1L),
+        )
+        val state = GameState(tasks = tasks)
+        val expected = com.monsterquest.core.Planner.sections(tasks, now, zone).let { s ->
+            s.filter { it.group == com.monsterquest.core.Planner.Group.NO_DATE }.flatMap { it.tasks } +
+                s.filter { it.group != com.monsterquest.core.Planner.Group.NO_DATE }.flatMap { it.tasks }
+        }.map { it.id }
+        assertEquals(listOf("nodate", "missed", "now", "tonight", "later"), expected)
+        val quests = WidgetSummary.of(state, today, now, zone)["quests"] as JsonArray
+        assertEquals(expected, quests.map { it.jsonObject["id"]!!.jsonPrimitive.content })
+        assertEquals("Overdue", quests[1].jsonObject["when"]!!.jsonPrimitive.content)
     }
 }
