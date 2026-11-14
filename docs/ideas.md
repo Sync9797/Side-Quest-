@@ -15,6 +15,16 @@ Ideas for later. None of these are planned yet.
 - **Collection goals:** Journal pages for shinies and perfect-gene monsters,
   with titles for completing them.
 
+## Dungeons and torches
+
+- **Scout the champion:** spend a torch before the champion fight to see their
+  team, then pick your lineup.
+- **Escape torch:** spend 2 torches to slip out mid-fight and keep everything
+  you found, instead of losing half when your team falls.
+- **Torch records:** a best record per star rating for the deepest dungeon
+  cleared with the fewest torches, so clever play counts, not just walking a
+  lot.
+
 ## Real life
 
 - **Habit streaks:** repeating to-dos (gym, reading) build a streak, and each
