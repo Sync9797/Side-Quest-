@@ -1292,6 +1292,9 @@ abstract class ScreenshotBase(private val device: String) {
         val v = vm(sampleState().copy(dungeonRun = com.monsterquest.core.DungeonRun(d, step = 2, gold = 120, last = "A treasury! The chest holds 96 gold and 2 torches.")))
         shot("42_dungeon_room") { AppRoot(v) }
         rule.onNodeWithText("Choose a door").assertExists()
+        // Scrolled down (a tip makes the page long): Leave stays clear of the party walking below.
+        rule.onNodeWithText("Leave the dungeon").performScrollTo()
+        capture("42b_dungeon_room_bottom", 500)
     }
 
     /** A trap: its kind, the odds, the damage, and a torch to pass safely. */

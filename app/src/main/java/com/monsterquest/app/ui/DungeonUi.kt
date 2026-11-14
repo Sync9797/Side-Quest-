@@ -228,7 +228,14 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
             )
-            if (!d.tutorial) TextButton(onClick = { confirmLeave = true }) { Text("Leave the dungeon", color = Color.White) }
+            if (!d.tutorial) {
+                TextButton(
+                    onClick = { confirmLeave = true },
+                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(20.dp)).background(Color.Black.copy(alpha = 0.45f)),
+                ) { Text("Leave the dungeon", color = Color.White) }
+            }
+            // Room to scroll everything above your party, who walk along the bottom of the screen.
+            Spacer(Modifier.height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.13f).dp + 96.dp))
         }
     }
 
