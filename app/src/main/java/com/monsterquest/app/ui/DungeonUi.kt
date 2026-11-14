@@ -194,6 +194,8 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                         }
                     }
                 }
+                TipCard(vm, com.monsterquest.core.Tip.DUNGEON)
+                if (dark) TipCard(vm, com.monsterquest.core.Tip.DARK)
                 Text("Choose a door", color = Color.White, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(8.dp))
                 val (left, right) = Dungeons.doors(run)

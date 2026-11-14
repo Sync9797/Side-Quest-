@@ -355,6 +355,32 @@ fun SettingsScreen(vm: GameViewModel, initialHelp: Boolean = false, onClose: () 
                     Text(vm.updateCheckNote ?: "", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                     androidx.compose.material3.OutlinedButton(onClick = { vm.checkForUpdate(manual = true) }) { Text("Check now") }
                 }
+                ToggleRow(
+                    "Game updates",
+                    "A notification when something is waiting: your adventure team is back, a rare visitor is about to leave, or an egg is ready. At most 3 a day, never between 10 PM and 8 AM.",
+                    prefs.gameNudges,
+                ) { on -> vm.updateSettings { it.copy(gameNudges = on) } }
+                // The last crash, kept on this phone only: share it to help fix it.
+                vm.lastCrash?.let { report ->
+                    Spacer(Modifier.height(8.dp))
+                    Text("The game crashed", fontWeight = FontWeight.SemiBold, color = HpRed)
+                    Text(
+                        report.lines().firstOrNull().orEmpty() + ". The report stays on this phone; share it (by message or email) to help fix the problem.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        androidx.compose.material3.Button(onClick = {
+                            val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Side Quest crash report")
+                                putExtra(android.content.Intent.EXTRA_TEXT, report)
+                            }
+                            runCatching { context.startActivity(android.content.Intent.createChooser(send, "Share crash report")) }
+                        }, modifier = Modifier.weight(1f)) { Text("Share report") }
+                        androidx.compose.material3.OutlinedButton(onClick = { vm.clearCrash() }, modifier = Modifier.weight(1f)) { Text("Delete") }
+                    }
+                }
             }
             // ---- About ----
             val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull()

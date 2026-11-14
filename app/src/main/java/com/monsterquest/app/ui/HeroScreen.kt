@@ -329,6 +329,10 @@ fun HeroScreen(vm: GameViewModel) {
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // A spell reached rank 5 with no path yet: a word on paths.
+        if (h.knownSpells.any { h.spellRank(it) >= Spells.MAX_RANK && it !in h.spellPaths && com.monsterquest.core.SpellMastery.path(it, 1) != null }) {
+            TipCard(vm, com.monsterquest.core.Tip.SPELL_PATH)
+        }
         // Scholar's Tomes from long phone-free sessions: pages for a spell you choose.
         s.tomes.forEachIndexed { i, pages -> TomeCard(vm, i, pages) }
         Spells.all.forEach { base ->

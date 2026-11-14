@@ -197,6 +197,51 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** What changed in the version just installed (shown once after an update), or null. */
+    var whatsNew by mutableStateOf<List<String>?>(null)
+        private set
+
+    /** After an update, fetches this version's release notes for the "What's new" card. */
+    private fun checkWhatsNew() {
+        val seen = state.settings.lastSeenVersion
+        if (seen == installedVersion || android.os.Build.FINGERPRINT == "robolectric") return
+        // A brand-new player has nothing to compare with: just remember the version.
+        if (seen == null && !state.starterChosen) {
+            updateSettings { it.copy(lastSeenVersion = installedVersion) }
+            return
+        }
+        viewModelScope.launch {
+            val ua = "SideQuest/$installedVersion (${getApplication<Application>().packageName})"
+            val body = withContext(Dispatchers.IO) { com.monsterquest.app.data.UpdateChecker.notesFor(installedVersion, ua) } ?: return@launch
+            val points = com.monsterquest.core.ReleaseNotes.points(body)
+            if (points.isNotEmpty()) whatsNew = points else updateSettings { it.copy(lastSeenVersion = installedVersion) }
+        }
+    }
+
+    fun dismissWhatsNew() {
+        whatsNew = null
+        updateSettings { it.copy(lastSeenVersion = installedVersion) }
+    }
+
+    /** Test hook: show a "What's new" card. */
+    @VisibleForTesting
+    fun debugWhatsNew(points: List<String>) {
+        whatsNew = points
+    }
+
+    /** The last crash report kept on the phone (see [com.monsterquest.app.data.CrashLog]), or null. */
+    var lastCrash by mutableStateOf(com.monsterquest.app.data.CrashLog.last(getApplication()))
+        private set
+
+    fun clearCrash() {
+        com.monsterquest.app.data.CrashLog.clear(getApplication())
+        lastCrash = null
+    }
+
+    /** One-time tips: whether to show it, and marking it seen. */
+    fun tipShown(tip: com.monsterquest.core.Tip): Boolean = com.monsterquest.core.Tips.seen(state, tip)
+    fun dismissTip(tip: com.monsterquest.core.Tip) = set(com.monsterquest.core.Tips.markSeen(state, tip))
+
     fun dismissUpdate(skip: Boolean) {
         val u = availableUpdate ?: return
         if (skip) updateSettings { it.copy(skippedVersion = u.version) }
@@ -205,6 +250,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         checkForUpdate()
+        checkWhatsNew()
         viewModelScope.launch(Dispatchers.IO) {
             var widgetKey: Any? = null
             pendingSave.drop(1).collect {

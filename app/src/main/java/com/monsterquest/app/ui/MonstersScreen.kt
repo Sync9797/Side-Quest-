@@ -144,7 +144,12 @@ fun MonstersScreen(vm: GameViewModel) {
         }
         when (tab) {
             1 -> JournalTab(vm)
-            2 -> AdventuresTab(vm)
+            2 -> Column(Modifier.fillMaxSize()) {
+                if (vm.state.monsters.size >= com.monsterquest.core.Adventures.UNLOCK_MONSTERS) {
+                    TipCard(vm, com.monsterquest.core.Tip.ADVENTURES, Modifier.padding(horizontal = 16.dp))
+                }
+                Box(Modifier.weight(1f)) { AdventuresTab(vm) }
+            }
             else -> MonsterCollection(vm)
         }
     }
@@ -279,6 +284,7 @@ private fun MonsterList(vm: GameViewModel, sorted: List<Monster>, selectedUid: S
                         color = if (synergies.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else XpPurple,
                         modifier = Modifier.padding(bottom = 6.dp),
                     )
+                    if (synergies.isNotEmpty()) TipCard(vm, com.monsterquest.core.Tip.SYNERGY)
                     // Five slots: three on top, two below (so each tile stays a usable size).
                     (0 until MAX_PARTY_SIZE).chunked(3).forEach { row ->
                     Row(Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -776,6 +782,7 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        TipCard(vm, com.monsterquest.core.Tip.BONDS, Modifier.padding(top = 6.dp))
         // The bond: battles fought and walks taken together.
         val bondLevel = m.bondLevel
         val nextBond = com.monsterquest.core.Bonds.nextAt(m.bond)

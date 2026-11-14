@@ -89,7 +89,29 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         AppScreens(vm, initialTab, initialSettings)
         vm.lootPopup?.let { LootPopupCard(it) { vm.lootPopup = null } }
         vm.availableUpdate?.let { UpdateDialog(vm, it) }
+        // After an update: what changed (not while an update offer is up).
+        if (vm.availableUpdate == null) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }
+}
+
+/** Shown once after an update: the new version's release notes, as points. */
+@Composable
+private fun WhatsNewDialog(vm: GameViewModel, points: List<String>) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = { vm.dismissWhatsNew() },
+        title = { Text("What's new in ${vm.installedVersion}") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                points.forEach { p ->
+                    Row(Modifier.padding(vertical = 3.dp)) {
+                        Text("•  ", color = Gold, fontSize = 13.sp)
+                        Text(p, fontSize = 13.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = { androidx.compose.material3.TextButton(onClick = { vm.dismissWhatsNew() }) { Text("Let's go") } },
+    )
 }
 
 /** A newer version is out: what changed, and a button to download it. */
@@ -102,9 +124,15 @@ private fun UpdateDialog(vm: GameViewModel, u: com.monsterquest.app.data.Availab
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text("You have ${vm.installedVersion}. Download the new version and open it to install; your save is kept.", fontSize = 13.sp)
-                if (u.notes.isNotBlank()) {
+                val points = com.monsterquest.core.ReleaseNotes.points(u.notes)
+                if (points.isNotEmpty()) {
                     Text("What's new", fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 10.dp))
-                    Text(u.notes.lines().take(14).joinToString("\n"), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    points.take(12).forEach { p ->
+                        Row(Modifier.padding(vertical = 2.dp)) {
+                            Text("•  ", color = Gold, fontSize = 12.sp)
+                            Text(p, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
         },

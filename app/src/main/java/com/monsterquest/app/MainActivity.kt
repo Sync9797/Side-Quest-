@@ -62,6 +62,8 @@ class MainActivity : ComponentActivity() {
      * short grace). Turning the screen off is fine: the timer keeps going.
      */
     override fun onStop() {
+        // Reminders for what will be waiting while you're away (adventures back, a visitor leaving, an egg ready).
+        com.monsterquest.app.reminders.GameNudgeAlarms.schedule(this, vm.state)
         val screenOn = (getSystemService(POWER_SERVICE) as android.os.PowerManager).isInteractive
         if (vm.state.focus != null && screenOn && !isChangingConfigurations) FocusService.appLeft(this)
         super.onStop()
@@ -129,6 +131,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // The system splash (the crest) while the app starts, then the game's loading screen.
         installSplashScreen()
+        // Keep the last crash on the phone, to share from Settings.
+        com.monsterquest.app.data.CrashLog.install(this, runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?")
         super.onCreate(savedInstanceState)
         val coldStart = savedInstanceState == null
         // Opened from a widget that asked for a screen.

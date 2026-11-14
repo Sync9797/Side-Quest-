@@ -162,6 +162,7 @@ fun EggsSection(vm: com.monsterquest.app.GameViewModel) {
     val eggs = vm.state.eggs
     if (eggs.isEmpty()) return
     SectionTitle("Eggs ${eggs.size}/${com.monsterquest.core.Eggs.MAX_EGGS}")
+    TipCard(vm, com.monsterquest.core.Tip.EGGS)
     val warm = com.monsterquest.core.Eggs.warming(vm.state)
     val incubators = vm.state.count(com.monsterquest.core.Item.INCUBATOR)
     if (eggs.size > com.monsterquest.core.Eggs.WARMING) {

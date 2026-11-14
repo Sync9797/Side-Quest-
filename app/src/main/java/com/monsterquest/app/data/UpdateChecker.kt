@@ -24,6 +24,22 @@ data class AvailableUpdate(
 object UpdateChecker {
     private const val RELEASES = "https://api.github.com/repos/Sync9797/Side-Quest-/releases?per_page=15"
 
+    /** The notes of the release for [version] (e.g. "3.25.0"), or null (offline, or no such release). */
+    fun notesFor(version: String, userAgent: String): String? = runCatching {
+        val conn = URL("https://api.github.com/repos/Sync9797/Side-Quest-/releases/tags/v$version").openConnection() as HttpURLConnection
+        try {
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 15_000
+            conn.setRequestProperty("User-Agent", userAgent)
+            conn.setRequestProperty("Accept", "application/vnd.github+json")
+            if (conn.responseCode != 200) return@runCatching null
+            val body = conn.inputStream.bufferedReader().use { it.readText() }
+            Json.parseToJsonElement(body).jsonObject["body"]?.jsonPrimitive?.contentOrNull
+        } finally {
+            conn.disconnect()
+        }
+    }.getOrNull()
+
     /** The newest release later than [current], or null (up to date, offline, or GitHub didn't answer). */
     fun check(current: String, userAgent: String): AvailableUpdate? = runCatching {
         val conn = URL(RELEASES).openConnection() as HttpURLConnection

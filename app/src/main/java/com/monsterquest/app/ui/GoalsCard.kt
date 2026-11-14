@@ -91,6 +91,7 @@ private fun GoalRow(vm: GameViewModel, g: Goal) {
 @Composable
 private fun BountySection(vm: GameViewModel, today: Long) {
     val s = vm.state
+    TipCard(vm, com.monsterquest.core.Tip.BOUNTY, Modifier.padding(top = 8.dp))
     val claimed = com.monsterquest.core.Bounty.claimed(s, today)
     val lines = com.monsterquest.core.Bounty.lines(s)
     Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {

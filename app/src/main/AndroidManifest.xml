@@ -97,6 +97,10 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/quest_widget_info" />
         </receiver>
+        <!-- Game updates: an adventure back, a rare visitor leaving, an egg ready (alarms set when you leave the game). -->
+        <receiver
+            android:name=".reminders.NudgeReceiver"
+            android:exported="false" />
         <!-- Daily reminders: alarms, notification buttons, and re-arming after a reboot or time change. -->
         <receiver
             android:name=".reminders.ReminderReceiver"

@@ -127,8 +127,11 @@ object ReminderAlarms {
     fun handle(context: Context, intent: Intent) {
         val repo = SaveRepository(context)
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED ->
-                scheduleAll(context, repo.load().reminders)
+            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> {
+                val state = repo.load()
+                scheduleAll(context, state.reminders)
+                GameNudgeAlarms.schedule(context, state)
+            }
             ACTION_RING -> {
                 val id = intent.getStringExtra(EXTRA_ID) ?: return
                 // Apply any queued taps first so the streak shown is up to date.

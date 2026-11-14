@@ -311,6 +311,8 @@ data class GameState(
     /** Rare visitors on their way to you (saved under their old name, followers). */
     @kotlinx.serialization.SerialName("followers")
     val visitors: List<Visitor> = emptyList(),
+    /** One-time tips already shown (see [Tips]). */
+    val tipsSeen: Set<String> = emptySet(),
     /** When rest healing was last applied (see GameEngine.regenerate). */
     val lastRegenMs: Long = 0,
     /** Last daily step total read from Health Connect, and the day it was for. */

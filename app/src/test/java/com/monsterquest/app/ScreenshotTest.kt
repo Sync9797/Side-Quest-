@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
@@ -1307,6 +1308,24 @@ abstract class ScreenshotBase(private val device: String) {
         rule.waitForIdle()
         rule.onNodeWithText("Light a torch (you have 6)").assertExists()
         capture("43b_dungeon_trap", 500)
+    }
+
+    /** Help search: one word finds every point that mentions it. */
+    @Test fun helpSearch() {
+        shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }
+        rule.onNodeWithText("Search help (torch, egg, trap...)").performTextInput("torch")
+        rule.mainClock.advanceTimeBy(300)
+        rule.waitForIdle()
+        rule.onNodeWithText("results for \"torch\"", substring = true).assertExists()
+        capture("45b_help_search_results", 300)
+    }
+
+    /** After an update: what changed, once. */
+    @Test fun whatsNew() {
+        val v = vm()
+        v.debugWhatsNew(listOf("Traps are more dangerous, with their own odds.", "Light a torch to pass a trap safely.", "Dark halls, dead ends and vaults."))
+        shot("46_whats_new") { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("Let's go").assertExists()
     }
 
     /** Deep in a 5-star dungeon: pitch dark, every door unknown, and a torch to light the way. */

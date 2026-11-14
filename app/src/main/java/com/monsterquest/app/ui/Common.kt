@@ -316,3 +316,19 @@ fun Modifier.readyGlow(active: Boolean, color: Color = Gold): Modifier {
         },
     )
 }
+
+/**
+ * A one-time tip: shown the first time you meet [tip], until you tap "Got it"
+ * (see [com.monsterquest.core.Tips]).
+ */
+@Composable
+fun TipCard(vm: com.monsterquest.app.GameViewModel, tip: com.monsterquest.core.Tip, modifier: Modifier = Modifier) {
+    if (vm.tipShown(tip)) return
+    GameCard(modifier.padding(vertical = 4.dp), border = Gold) {
+        IconText(GameIcon.BOOK, "Tip: ${tip.title}", tint = Gold, textColor = Gold, bold = true, fontSize = 14.sp)
+        Text(tip.text, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            androidx.compose.material3.TextButton(onClick = { vm.dismissTip(tip) }) { Text("Got it") }
+        }
+    }
+}

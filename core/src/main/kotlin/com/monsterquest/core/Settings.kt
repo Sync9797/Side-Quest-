@@ -56,6 +56,10 @@ data class Settings(
     val checkUpdates: Boolean = true,
     /** A version the player chose to skip (not offered again; a later one still is). */
     val skippedVersion: String? = null,
+    /** Notifications when something in the game is waiting (an adventure back, a rare visitor leaving, an egg ready). */
+    val gameNudges: Boolean = true,
+    /** The version whose "What's new" the player has seen (null: none yet). */
+    val lastSeenVersion: String? = null,
     /** The map turns with the phone, so what's in front of you is up the screen (else north is up). */
     val followHeading: Boolean = false,
     /** Ask for location less often to save battery (the map updates more slowly). */

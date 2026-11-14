@@ -67,6 +67,8 @@ private val topics = listOf(
                 "Getting around",
                 "The menu at the bottom: Quests (Home), Map, Bag and Store, with the Hero button in the middle (tap or hold it for your Hero or your Monsters).",
                 "The top bar shows your level, gold and torches. The battery button turns on the battery saver (see Walking).",
+                "New things explain themselves: a tip card appears the first time you meet a dungeon, an egg, a bond and more (tap Got it). After each update, a What's new card lists what changed. Search this Help for any word with the box at the top.",
+                "Game updates (Settings): a notification when your adventure team is back, a rare visitor is about to leave, or an egg is ready. At most 3 a day, never from 10 PM to 8 AM. If the game ever crashes, Settings keeps the report on your phone so you can share it.",
             ),
             section(
                 "First steps, goals and achievements",
@@ -286,6 +288,34 @@ fun HelpScreen(onBack: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
+            // Search every topic for a word ("torch", "egg", "trap"...).
+            var query by rememberSaveable { mutableStateOf("") }
+            androidx.compose.material3.OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                placeholder = { Text("Search help (torch, egg, trap...)") },
+                singleLine = true,
+                leadingIcon = { GIcon(GameIcon.BOOK, Modifier.size(18.dp), MaterialTheme.colorScheme.onSurfaceVariant) },
+                trailingIcon = { if (query.isNotEmpty()) TextButton(onClick = { query = "" }) { Text("Clear") } },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            )
+            val q = query.trim()
+            if (q.length >= 2) {
+                val hits = topics.flatMap { t -> t.sections.flatMap { sec -> sec.points.filter { it.contains(q, ignoreCase = true) || sec.title.contains(q, ignoreCase = true) }.map { Triple(t, sec, it) } } }
+                Text(
+                    if (hits.isEmpty()) "Nothing found for \"$q\"." else "${hits.size} result${if (hits.size == 1) "" else "s"} for \"$q\"",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                hits.forEach { (t, sec, p) ->
+                    GameCard(Modifier.padding(vertical = 4.dp)) {
+                        Text("${t.title} › ${sec.title}", fontSize = 11.sp, color = Gold, fontWeight = FontWeight.SemiBold)
+                        Text(p, fontSize = 13.sp, modifier = Modifier.padding(top = 2.dp))
+                    }
+                }
+                Spacer(Modifier.height(24.dp))
+                return@Column
+            }
             topics.forEachIndexed { i, t ->
                 val expanded = open == i
                 GameCard(
