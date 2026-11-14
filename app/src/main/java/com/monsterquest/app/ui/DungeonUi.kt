@@ -108,8 +108,10 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
         Backdrop(Scene.of(d.theme), Modifier.fillMaxSize().graphicsLayer { alpha = 0.35f + 0.65f * enter.value })
         // Your party walks into each new room along the ground.
         PartyWalk(vm, run.step, Modifier.align(Alignment.BottomCenter))
+        // The rooms scroll in the space above your party, who walk along the ground (the bottom 13% of the screen, plus their height).
+        val partyBand = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.13f).dp + 84.dp
         Column(
-            Modifier.fillMaxSize().safeDrawingPadding().padding(16.dp).verticalScroll(rememberScrollState()),
+            Modifier.fillMaxSize().padding(bottom = partyBand).safeDrawingPadding().padding(16.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(d.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -234,8 +236,7 @@ fun DungeonScreen(vm: GameViewModel, run: DungeonRun) {
                     modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(20.dp)).background(Color.Black.copy(alpha = 0.45f)),
                 ) { Text("Leave the dungeon", color = Color.White) }
             }
-            // Room to scroll everything above your party, who walk along the bottom of the screen.
-            Spacer(Modifier.height((androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.13f).dp + 96.dp))
+
         }
     }
 
