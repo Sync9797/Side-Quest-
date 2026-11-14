@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.monsterquest.app.WidgetSummaryTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-11-14T04:53:30.375Z" hostname="runnervm8axu0" time="0.051">
+  <properties/>
+  <testcase name="summary" classname="com.monsterquest.app.WidgetSummaryTest" time="0.035"/>
+  <testcase name="questsTorchesAndActions" classname="com.monsterquest.app.WidgetSummaryTest" time="0.015"/>
+  <testcase name="questsFollowTheQuestsScreen" classname="com.monsterquest.app.WidgetSummaryTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

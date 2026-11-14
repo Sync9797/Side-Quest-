@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.monsterquest.app.MonsterGalleryTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-14T04:53:02.794Z" hostname="runnervm8axu0" time="3.682">
+  <properties/>
+  <testcase name="renderEverySpecies" classname="com.monsterquest.app.MonsterGalleryTest" time="3.682"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

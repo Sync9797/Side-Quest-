@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.monsterquest.app.WidgetSizeTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-14T04:53:30.370Z" hostname="runnervm8axu0" time="0.003">
+  <properties/>
+  <testcase name="dateCardOnlyWhenItFitsOtherwiseTheList" classname="com.monsterquest.app.WidgetSizeTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
