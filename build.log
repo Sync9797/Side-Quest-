@@ -1,0 +1,77 @@
+
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
+Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
+If the parent project does not need the plugin, add 'apply false' to the plugin line.
+See: https://docs.gradle.org/current/userguide/plugins.html#sec:subprojects_plugins_dsl
+The Kotlin plugin was loaded in the following projects: ':app', ':core'
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebug
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:mergeDebugResources
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Adaptive.kt:107:27 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Adaptive.kt:114:30 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Backdrop.kt:164:38 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/BattleFx.kt:147:34 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/BattleFx.kt:148:27 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/GameMap.kt:369:21 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/MapScreen.kt:602:26 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/ArtPainter.kt:84:51 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/ArtPainter.kt:133:75 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/CharacterArt.kt:953:67 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:bundleDebugClassesToRuntimeJar
+
+> Task :app:compileDebugUnitTestKotlin FAILED
+e: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/test/java/com/monsterquest/app/ScreenshotTest.kt:232:47 Unresolved reference 'performScrollTo'.
+e: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/test/java/com/monsterquest/app/ScreenshotTest.kt:261:14 Unresolved reference 'performScrollTo'.
+e: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/test/java/com/monsterquest/app/ScreenshotTest.kt:278:44 Unresolved reference 'performScrollTo'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/render-1794631406309.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugUnitTestKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 26s
+26 actionable tasks: 24 executed, 2 up-to-date
