@@ -407,6 +407,21 @@ internal fun QuestRow(task: QuestTask, now: Long, onClick: () -> Unit, onComplet
         com.monsterquest.core.QuestRewards.tooSoon(task, now)?.let { (it + 59_999) / 60_000 }
     } else null
     var confirmEarly by remember { mutableStateOf(false) }
+    var confirmClose by remember { mutableStateOf(false) }
+    if (confirmClose) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmClose = false },
+            title = { Text("Close this quest?") },
+            text = {
+                Text(
+                    "\"${task.title}\" leaves your list with no reward and no penalty." +
+                        if (task.source == TaskSource.CALENDAR) " It stays in your phone's calendar, but won't come back as a quest." else "",
+                )
+            },
+            confirmButton = { TextButton(onClick = { confirmClose = false; onDelete() }) { Text("Close it") } },
+            dismissButton = { TextButton(onClick = { confirmClose = false }) { Text("Keep it") } },
+        )
+    }
     if (confirmEarly && waitMin != null) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { confirmEarly = false },
@@ -458,8 +473,9 @@ internal fun QuestRow(task: QuestTask, now: Long, onClick: () -> Unit, onComplet
                     }
                 }
             }
-            if (task.source == TaskSource.MANUAL) {
-                TextButton(onClick = onDelete, contentPadding = PaddingValues(4.dp)) {
+            // Close a quest you won't get done (asks first).
+            if (!task.completed) {
+                TextButton(onClick = { confirmClose = true }, contentPadding = PaddingValues(4.dp)) {
                     GIcon(GameIcon.CLOSE, Modifier.size(16.dp), MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

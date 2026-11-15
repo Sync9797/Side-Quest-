@@ -84,4 +84,32 @@ class NudgesTipsTest {
         )
         assertEquals(listOf("Fixed a bug in the map."), ReleaseNotes.points("3.0.1: fix\n\nFixed a bug in the map."))
     }
+
+    @Test
+    fun aClosedCalendarEventStaysClosedAfterASync() {
+        val start = at(10)
+        val events = listOf(
+            CalendarEvent("church:$start", "Church", start, start + 3_600_000, false, "me"),
+            CalendarEvent("gym:$start", "Gym", start, start + 3_600_000, false, "me"),
+        )
+        var s = GameEngine.syncCalendar(base, events).state
+        assertEquals(2, s.tasks.count { it.source == TaskSource.CALENDAR })
+        val closed = GameEngine.deleteTask(s, "church:$start", at(9))
+        s = closed.state
+        assertTrue("calendar" in closed.message)
+        assertEquals(listOf("Gym"), s.tasks.map { it.title })
+        // The next sync doesn't bring it back, and nothing was paid or lost.
+        s = GameEngine.syncCalendar(s, events).state
+        assertEquals(listOf("Gym"), s.tasks.map { it.title })
+        assertEquals(base.gold, s.gold)
+        assertEquals(base.stats.tasksCompleted, s.stats.tasksCompleted)
+        // A to-do just goes.
+        s = GameEngine.addTask(s, "Take battery out", Difficulty.HARD, Random(1), at(8)).state
+        val todo = s.tasks.first { it.source == TaskSource.MANUAL }
+        s = GameEngine.deleteTask(s, todo.id, at(9)).state
+        assertTrue(s.tasks.none { it.id == todo.id })
+        // Closed events are forgotten after a couple of months (they won't sync again by then).
+        val later = GameEngine.deleteTask(GameEngine.syncCalendar(s, events).state, "gym:$start", start + 90L * 24 * 3_600_000).state
+        assertEquals(setOf("gym:$start"), later.dismissedQuests)
+    }
 }

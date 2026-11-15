@@ -365,8 +365,25 @@ object GameEngine {
         return Update(state.copy(tasks = state.tasks.map { if (it.id == id) updated else it }), "Quest updated.")
     }
 
-    fun deleteTask(state: GameState, id: String): Update =
-        Update(state.copy(tasks = state.tasks.filterNot { it.id == id }), "Quest removed.")
+    /**
+     * Closes a quest you won't get done: no reward, no penalty. A to-do is
+     * removed; a calendar event leaves your quests for good (it stays in your
+     * calendar, and syncs leave it out).
+     */
+    fun deleteTask(state: GameState, id: String, nowMs: Long = System.currentTimeMillis()): Update {
+        val task = state.tasks.find { it.id == id } ?: return Update(state, "Quest not found.")
+        val tasks = state.tasks.filterNot { it.id == id }
+        if (task.source != TaskSource.CALENDAR) return Update(state.copy(tasks = tasks), "Quest removed.")
+        // Remember it (the last couple of months are plenty: older events don't come back in a sync).
+        val keep = state.dismissedQuests.filter { key -> (eventStartMs(key) ?: nowMs) > nowMs - DISMISSED_KEEP_MS }.toSet()
+        return Update(state.copy(tasks = tasks, dismissedQuests = keep + id), "Closed \"${task.title}\". It stays in your calendar.")
+    }
+
+    /** How long closed calendar events are remembered. */
+    private const val DISMISSED_KEEP_MS = 60L * 24 * 60 * 60_000
+
+    /** A calendar quest's start, from its key ("eventId:beginMs"). */
+    private fun eventStartMs(key: String): Long? = key.substringAfterLast(':', "").toLongOrNull()
 
     fun completeTask(state: GameState, id: String, nowMs: Long): Update {
         val task = state.tasks.find { it.id == id } ?: return Update(state, "Quest not found.")
@@ -407,7 +424,7 @@ object GameEngine {
         val kept = state.tasks.filter { it.source == TaskSource.MANUAL || it.completed }
         // Priorities set on calendar quests survive a re-sync.
         val priorities = state.tasks.filter { it.source == TaskSource.CALENDAR }.associate { it.id to it.priority }
-        val fresh = events.filter { it.key !in completedKeys }.map {
+        val fresh = events.filter { it.key !in completedKeys && it.key !in state.dismissedQuests }.map {
             QuestTask(
                 id = it.key,
                 title = it.title.ifBlank { "(Untitled event)" },

@@ -313,6 +313,8 @@ data class GameState(
     val visitors: List<Visitor> = emptyList(),
     /** One-time tips already shown (see [Tips]). */
     val tipsSeen: Set<String> = emptySet(),
+    /** Calendar events closed from the quest list ("won't do"): calendar syncs leave them out. */
+    val dismissedQuests: Set<String> = emptySet(),
     /** When rest healing was last applied (see GameEngine.regenerate). */
     val lastRegenMs: Long = 0,
     /** Last daily step total read from Health Connect, and the day it was for. */

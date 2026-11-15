@@ -86,6 +86,7 @@ private val topics = listOf(
             section(
                 "Quests",
                 "Your phone's calendar events become quests automatically; use + Task for things without a date. Tap a quest to change its priority.",
+                "Won't get to one? Tap its X to close it: no reward, no penalty. A closed calendar event stays in your phone's calendar but won't come back as a quest.",
                 "Completing a quest gives XP, gold and a hunt token. Rewards are capped to keep things fair: a new task pays after 15 minutes (its card shows Reward in X min, and marking it done sooner asks first), the first 8 quests a day pay in full and the next 4 half, and only 3 Hard quests a day pay the Hard rate.",
                 "Keeping up with your weekday quests opens the Silver (Tue/Thu) and Gold (weekend) shrines.",
             ),
