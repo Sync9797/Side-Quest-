@@ -62,6 +62,9 @@ set out draws the ones that eat it.
 - **Gear:** weapons and armor in four rarities with bonus effects; forge new
   gear from parts.
 - **Star ranks:** every 50 levels earns a star and a star reward box.
+- **Level 100:** become a Centurion (a title, a golden frame on the map and a
+  legendary egg). Level-100 monsters keep growing by ascension, and Mythic
+  6-star dungeons appear, with the Mythbreaker title for clearing one.
 
 ### Monsters
 98 species in 39 evolution lines and 7 types. Each type is strong against two

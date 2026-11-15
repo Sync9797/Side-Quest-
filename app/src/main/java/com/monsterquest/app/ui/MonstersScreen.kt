@@ -583,7 +583,7 @@ private fun MonsterTile(
         Row(verticalAlignment = Alignment.CenterVertically) {
             GIcon(sp.element.icon(), Modifier.size(11.dp), sp.element.color())
             Spacer(Modifier.width(3.dp))
-            Text("Lv ${m.level}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Lv ${m.level}" + if (m.ascension > 0) " ✦${m.ascension}" else "", fontSize = 11.sp, color = if (m.ascension > 0) Gold else MaterialTheme.colorScheme.onSurfaceVariant)
             if (showPotential) {
                 Text("  •  ${m.potential}%", fontSize = 11.sp, color = if (m.potential >= 80) Gold else MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -685,7 +685,22 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
                 }
                 Spacer(Modifier.height(4.dp))
             }
-            LabeledBar("XP", m.xp, m.xpToNext, XpPurple)
+            if (m.level >= com.monsterquest.core.MAX_MONSTER_LEVEL) {
+                // Past level 100: ascension ranks, each +1% to every stat.
+                val cap = com.monsterquest.core.Ascension.cap(s.hero.level)
+                Text(
+                    "Ascension ${m.ascension}  •  +${m.ascension * com.monsterquest.core.Ascension.PCT_PER_RANK}% to every stat",
+                    fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Gold,
+                )
+                Text(
+                    if (m.ascension >= cap) "As far as your hero allows: it ascends further as your hero levels up."
+                    else "XP now ascends it: up to rank $cap at your hero's level.",
+                    fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                LabeledBar("Ascension XP", m.xp, m.xpToNext, Gold)
+            } else {
+                LabeledBar("XP", m.xp, m.xpToNext, XpPurple)
+            }
             sp.evolveLevel?.let { lvl -> if (m.level < lvl) Text("Can evolve at Lv $lvl", fontSize = 12.sp, color = XpPurple) }
         }
 

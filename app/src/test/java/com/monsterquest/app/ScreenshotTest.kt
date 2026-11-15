@@ -1310,6 +1310,15 @@ abstract class ScreenshotBase(private val device: String) {
         capture("43b_dungeon_trap", 500)
     }
 
+    /** Level 100: the Centurion reward, with a legendary egg to choose. */
+    @Test fun centurion() {
+        val base = sampleState()
+        val v = vm(base.copy(hero = base.hero.copy(level = 100)))
+        shot("47_centurion") { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("Centurion!").assertExists()
+        rule.onNodeWithText("Take the egg").assertExists()
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }

@@ -52,7 +52,8 @@ import com.monsterquest.core.Dungeons
 import com.monsterquest.core.RoomKind
 
 /** Stars for a dungeon's difficulty, e.g. "★★★☆☆". */
-fun starsText(n: Int): String = "★".repeat(n) + "☆".repeat(5 - n)
+fun starsText(n: Int): String =
+    if (n >= com.monsterquest.core.Dungeons.MYTHIC_STARS) "Mythic ★★★★★★" else "★".repeat(n) + "☆".repeat((5 - n).coerceAtLeast(0))
 
 private fun RoomKind.icon(): GameIcon = when (this) {
     RoomKind.MONSTERS -> GameIcon.PAW

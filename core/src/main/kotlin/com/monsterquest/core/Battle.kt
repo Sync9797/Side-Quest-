@@ -707,6 +707,9 @@ class Battle(
     }
 
     /** The hero, whether fighting or stepped back to let a monster fight. */
+    /** The hero's level, for foes' ascension (set before the foes are built). */
+    private val heroLevelForFoes = hero.level
+
     private val heroFighter = Combatant.fromHero(hero, gear, heroDamage, armor, offhand, heroEnergyUsed, restFactor)
     private val team: MutableList<Combatant> = (listOf(heroFighter) + fighters.map { ally(it) }).toMutableList()
 
@@ -734,13 +737,15 @@ class Battle(
         val legend = if (m.species.rarity == Rarity.LEGENDARY && encounter != EncounterType.WILD) 1 / Bestiary.LEGENDARY_POWER else 1.0
         // A wild Alpha is half again as tough.
         val alpha = if (m.alpha && encounter == EncounterType.WILD) Alphas.STAT_BOOST else 1.0
+        // Past hero level 100, level-100 foes ascend with you (see [Ascension]).
+        val asc = if (m.level >= MAX_MONSTER_LEVEL && !tutorial) Ascension.factor(Ascension.enemyRanks(heroLevelForFoes)) else 1.0
         return Combatant.fromMonster(
             if (alpha > 1.0) m.copy(nickname = "Alpha ${m.displayName}") else m,
             key,
-            hpMultiplier = encounter.hpMultiplier * scaling.hp * legend * enemyBoost * alpha * (if (tutorial) 0.6 else 1.0),
-            attackMultiplier = scaling.attack * legend * enemyBoost * alpha * (if (tutorial) 0.35 else 1.0) * weatherAttack(m),
-            defenseMultiplier = scaling.defense * legend * enemyBoost * alpha,
-            speedMultiplier = enemyBoost * weatherSpeed(m),
+            hpMultiplier = encounter.hpMultiplier * scaling.hp * legend * enemyBoost * alpha * asc * (if (tutorial) 0.6 else 1.0),
+            attackMultiplier = scaling.attack * legend * enemyBoost * alpha * asc * (if (tutorial) 0.35 else 1.0) * weatherAttack(m),
+            defenseMultiplier = scaling.defense * legend * enemyBoost * alpha * asc,
+            speedMultiplier = enemyBoost * asc * weatherSpeed(m),
         )
     }
     private val enemyList: MutableList<Combatant> = (

@@ -21,7 +21,12 @@ object XpRules {
 
     /** The highest level a monster can reach right now. */
     fun monsterCap(state: GameState): Int = monsterCap(state.hero.level)
-    fun monsterCap(heroLevel: Int): Int = (heroLevel + MONSTER_LEAD).coerceAtMost(MAX_MONSTER_LEVEL)
+    /**
+     * How high a monster can grow: [MONSTER_LEAD] levels above the hero. Past
+     * level 100 the rest is ascension ranks (a level-100 monster with a hero at
+     * level 103 can reach rank 8).
+     */
+    fun monsterCap(heroLevel: Int): Int = heroLevel + MONSTER_LEAD
 
     /** Share of XP earned for beating a foe at [foeLevel] at your level [myLevel]. */
     fun gapFactor(myLevel: Int, foeLevel: Int): Double {

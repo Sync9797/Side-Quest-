@@ -166,6 +166,10 @@ fun HeroScreen(vm: GameViewModel) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(h.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // Titles earned at milestones (level 100, a Mythic dungeon).
+                    com.monsterquest.core.Titles.shown(s)?.let { t ->
+                        Text(t + if (s.titles.size > 1) "  (+${s.titles.size - 1} more)" else "", color = Gold, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    }
                     Text("${com.monsterquest.core.Stars.label(h.level).replace("Lv", "Level")} ${h.activeSubclass?.label ?: h.heroClass.label}", color = XpPurple)
                 }
                 TextButton(onClick = { renaming = true }, contentPadding = PaddingValues(4.dp)) {

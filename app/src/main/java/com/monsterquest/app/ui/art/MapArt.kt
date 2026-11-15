@@ -115,7 +115,20 @@ fun drawShrineOn(c: Canvas, w: Float, h: Float, tier: ShrineTier, state: BeaconS
 fun drawVillainOn(c: Canvas, w: Float, h: Float, villain: Boolean) = drawVillainBanner(c, w, h, villain)
 
 /** The player on the map: the hero in their gear, standing in a gold ring. */
-fun drawPlayerOn(c: Canvas, w: Float, h: Float, cls: com.monsterquest.core.HeroClass, outfit: HeroOutfit, stars: Int = 0) {
+fun drawPlayerOn(c: Canvas, w: Float, h: Float, cls: com.monsterquest.core.HeroClass, outfit: HeroOutfit, stars: Int = 0, centurion: Boolean = false) {
+    if (centurion) {
+        // A Centurion's golden frame: a bright halo and a double ring at the feet.
+        val feetY = h * 0.86f
+        ArtPainter.glow(c, w / 2, h * 0.55f, w * 0.55f, Argb.hex("ffd34d"), 0.55f)
+        c.drawOval(
+            w * 0.06f, feetY - h * 0.1f, w * 0.94f, feetY + h * 0.1f,
+            android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = w * 0.03f
+                color = Argb.hex("ffd34d")
+            },
+        )
+    }
     drawPlayerFigure(c, w, h, cls, outfit)
     if (stars > 0) {
         // A gold star badge (with the count past one) over the hero's shoulder.
@@ -225,8 +238,10 @@ fun drawDungeonOn(c: Canvas, w: Float, h: Float, stars: Int) {
         ArtPainter.glow(c, x, h * 0.42f, w * 0.14f, Argb.hex("ff9a3a"), 0.8f)
         ArtPainter.circle(c, x, h * 0.42f, w * 0.04f, Argb.hex("ffd27a"))
     }
-    // Difficulty: one small star per level, above the arch.
-    val starPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = Argb.hex("ebc678") }
+    // Difficulty: one small star per level, above the arch (a Mythic dungeon's in violet, with a glow).
+    val mythic = stars >= com.monsterquest.core.Dungeons.MYTHIC_STARS
+    if (mythic) ArtPainter.glow(c, w / 2, h * 0.6f, w * 0.6f, Argb.hex("b07cff"), 0.6f)
+    val starPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = Argb.hex(if (mythic) "c9a3ff" else "ebc678") }
     val gap = w * 0.16f
     val x0 = w / 2 - gap * (stars - 1) / 2
     repeat(stars) { i -> c.drawCircle(x0 + i * gap, h * 0.14f, w * 0.055f, starPaint) }

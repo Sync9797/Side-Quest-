@@ -264,7 +264,9 @@ object Venues {
         heroLevel < 15 -> listOf(1, 1, 1, 2, 2, 2, 3, 3, 4)
         heroLevel < 30 -> listOf(1, 1, 2, 2, 3, 3, 4, 4, 5)
         heroLevel < 45 -> listOf(1, 2, 2, 3, 3, 4, 4, 5, 5)
-        else -> listOf(2, 3, 3, 4, 4, 4, 5, 5, 5)
+        heroLevel < Dungeons.MYTHIC_LEVEL -> listOf(2, 3, 3, 4, 4, 4, 5, 5, 5)
+        // Past level 100: one Mythic (6-star) dungeon in each neighbourhood's deck.
+        else -> listOf(3, 4, 4, 4, 5, 5, 5, 5, Dungeons.MYTHIC_STARS)
     }
 
     /** The cell of about [sizeM] meters a spot falls in. */

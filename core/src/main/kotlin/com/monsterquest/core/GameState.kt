@@ -315,6 +315,10 @@ data class GameState(
     val tipsSeen: Set<String> = emptySet(),
     /** Calendar events closed from the quest list ("won't do"): calendar syncs leave them out. */
     val dismissedQuests: Set<String> = emptySet(),
+    /** Titles earned (see [Titles]), shown by the hero's name. */
+    val titles: Set<String> = emptySet(),
+    /** Mythic dungeons cleared (see [Dungeons.MYTHIC_STARS]). */
+    val mythicsCleared: Int = 0,
     /** When rest healing was last applied (see GameEngine.regenerate). */
     val lastRegenMs: Long = 0,
     /** Last daily step total read from Health Connect, and the day it was for. */

@@ -125,6 +125,10 @@ data class BossReward(
 object Dungeons {
     const val RANGE_M = 100.0
 
+    /** Mythic dungeons: 6 stars, only for heroes past [MYTHIC_LEVEL]. Their first clear makes you a [Titles.MYTHBREAKER]. */
+    const val MYTHIC_STARS = 6
+    const val MYTHIC_LEVEL = 101
+
     /** The tutorial's rooms in order: one of each kind, then its champion. */
     val TUTORIAL_ROOMS = listOf(RoomKind.STARTER, RoomKind.TREASURY, RoomKind.MONSTERS, RoomKind.TRAP, RoomKind.COMBAT, RoomKind.FOUNTAIN)
 
@@ -657,6 +661,11 @@ object Dungeons {
         if (hit(8)) { item(Item.GOLDEN_BERRY, 1); got += "a Golden Berry" }
         if (hit(9)) { item(Item.MOOD_CRYSTAL, 1); got += "a Mood Crystal" }
         s = s.copy(dungeonsCleared = s.dungeonsCleared.filterValues { it >= day - 1 } + (d.id to day))
+        // A Mythic dungeon: counted, and the first makes you a Mythbreaker.
+        if (d.stars >= MYTHIC_STARS) {
+            if (Titles.MYTHBREAKER !in s.titles) got += "the title ${Titles.MYTHBREAKER}"
+            s = Titles.grant(s, Titles.MYTHBREAKER).copy(mythicsCleared = s.mythicsCleared + 1)
+        }
         val banked = bank(s, r, half = false)
         return Update(
             banked.state.copy(dungeonRun = null, stats = banked.state.stats.copy(dungeonsCleared = banked.state.stats.dungeonsCleared + 1)),

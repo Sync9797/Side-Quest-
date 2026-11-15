@@ -500,6 +500,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun editTask(id: String, title: String, difficulty: Difficulty, dueMs: Long?, priority: com.monsterquest.core.Priority) =
         apply(GameEngine.editTask(state, id, title, difficulty, dueMs, priority))
     fun deleteTask(id: String) = apply(GameEngine.deleteTask(state, id))
+
+    /** Level 100: take the Centurion title and a legendary egg. */
+    fun claimCenturion(speciesId: String) {
+        val u = com.monsterquest.core.Centurion.claim(state, speciesId)
+        set(u.state)
+        showRewards(u.rewardTitle, u.rewards)
+        if (u.message.isNotEmpty()) message = u.message
+    }
     fun closeMissed() = apply(GameEngine.closeMissed(state))
     fun completeTask(id: String) = apply(GameEngine.completeTask(state, id, System.currentTimeMillis()))
 

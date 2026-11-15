@@ -89,9 +89,51 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         AppScreens(vm, initialTab, initialSettings)
         vm.lootPopup?.let { LootPopupCard(it) { vm.lootPopup = null } }
         vm.availableUpdate?.let { UpdateDialog(vm, it) }
+        // Level 100: the Centurion reward (not mid-battle or mid-dungeon).
+        if (com.monsterquest.core.Centurion.due(vm.state) && vm.battle == null && vm.state.dungeonRun == null) CenturionDialog(vm)
         // After an update: what changed (not while an update offer is up).
         if (vm.availableUpdate == null) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }
+}
+
+/** Level 100: the Centurion title, a glowing frame, and a legendary egg of your choice. */
+@Composable
+private fun CenturionDialog(vm: GameViewModel) {
+    var pick by remember { mutableStateOf<String?>(null) }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Centurion!", color = Gold, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(
+                    "You've reached level ${com.monsterquest.core.Centurion.LEVEL}. You take the title Centurion, and a golden frame glows around you on the map. " +
+                        "Choose a legendary egg (with ${com.monsterquest.core.Centurion.PERFECT_STATS} perfect stats) to hatch by walking:",
+                    fontSize = 13.sp,
+                )
+                com.monsterquest.core.Centurion.choices().forEach { sp ->
+                    val on = pick == sp.id
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 6.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .background(if (on) Gold.copy(alpha = 0.2f) else androidx.compose.ui.graphics.Color.Transparent)
+                            .clickable { pick = sp.id }
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        com.monsterquest.app.ui.art.MonsterArt(sp, Modifier.size(44.dp))
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text(sp.name, fontWeight = FontWeight.SemiBold)
+                            Text(sp.typeLabel, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { pick?.let { vm.claimCenturion(it) } }, enabled = pick != null) { Text("Take the egg") }
+        },
+    )
 }
 
 /** Shown once after an update: the new version's release notes, as points. */

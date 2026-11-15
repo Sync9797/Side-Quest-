@@ -430,6 +430,8 @@ data class Monster(
     val alpha: Boolean = false,
     /** Bond points with the hero (see [Bonds]): from battles fought and walks taken together. */
     val bond: Int = 0,
+    /** Ascension ranks past level 100 (see [Ascension]): each adds 1% to every stat. */
+    val ascension: Int = 0,
 ) {
     val species: Species get() = Bestiary.get(speciesId)
     val bondLevel: Int get() = Bonds.level(bond)
@@ -460,7 +462,7 @@ data class Monster(
             stat == Stat.ATTACK -> SHADOW_ATTACK
             else -> 1.0
         }
-        return floor(value * personality.modifier(stat) * curse).toInt().coerceAtLeast(1)
+        return floor(value * personality.modifier(stat) * curse * Ascension.factor(ascension)).toInt().coerceAtLeast(1)
     }
 
     val currentHp: Int get() = if (fainted) 0 else (stat(Stat.HP) - damage).coerceAtLeast(1)
@@ -491,7 +493,8 @@ data class Monster(
     val potential: Int
         get() = (MONSTER_STATS.sumOf { ivs[it] } * 100) / (MAX_IV * MONSTER_STATS.size)
 
-    val xpToNext: Int get() = monsterXpForNext(level)
+    /** XP to the next level, or past level 100 to the next ascension rank. */
+    val xpToNext: Int get() = if (level >= MAX_MONSTER_LEVEL) Ascension.XP_PER_RANK else monsterXpForNext(level)
 
     companion object {
         /** A new monster; it evolves straight away if [level] is past its evolution levels. */
@@ -516,7 +519,9 @@ fun monsterXpForNext(level: Int): Int = ((20 + level * level * 5) * XP_CURVE).to
 
 /**
  * Adds XP to a monster, levelling it up as needed, but no higher than [cap]
- * (the hero's lead, see [XpRules]): XP past that is held for later.
+ * (the hero's lead, see [XpRules]): XP past that is held for later. A cap
+ * past level 100 is room to ascend: at level 100, XP buys [Ascension] ranks
+ * instead, up to `cap - 100` of them.
  */
 fun Monster.gainXp(amount: Int, cap: Int = MAX_MONSTER_LEVEL): Monster {
     val top = cap.coerceAtMost(MAX_MONSTER_LEVEL)
@@ -527,7 +532,21 @@ fun Monster.gainXp(amount: Int, cap: Int = MAX_MONSTER_LEVEL): Monster {
         x -= monsterXpForNext(lvl)
         lvl++
     }
-    if (lvl >= MAX_MONSTER_LEVEL) return copy(level = lvl, xp = 0)
+    if (lvl >= MAX_MONSTER_LEVEL) {
+        // Level 100: on into ascension, as far as the hero's level allows.
+        val ascCap = (cap - MAX_MONSTER_LEVEL).coerceAtLeast(0)
+        var asc = ascension
+        while (asc < ascCap && x >= Ascension.XP_PER_RANK) {
+            x -= Ascension.XP_PER_RANK
+            asc++
+        }
+        if (asc >= ascCap) {
+            // At the limit: the bar fills to just short of the next rank; the rest waits.
+            val room = Ascension.XP_PER_RANK - 1
+            if (x > room) return copy(level = lvl, ascension = asc, xp = room, heldXp = heldXp + (x - room))
+        }
+        return copy(level = lvl, ascension = asc, xp = x)
+    }
     if (lvl >= top) {
         // At the limit: the bar fills to just short of the next level; the rest waits.
         val room = monsterXpForNext(lvl) - 1
