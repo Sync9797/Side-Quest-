@@ -84,6 +84,9 @@ enum class GameIcon(internal vararg val parts: IconPart) {
     BROADSWORD(fill("M18 2h4v4L11 17l-4-4z"), fill("M5.5 11.5l7 7-1.5 1.5-7-7z"), fill("M6 17l1.5 1.5-3.5 3.5L2.5 20.5z")),
     WAND(line("M4 20L14 10"), fill("M17 3l1.2 2.8L21 7l-2.8 1.2L17 11l-1.2-2.8L13 7l2.8-1.2z")),
     DAGGER(fill("M15 3l3 3-7.5 7.5-3-3z"), line("M8.5 15.5L4 20")),
+    AXE(line("M4 21L15 7"), fill("M12 5.5c2.5-3 8-2.5 9 3.5-2.5-1.5-5.5-1-7 .5z"), fill("M11 7l-2.5-1L10 9z")),
+    BOW(line("M7 3q11 9 0 18"), line("M7 3v18"), line("M3 12h15"), fill("M17.5 10l4 2-4 2z")),
+    SCYTHE(line("M9 21L14.5 3"), fill("M14.5 3q-8-1.5-11.5 6 5-3.5 10.8-2z")),
 
     // Armor
     PLATE(fill("M5 5l4-2h6l4 2v6c0 5-3 9-7 11-4-2-7-6-7-11z"), cut("M12 4v17M7 9h10")),

@@ -129,6 +129,10 @@ object Dungeons {
     const val MYTHIC_STARS = 6
     const val MYTHIC_LEVEL = 101
 
+    /** A 5-star champion's chance of a relic (from level 50), and a Mythic champion's. */
+    const val RELIC_CHANCE = 0.05
+    const val MYTHIC_RELIC_CHANCE = 0.15
+
     /** The tutorial's rooms in order: one of each kind, then its champion. */
     val TUTORIAL_ROOMS = listOf(RoomKind.STARTER, RoomKind.TREASURY, RoomKind.MONSTERS, RoomKind.TRAP, RoomKind.COMBAT, RoomKind.FOUNTAIN)
 
@@ -661,6 +665,12 @@ object Dungeons {
         if (hit(8)) { item(Item.GOLDEN_BERRY, 1); got += "a Golden Berry" }
         if (hit(9)) { item(Item.MOOD_CRYSTAL, 1); got += "a Mood Crystal" }
         s = s.copy(dungeonsCleared = s.dungeonsCleared.filterValues { it >= day - 1 } + (d.id to day))
+        // Late in the game, the hardest champions sometimes guard a relic of old legend.
+        if (d.stars >= 5) Relic.roll(s.hero.level, rng, if (d.stars >= MYTHIC_STARS) MYTHIC_RELIC_CHANCE else RELIC_CHANCE)?.let {
+            r = r.copy(gear = r.gear + it)
+            got += "a relic: ${it.name}!"
+            loot += Reward.WeaponDrop(it)
+        }
         // A Mythic dungeon: counted, and the first makes you a Mythbreaker.
         if (d.stars >= MYTHIC_STARS) {
             if (Titles.MYTHBREAKER !in s.titles) got += "the title ${Titles.MYTHBREAKER}"

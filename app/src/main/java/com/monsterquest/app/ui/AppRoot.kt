@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import com.monsterquest.app.ui.art.GameIcon
 import com.monsterquest.app.ui.art.GIcon
@@ -89,11 +90,75 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         AppScreens(vm, initialTab, initialSettings)
         vm.lootPopup?.let { LootPopupCard(it) { vm.lootPopup = null } }
         vm.availableUpdate?.let { UpdateDialog(vm, it) }
+        // Level 50: new weapons, and three mystery chests to choose from (not mid-battle or mid-dungeon).
+        val calm = vm.battle == null && vm.state.dungeonRun == null
+        if (calm && (com.monsterquest.core.ExoticChests.due(vm.state) || vm.exoticReveal != null)) ExoticChestDialog(vm)
         // Level 100: the Centurion reward (not mid-battle or mid-dungeon).
         if (com.monsterquest.core.Centurion.due(vm.state) && vm.battle == null && vm.state.dungeonRun == null) CenturionDialog(vm)
         // After an update: what changed (not while an update offer is up).
         if (vm.availableUpdate == null) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }
+}
+
+/**
+ * Level 50: congratulations, and three mystery chests. Pick one: inside is a
+ * new exotic weapon (an axe, a bow or a scythe), with its strengths and its
+ * trade-off.
+ */
+@Composable
+private fun ExoticChestDialog(vm: GameViewModel) {
+    val revealed = vm.exoticReveal
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = {},
+        title = {
+            Text(
+                if (revealed == null) "Level ${com.monsterquest.core.ExoticChests.LEVEL}! New weapons" else revealed.name,
+                color = Gold, fontWeight = FontWeight.Bold,
+            )
+        },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (revealed == null) {
+                    Text(
+                        "Congratulations! Exotic weapons now join the world: axes, bows and scythes. They're hard for every class to master " +
+                            "(${com.monsterquest.core.EXOTIC_MASTERY_BATTLES} battles before the unfamiliar-weapon penalty wears off), and each has a trade-off. " +
+                            "Choose one of these mystery chests: each holds a different one.",
+                        fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly) {
+                        (0 until 3).forEach { i ->
+                            Column(
+                                Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                    .clickable { vm.openExoticChest(i) }
+                                    .padding(8.dp)
+                                    .readyGlow(true),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                com.monsterquest.app.ui.art.GIcon(com.monsterquest.app.ui.art.GameIcon.CHEST, Modifier.size(56.dp), Gold)
+                                Text("?", color = Gold, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                            }
+                        }
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        com.monsterquest.app.ui.art.GIcon(revealed.type.icon(), Modifier.size(40.dp), Gold)
+                        Spacer(Modifier.width(10.dp))
+                        Text("${revealed.rarity.label} ${revealed.type.label}", fontWeight = FontWeight.SemiBold)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text("Strengths: ${revealed.type.description}.", fontSize = 13.sp)
+                    Text("Trade-off: ${revealed.type.drawback}.", fontSize = 13.sp, color = HpRed, modifier = Modifier.padding(top = 4.dp))
+                    Text(revealed.summary(vm.state.hero.heroClass), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                    Text("It's in your Bag. Equip it on the Hero tab.", fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+                }
+            }
+        },
+        confirmButton = {
+            if (revealed != null) androidx.compose.material3.TextButton(onClick = { vm.dismissExoticReveal() }) { Text("Take it") }
+        },
+    )
 }
 
 /** Level 100: the Centurion title, a glowing frame, and a legendary egg of your choice. */

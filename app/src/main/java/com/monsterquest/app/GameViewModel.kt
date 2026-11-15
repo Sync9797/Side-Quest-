@@ -501,6 +501,22 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         apply(GameEngine.editTask(state, id, title, difficulty, dueMs, priority))
     fun deleteTask(id: String) = apply(GameEngine.deleteTask(state, id))
 
+    /** The weapon just revealed from a level-50 mystery chest (shown until dismissed). */
+    var exoticReveal by mutableStateOf<com.monsterquest.core.Gear?>(null)
+        private set
+
+    /** Level 50: opens one of the three mystery chests. */
+    fun openExoticChest(index: Int) {
+        val u = com.monsterquest.core.ExoticChests.open(state, index)
+        if (u.state === state) return
+        set(u.state)
+        exoticReveal = u.state.gear.lastOrNull()
+    }
+
+    fun dismissExoticReveal() {
+        exoticReveal = null
+    }
+
     /** Level 100: take the Centurion title and a legendary egg. */
     fun claimCenturion(speciesId: String) {
         val u = com.monsterquest.core.Centurion.claim(state, speciesId)

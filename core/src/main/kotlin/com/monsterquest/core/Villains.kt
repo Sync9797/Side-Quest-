@@ -142,7 +142,7 @@ object Villains {
         val bonusGear = if (camp.tier == VillainTier.VILLAIN) listOf(Armory.roll(camp.level, rng, luck = 15)) else emptyList()
         val loot = rolled.copy(
             weapons = rolled.weapons + bonusGear,
-            parts = GameEngine.rollParts(camp.team.size, rng),
+            parts = GameEngine.rollParts(camp.team.size, rng, state.hero.level),
             // Thugs and villains also drop armor scrap.
             armorParts = GameEngine.rollArmorParts(camp.team.size, rng),
         )

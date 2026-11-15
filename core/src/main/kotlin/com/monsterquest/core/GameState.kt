@@ -319,6 +319,8 @@ data class GameState(
     val titles: Set<String> = emptySet(),
     /** Mythic dungeons cleared (see [Dungeons.MYTHIC_STARS]). */
     val mythicsCleared: Int = 0,
+    /** The level-50 mystery chest (see [ExoticChests]) has been opened. */
+    val exoticChestOpened: Boolean = false,
     /** When rest healing was last applied (see GameEngine.regenerate). */
     val lastRegenMs: Long = 0,
     /** Last daily step total read from Health Connect, and the day it was for. */

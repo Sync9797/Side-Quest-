@@ -168,6 +168,11 @@ class Combatant(
     var offhandElement: Element = Element.NEUTRAL
     var offhandHits: Int = 1
 
+    // The main weapon's style (exotic weapons): accuracy, armor-splitting, sweeping.
+    var weaponAccuracy: Int = 100
+    var weaponPierce: Boolean = false
+    var weaponSweepPct: Int = 0
+
     /** A monster skill's rank, or 0 without it. */
     fun rankOf(t: Trait): Int = traits[t] ?: 0
 
@@ -332,7 +337,7 @@ class Combatant(
             val offMagic = ((off?.magicBonus(cls) ?: 0) * share).roundToInt()
             val speedPct = (gear?.type?.speedPercent ?: 0) + armor.sumOf { it.type.speedPercent } + 10 * fx.count { it == GearEffect.SWIFT }
             val baseDefense = h.defense + armor.sumOf { it.defenseBonus(cls) } + classStats
-            val defense = (baseDefense * (1 + 0.1 * fx.count { it == GearEffect.GUARDED })).toInt().coerceAtLeast(1)
+            val defense = (baseDefense * (1 + 0.1 * fx.count { it == GearEffect.GUARDED }) * (1 + (gear?.type?.defensePercent ?: 0) / 100.0)).toInt().coerceAtLeast(1)
             val attack = (h.attack + (gear?.attackBonus(cls) ?: 0) + armor.sumOf { it.attackBonus(cls) } + classStats) *
                 (1 + 0.1 * fx.count { it == GearEffect.MIGHTY })
             val magic = (h.magic + (gear?.magicBonus(cls) ?: 0) + offMagic + armor.sumOf { it.magicBonus(cls) } + classStats) *
@@ -355,7 +360,10 @@ class Combatant(
                     offhandHits = off.type.hits
                 }
                 energyRegen = (gear?.type?.energyPerTurn ?: 0) + 2 * fx.count { it == GearEffect.ARCANE } + perks.energyPerTurn
-                critBonus = (if (GearEffect.KEEN in fx) 0.1 else 0.0) + perks.critPct / 100.0
+                critBonus = (if (GearEffect.KEEN in fx) 0.1 else 0.0) + perks.critPct / 100.0 + (gear?.type?.critPct ?: 0) / 100.0
+                weaponAccuracy = gear?.type?.accuracy ?: 100
+                weaponPierce = gear?.type?.pierce == true
+                weaponSweepPct = gear?.type?.sweepPct ?: 0
                 lifesteal = 0.15 * fx.count { it == GearEffect.VAMPIRIC }
                 onHitStatus = when {
                     GearEffect.SEARING in fx -> Status.BURN
@@ -1284,13 +1292,22 @@ class Battle(
             BattleAction.Skip -> return false
             BattleAction.Attack -> {
                 if (actor.isHero) {
-                    // Daggers strike twice.
-                    repeat(actor.hits) {
-                        if (enemy.alive && !floatsOver(actor, enemy, actor.attackElement) && rollHit(actor, enemy, 100)) {
-                            // A cursed weapon hits 25% softer until the curse is lifted.
-                            val power = if (actor.weaponCursed) 40 * (100 - CURSED_DAMAGE_CUT) / 100 else 40
-                            val dmg = strike(actor, enemy, power, actor.attackElement, useMagic = false, verb = "attacks", style = StrikeStyle.SLASH)
-                            afterHeroHit(actor, enemy, dmg, basic = true)
+                    // A cursed weapon hits 25% softer until the curse is lifted.
+                    val power = if (actor.weaponCursed) 40 * (100 - CURSED_DAMAGE_CUT) / 100 else 40
+                    if (actor.weaponSweepPct > 0) {
+                        // A scythe reaps every foe in one swing.
+                        for (foe in enemies.filter { it.alive }) {
+                            if (floatsOver(actor, foe, actor.attackElement) || !rollHit(actor, foe, actor.weaponAccuracy)) continue
+                            val dmg = strike(actor, foe, (power * actor.weaponSweepPct / 100).coerceAtLeast(1), actor.attackElement, useMagic = false, verb = "reaps", style = StrikeStyle.SLASH, pierce = actor.weaponPierce)
+                            afterHeroHit(actor, foe, dmg, basic = true)
+                        }
+                    } else {
+                        // Daggers strike twice; an axe splits raised Defense but misses more.
+                        repeat(actor.hits) {
+                            if (enemy.alive && !floatsOver(actor, enemy, actor.attackElement) && rollHit(actor, enemy, actor.weaponAccuracy)) {
+                                val dmg = strike(actor, enemy, power, actor.attackElement, useMagic = false, verb = "attacks", style = StrikeStyle.SLASH, pierce = actor.weaponPierce)
+                                afterHeroHit(actor, enemy, dmg, basic = true)
+                            }
                         }
                     }
                     // Kleptomaniac: the off-hand weapon follows up.

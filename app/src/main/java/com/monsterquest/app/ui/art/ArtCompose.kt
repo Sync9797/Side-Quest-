@@ -205,6 +205,9 @@ fun com.monsterquest.core.WeaponType.icon(): GameIcon = when (this) {
     com.monsterquest.core.WeaponType.DAGGER -> GameIcon.DAGGER
     com.monsterquest.core.WeaponType.STAFF -> GameIcon.STAFF
     com.monsterquest.core.WeaponType.WAND -> GameIcon.WAND
+    com.monsterquest.core.WeaponType.AXE -> GameIcon.AXE
+    com.monsterquest.core.WeaponType.BOW -> GameIcon.BOW
+    com.monsterquest.core.WeaponType.SCYTHE -> GameIcon.SCYTHE
 }
 
 fun com.monsterquest.core.GearRarity.color(): Color = when (this) {

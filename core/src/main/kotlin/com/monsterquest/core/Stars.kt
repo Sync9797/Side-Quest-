@@ -21,6 +21,9 @@ object Stars {
     /** "Lv 37", or "★2 · Lv 4". */
     fun label(level: Int): String = if (of(level) == 0) "Lv $level" else "★${of(level)} · Lv ${shownLevel(level)}"
 
+    /** A star box's chance of holding a relic instead of its Epic weapon. */
+    const val STAR_RELIC_CHANCE = 0.25
+
     /** What a new star's reward box holds: supplies, plus an Epic weapon and Epic armor rolled at your level. */
     val BOX_ITEMS: Map<Item, Int> = mapOf(Item.PRISMATIC_CRYSTAL to 3, Item.RESTORE_POTION to 2, Item.PHOENIX_FEATHER to 2)
 
@@ -31,7 +34,8 @@ object Stars {
         val r = Random(heroName.hashCode().toLong() * 31 + star)
         return Box(
             BOX_ITEMS,
-            Armory.roll(level, r, luck = 20, minimum = GearRarity.EPIC),
+            // A star box sometimes holds a relic instead of an Epic weapon.
+            Relic.roll(level, r, STAR_RELIC_CHANCE) ?: Armory.roll(level, r, luck = 20, minimum = GearRarity.EPIC),
             Armory.rollArmor(level, r, luck = 20, minimum = GearRarity.EPIC),
         )
     }

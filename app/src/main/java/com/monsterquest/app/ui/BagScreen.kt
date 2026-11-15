@@ -45,6 +45,7 @@ import com.monsterquest.core.MAX_ITEMS_PER_BATTLE
 import com.monsterquest.core.Spells
 import com.monsterquest.core.Hero
 import com.monsterquest.core.PROFICIENCY_BATTLES
+import com.monsterquest.core.EXOTIC_MASTERY_BATTLES
 import com.monsterquest.core.SMELT_COST
 import com.monsterquest.core.Trait
 import com.monsterquest.core.PARTS_TO_FORGE
@@ -384,6 +385,9 @@ private fun GearCard(w: Gear, hero: Hero, equipped: Boolean, where: String = "eq
                 Text("Lv ${w.level} ${w.type.label}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 weaponClassNote(w, hero)?.let { (text, color) -> Text(text, fontSize = 12.sp, color = color) }
                 Text(w.summary(cls), fontSize = 12.sp)
+                // A relic's line of lore, and an exotic weapon's trade-off.
+                w.relic?.let { Text("“${it.lore}”", fontSize = 12.sp, color = Gold, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic) }
+                if (w.type.exotic) Text("Exotic: ${w.type.drawback}. ${EXOTIC_MASTERY_BATTLES} battles to master.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 w.curse?.let { c ->
                     Text(
                         if (w.cursed) "Cursed (${w.cursePct}% left) • ${c.label}: ${c.weaponText}" else "${c.label}: ${c.weaponText}",

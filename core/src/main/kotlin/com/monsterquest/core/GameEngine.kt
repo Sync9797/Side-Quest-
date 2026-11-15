@@ -1250,7 +1250,7 @@ object GameEngine {
         }
         if (r.encounter == EncounterType.THUG && r.outcome == BattleOutcome.WON) {
             val rng = Random(nowMs)
-            val loot = Loot(parts = rollParts(1 + rng.nextInt(2), rng), armorParts = rollArmorParts(1 + rng.nextInt(2), rng))
+            val loot = Loot(parts = rollParts(1 + rng.nextInt(2), rng, state.hero.level), armorParts = rollArmorParts(1 + rng.nextInt(2), rng))
             val u = grantLoot(s, loot)
             s = u.state
             rewards += u.rewards
@@ -1495,8 +1495,8 @@ object GameEngine {
     }
 
     /** Some parts of one random weapon type. */
-    fun rollParts(count: Int, rng: Random): Map<WeaponType, Int> =
-        if (count <= 0) emptyMap() else mapOf(Armory.randomPartType(rng) to count)
+    fun rollParts(count: Int, rng: Random, heroLevel: Int = 1): Map<WeaponType, Int> =
+        if (count <= 0) emptyMap() else mapOf(Armory.randomPartType(rng, heroLevel) to count)
 
     /** Some armor scrap of one random armor type (from thugs and villains). */
     fun rollArmorParts(count: Int, rng: Random): Map<ArmorType, Int> =
@@ -1639,7 +1639,7 @@ object GameEngine {
         val n = w.classStats(h.heroClass, h.perks.anyWeapon)
         return when {
             n > 0 -> " Class bonus: +$n to all stats!"
-            n < 0 -> " Unfamiliar weapon: $n to all stats until you've fought ${PROFICIENCY_BATTLES - w.proficiency} more battle(s) with it."
+            n < 0 -> " Unfamiliar weapon: $n to all stats until you've fought ${w.type.masteryBattles - w.proficiency} more battle(s) with it."
             else -> ""
         }
     }

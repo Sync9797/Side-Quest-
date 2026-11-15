@@ -22,13 +22,59 @@ enum class WeaponType(
     /** Energy restored at the start of each of the hero's turns. */
     val energyPerTurn: Int,
     val description: String,
+    /** Found and forged only from this hero level. */
+    val minLevel: Int = 1,
+    /**
+     * Exotic: no class's own, so every hero (Adventurers too) starts with the
+     * unfamiliar-weapon penalty, and it takes [EXOTIC_MASTERY_BATTLES] to wear off.
+     */
+    val exotic: Boolean = false,
+    /** Defense change in percent while wielding it. */
+    val defensePercent: Int = 0,
+    /** Basic-attack accuracy, in percent. */
+    val accuracy: Int = 100,
+    /** Basic attacks ignore the foe's raised Defense and its guard. */
+    val pierce: Boolean = false,
+    /** Basic attacks hit every foe at this share of power (0: just the target). */
+    val sweepPct: Int = 0,
+    /** Extra critical-hit chance, in percent. */
+    val critPct: Int = 0,
+    /** What it gives up, for its description. */
+    val drawback: String = "",
 ) {
     SWORD("Sword", setOf(HeroClass.WARRIOR, HeroClass.ROGUE), 1.0, 0.2, 0, 1, 0, "Balanced blade"),
     BROADSWORD("Broadsword", setOf(HeroClass.WARRIOR), 1.6, 0.0, -15, 1, 0, "Heavy damage, but slows you down"),
     DAGGER("Dagger", setOf(HeroClass.ROGUE), 0.6, 0.0, 5, 2, 0, "Lighter hits that strike twice"),
     STAFF("Staff", setOf(HeroClass.MAGE), 0.4, 1.4, 0, 1, 0, "Weak swings, much stronger magic"),
     WAND("Wand", setOf(HeroClass.MAGE), 0.3, 0.8, 0, 1, 3, "Weak hits; restores Energy every turn"),
+
+    // Exotic weapons, from level 50: hard for every class to master, each with a trade-off.
+    AXE(
+        "Axe", emptySet(), 1.8, 0.0, -10, 1, 0, "The heaviest blows of all, splitting raised Defense and guards",
+        minLevel = EXOTIC_LEVEL, exotic = true, accuracy = 85, pierce = true, drawback = "Slow (−10% Speed), and swings miss more (85% accuracy)",
+    ),
+    BOW(
+        "Bow", emptySet(), 1.0, 0.1, 10, 1, 0, "Quick and deadly: +10% Speed and +10% critical hits",
+        minLevel = EXOTIC_LEVEL, exotic = true, defensePercent = -15, critPct = 10, drawback = "Both hands on the bow, no shield: −15% Defense",
+    ),
+    SCYTHE(
+        "Scythe", emptySet(), 1.2, 0.5, -5, 1, 0, "Each swing reaps every foe (60% power) and stirs some Magic",
+        minLevel = EXOTIC_LEVEL, exotic = true, defensePercent = -10, sweepPct = 60, drawback = "Unwieldy: −5% Speed and −10% Defense",
+    ),
+    ;
+
+    /** Battles to get used to it: three times as long for an exotic weapon. */
+    val masteryBattles: Int get() = if (exotic) EXOTIC_MASTERY_BATTLES else PROFICIENCY_BATTLES
+
+    companion object {
+        /** The weapons a hero of [level] can find or forge. */
+        fun available(level: Int): List<WeaponType> = entries.filter { it.minLevel <= level }
+    }
 }
+
+/** Exotic weapons (axe, bow, scythe) appear from this hero level. */
+const val EXOTIC_LEVEL = 50
+const val EXOTIC_MASTERY_BATTLES = 30
 
 const val CLASS_MATCH_BONUS = 0.2
 
@@ -106,6 +152,8 @@ data class Gear(
     val curse: Curse? = null,
     /** How much of the curse is left, 0-100 (0 = lifted). */
     val cursePct: Int = 0,
+    /** A named relic of old legend (see [Relic]), or null. */
+    val relic: Relic? = null,
 ) {
     /** Raw weapon power before its type splits it between Attack and Magic. */
     val power: Int get() = ((6 + level * 0.8) * rarity.multiplier * material.multiplier).roundToInt()
@@ -114,10 +162,10 @@ data class Gear(
 
     fun matches(cls: HeroClass) = cls in type.classes
 
-    /** Outside your class (Adventurers have no class weapons, so nothing is foreign to them). */
-    fun foreign(cls: HeroClass) = cls != HeroClass.NONE && !matches(cls)
+    /** Outside your class (Adventurers have no class weapons, so nothing is foreign to them, except exotic ones). */
+    fun foreign(cls: HeroClass) = type.exotic || (cls != HeroClass.NONE && !matches(cls))
 
-    val mastered: Boolean get() = proficiency >= PROFICIENCY_BATTLES
+    val mastered: Boolean get() = proficiency >= type.masteryBattles
 
     private fun classMultiplier(cls: HeroClass) = if (matches(cls)) 1 + CLASS_MATCH_BONUS else 1.0
 
@@ -130,13 +178,13 @@ data class Gear(
      * as you get used to that weapon over [PROFICIENCY_BATTLES] battles.
      */
     fun classStats(cls: HeroClass, anyWeapon: Boolean = false): Int = when {
-        matches(cls) || anyWeapon -> rarity.classStatBonus
-        foreign(cls) -> -(rarity.classStatBonus * (PROFICIENCY_BATTLES - proficiency.coerceAtMost(PROFICIENCY_BATTLES)) + PROFICIENCY_BATTLES - 1) / PROFICIENCY_BATTLES
+        matches(cls) || (anyWeapon && !type.exotic) -> rarity.classStatBonus
+        foreign(cls) -> type.masteryBattles.let { n -> -(rarity.classStatBonus * (n - proficiency.coerceAtMost(n)) + n - 1) / n }
         else -> 0
     }
 
     /** One more battle with this weapon. */
-    fun practiced(): Gear = if (proficiency >= PROFICIENCY_BATTLES) this else copy(proficiency = proficiency + 1)
+    fun practiced(): Gear = if (proficiency >= type.masteryBattles) this else copy(proficiency = proficiency + 1)
 
     /** Gold the shop pays for it: rarer and higher-level weapons pay more. */
     val sellPrice: Int get() = gearSellPrice(rarity, level)
@@ -153,6 +201,7 @@ data class Gear(
                 Element.EARTH -> "Thorn "
                 Element.NEUTRAL -> ""
             }
+            relic?.let { return it.title }
             val cursedName = curse?.let { "${if (cursed) "Cursed " else ""}${it.label} " } ?: ""
             return "$cursedName$adjective${material.weaponLabel} ${type.label}"
         }
@@ -163,6 +212,11 @@ data class Gear(
         magicBonus(cls).takeIf { it > 0 }?.let { add("+$it Magic") }
         if (type.speedPercent != 0) add("${if (type.speedPercent > 0) "+" else ""}${type.speedPercent}% Speed")
         if (type.hits > 1) add("Hits ${type.hits}×")
+        if (type.sweepPct > 0) add("Hits every foe (${type.sweepPct}%)")
+        if (type.pierce) add("Ignores raised Defense")
+        if (type.critPct > 0) add("+${type.critPct}% crits")
+        if (type.defensePercent != 0) add("${type.defensePercent}% Defense")
+        if (type.accuracy < 100) add("${type.accuracy}% accuracy")
         if (type.energyPerTurn > 0) add("+${type.energyPerTurn} Energy/turn")
         if (element != Element.NEUTRAL) add("${element.label} attacks")
     }.joinToString(" • ")
@@ -382,7 +436,7 @@ object Armory {
         val pool = GearEffect.entries.shuffled(rng)
         return Gear(
             id = newId(rng),
-            type = type ?: WeaponType.entries.random(rng),
+            type = type ?: WeaponType.available(heroLevel).random(rng),
             rarity = rarity,
             level = lvl,
             element = element,
@@ -391,7 +445,7 @@ object Armory {
         )
     }
 
-    fun randomPartType(rng: Random): WeaponType = WeaponType.entries.random(rng)
+    fun randomPartType(rng: Random, heroLevel: Int = 1): WeaponType = WeaponType.available(heroLevel).random(rng)
 
     /** Converts weapons from older saves to the closest new weapon. */
     fun fromLegacy(w: Weapon, heroLevel: Int, rng: Random): Gear {

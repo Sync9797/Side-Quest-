@@ -263,7 +263,8 @@ fun HeroScreen(vm: GameViewModel) {
             icon = w?.type?.icon() ?: GameIcon.FIST,
             tint = w?.rarity?.color(),
             title = w?.let { "${it.rarity.label} ${it.name} (Lv ${it.level})" } ?: "Bare-handed",
-            detail = w?.let { it.summary(h.heroClass) } ?: "Find weapons at shrines and villain camps, or forge them from parts.",
+            detail = w?.let { it.summary(h.heroClass) + (it.relic?.let { r -> "\n“${r.lore}”" } ?: "") + (if (it.type.exotic && !it.mastered) "\nExotic: ${it.proficiency}/${it.type.masteryBattles} battles to master" else "") }
+                ?: "Find weapons at shrines and villain camps, or forge them from parts.",
             classNote = w?.let { weaponClassNote(it, h) },
             effects = w?.effects.orEmpty().map { it.label to it.description },
             curse = w?.curse?.let { CurseInfo(it.label, it.weaponText, w.cursePct, weapon = true) },

@@ -1310,10 +1310,36 @@ abstract class ScreenshotBase(private val device: String) {
         capture("43b_dungeon_trap", 500)
     }
 
+    /** Level 50: congratulations and three mystery chests; one opens to a new exotic weapon. */
+    @Test fun exoticChests() {
+        val base = sampleState()
+        val v = vm(base.copy(hero = base.hero.copy(level = 50)))
+        shot("48_level50_chests") { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("Level 50! New weapons").assertExists()
+        v.openExoticChest(0)
+        androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        rule.mainClock.advanceTimeBy(300)
+        rule.waitForIdle()
+        rule.onNodeWithText("Take it").assertExists()
+        rule.onNodeWithText("Trade-off:", substring = true).assertExists()
+    }
+
+    /** The hero wielding each exotic weapon (and a relic). */
+    @Test fun exoticOutfits() {
+        val legendary = com.monsterquest.core.GearRarity.LEGENDARY
+        shot("49_exotic_weapons", content = onBackground {
+            androidx.compose.foundation.layout.Row {
+                listOf(WeaponType.AXE, WeaponType.BOW, WeaponType.SCYTHE).forEach { t ->
+                    HeroArt(HeroClass.WARRIOR, androidx.compose.ui.Modifier.size(120.dp), outfit = HeroOutfit(t, legendary, com.monsterquest.core.Element.EARTH, com.monsterquest.core.ArmorType.PLATE))
+                }
+            }
+        })
+    }
+
     /** Level 100: the Centurion reward, with a legendary egg to choose. */
     @Test fun centurion() {
         val base = sampleState()
-        val v = vm(base.copy(hero = base.hero.copy(level = 100)))
+        val v = vm(base.copy(hero = base.hero.copy(level = 100), exoticChestOpened = true))
         shot("47_centurion") { AppRoot(v, Tab.QUESTS) }
         rule.onNodeWithText("Centurion!").assertExists()
         rule.onNodeWithText("Take the egg").assertExists()

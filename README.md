@@ -62,6 +62,10 @@ set out draws the ones that eat it.
 - **Gear:** weapons and armor in four rarities with bonus effects; forge new
   gear from parts.
 - **Star ranks:** every 50 levels earns a star and a star reward box.
+- **Level 50:** exotic weapons (axe, bow, scythe) join the world, hard for every
+  class to master and each with a trade-off, and you choose one of three
+  mystery chests to get your first. Named relic weapons of old legend start
+  turning up in the hardest dungeons.
 - **Level 100:** become a Centurion (a title, a golden frame on the map and a
   legendary egg). Level-100 monsters keep growing by ascension, and Mythic
   6-star dungeons appear, with the Mythbreaker title for clearing one.

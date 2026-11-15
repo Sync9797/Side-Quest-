@@ -148,7 +148,7 @@ object LootBoxes {
             }
         }
         var s = state.copy(lootBoxes = state.lootBoxes.filterNot { it.id == id }, gold = state.gold + gold)
-        val granted = GameEngine.grantLoot(s, GameEngine.Loot(items = items, pages = pages, parts = GameEngine.rollParts(parts, rng)))
+        val granted = GameEngine.grantLoot(s, GameEngine.Loot(items = items, pages = pages, parts = GameEngine.rollParts(parts, rng, state.hero.level)))
         s = granted.state
         val text = "Level $level box: +$gold gold, ${granted.message}."
         if (level < 4) return BoxOpening(Update(s, text))

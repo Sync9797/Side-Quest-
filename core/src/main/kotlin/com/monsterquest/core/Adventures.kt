@@ -177,7 +177,7 @@ object Adventures {
         return if (success) {
             val gold = 20 * d + adv.recommendedLevel * 2 * d + rng.nextInt(10 * d + 1)
             s = s.copy(gold = s.gold + gold)
-            val loot = GameEngine.rollLoot(s, d + 1, rng).let { if (d >= 3) it.copy(parts = GameEngine.rollParts(d - 1, rng)) else it }
+            val loot = GameEngine.rollLoot(s, d + 1, rng).let { if (d >= 3) it.copy(parts = GameEngine.rollParts(d - 1, rng, s.hero.level)) else it }
             val granted = GameEngine.grantLoot(s, loot, overfill = !active.bagFullAtStart)
             Update(
                 granted.state,
