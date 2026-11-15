@@ -112,4 +112,26 @@ class NudgesTipsTest {
         val later = GameEngine.deleteTask(GameEngine.syncCalendar(s, events).state, "gym:$start", start + 90L * 24 * 3_600_000).state
         assertEquals(setOf("gym:$start"), later.dismissedQuests)
     }
+
+    @Test
+    fun clearMissedHidesEndedEventsOnly() {
+        val past = at(8)
+        val future = at(18)
+        val events = listOf(
+            CalendarEvent("a:$past", "Church", past, past + 3_600_000, false, "me"),
+            CalendarEvent("b:$past", "Dentist", past, past + 1_800_000, false, "me"),
+            CalendarEvent("c:$future", "Migraine - AW", future, future + 3_600_000, false, "me"),
+        )
+        var s = GameEngine.syncCalendar(base, events).state
+        s = GameEngine.addTask(s, "Take battery out", Difficulty.HARD, Random(1), at(6), dueMs = at(7)).state
+        assertEquals(2, GameEngine.missedEvents(s, at(12)).size)
+        val u = GameEngine.closeMissed(s, at(12))
+        s = u.state
+        assertTrue("2 missed" in u.message)
+        // The later event and the overdue to-do stay.
+        assertEquals(setOf("Migraine - AW", "Take battery out"), s.tasks.map { it.title }.toSet())
+        assertEquals(setOf("Migraine - AW", "Take battery out"), GameEngine.syncCalendar(s, events).state.tasks.map { it.title }.toSet())
+        assertEquals(base.gold, s.gold)
+        assertEquals("No missed events.", GameEngine.closeMissed(s, at(12)).message)
+    }
 }

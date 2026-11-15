@@ -245,7 +245,11 @@ fun QuestsScreen(vm: GameViewModel) {
             item(key = "active_header") { SectionTitle("Scheduled (${scheduled.sumOf { it.tasks.size }})") }
         }
         scheduled.forEach { sec ->
-            item(key = "sec_${sec.group}") { GroupHeader(sec.group, sec.tasks.size) }
+            item(key = "sec_${sec.group}") {
+                // Missed calendar events can all be cleared at once (your own to-dos stay).
+                val missed = if (sec.group == Planner.Group.OVERDUE) sec.tasks.count { it.source == TaskSource.CALENDAR } else 0
+                GroupHeader(sec.group, sec.tasks.size, clearMissed = missed, onClearMissed = { vm.closeMissed() })
+            }
             items(sec.tasks, key = { it.id }, contentType = { "quest" }) { task ->
                 QuestRow(task, now, onClick = { editing = task }, onComplete = { vm.completeTask(task.id) }, onDelete = { vm.deleteTask(task.id) })
             }
@@ -328,15 +332,33 @@ private fun groupColor(g: Planner.Group): Color? = when (g) {
 }
 
 @Composable
-internal fun GroupHeader(g: Planner.Group, count: Int) {
+internal fun GroupHeader(g: Planner.Group, count: Int, clearMissed: Int = 0, onClearMissed: () -> Unit = {}) {
     val color = groupColor(g) ?: Gold
-    Row(Modifier.padding(top = 10.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+    var confirm by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         if (g == Planner.Group.SOON || g == Planner.Group.OVERDUE) {
             GIcon(GameIcon.HOURGLASS, Modifier.size(16.dp), color)
             Spacer(Modifier.width(6.dp))
         }
         Text(g.label, color = color, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-        Text("  $count", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        Text("  $count", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, modifier = Modifier.weight(1f))
+        if (clearMissed > 0) {
+            TextButton(onClick = { confirm = true }) { Text("Clear missed ($clearMissed)", fontSize = 13.sp) }
+        }
+    }
+    if (confirm) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirm = false },
+            title = { Text("Clear missed events?") },
+            text = {
+                Text(
+                    "$clearMissed calendar event${if (clearMissed == 1) "" else "s"} that already ended will leave your quests: no reward, no penalty. " +
+                        "They stay in your phone's calendar. Your own to-dos stay on the list.",
+                )
+            },
+            confirmButton = { TextButton(onClick = { confirm = false; onClearMissed() }) { Text("Clear them") } },
+            dismissButton = { TextButton(onClick = { confirm = false }) { Text("Keep them") } },
+        )
     }
 }
 

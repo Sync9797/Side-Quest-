@@ -379,6 +379,19 @@ object GameEngine {
         return Update(state.copy(tasks = tasks, dismissedQuests = keep + id), "Closed \"${task.title}\". It stays in your calendar.")
     }
 
+    /** Calendar events that have ended without being marked done (your own to-dos aren't included). */
+    fun missedEvents(state: GameState, nowMs: Long): List<QuestTask> =
+        state.tasks.filter { it.source == TaskSource.CALENDAR && Planner.isOverdue(it, nowMs) }
+
+    /** Closes every missed calendar event at once (see [deleteTask]): hidden in the game, kept in your calendar. */
+    fun closeMissed(state: GameState, nowMs: Long = System.currentTimeMillis()): Update {
+        val missed = missedEvents(state, nowMs)
+        if (missed.isEmpty()) return Update(state, "No missed events.")
+        var s = state
+        missed.forEach { s = deleteTask(s, it.id, nowMs).state }
+        return Update(s, "Cleared ${missed.size} missed event${if (missed.size == 1) "" else "s"}. They stay in your calendar.")
+    }
+
     /** How long closed calendar events are remembered. */
     private const val DISMISSED_KEEP_MS = 60L * 24 * 60 * 60_000
 
