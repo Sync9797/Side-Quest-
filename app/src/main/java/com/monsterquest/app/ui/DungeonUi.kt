@@ -504,7 +504,7 @@ fun TutorialIntro(onStart: () -> Unit) {
 @Composable
 private fun PartyWalk(vm: GameViewModel, step: Int, modifier: Modifier) {
     val s = vm.state
-    val outfit = com.monsterquest.app.ui.art.HeroOutfit.of(s.equippedGear, s.equippedArmor, s.equippedPieces)
+    val outfit = com.monsterquest.app.ui.art.HeroOutfit.of(s, hoodDown = false)
     val walk = remember(step) { Animatable(0f) }
     LaunchedEffect(step) { walk.animateTo(1f, tween(1700, easing = androidx.compose.animation.core.LinearOutSlowInEasing)) }
     val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "party")

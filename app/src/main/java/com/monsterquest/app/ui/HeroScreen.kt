@@ -33,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -162,7 +163,13 @@ fun HeroScreen(vm: GameViewModel) {
     val profile: @Composable () -> Unit = {
         GameCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HeroArt(h.heroClass, Modifier.size(110.dp), outfit = HeroOutfit.of(s.equippedGear, s.equippedArmor, s.equippedPieces))
+                // Tap the hero (or the Mirror) to change your look.
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    HeroArt(h.heroClass, Modifier.size(110.dp).clickable { vm.mirrorOpen = true }, outfit = HeroOutfit.of(s, hoodDown = true))
+                    TextButton(onClick = { vm.mirrorOpen = true }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp), modifier = Modifier.height(28.dp).testTag("mirror")) {
+                        Text("Mirror", fontSize = 12.sp, color = Gold)
+                    }
+                }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(h.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

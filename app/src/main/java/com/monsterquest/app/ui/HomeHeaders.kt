@@ -75,7 +75,7 @@ fun WelcomeHeader(vm: GameViewModel, nowMs: Long) {
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
-            HeroArt(h.heroClass, Modifier.fillMaxSize(), portrait = false, outfit = HeroOutfit.of(s.equippedGear, s.equippedArmor, s.equippedPieces))
+            HeroArt(h.heroClass, Modifier.fillMaxSize(), portrait = false, outfit = HeroOutfit.of(s, hoodDown = true))
         }
     }
 }

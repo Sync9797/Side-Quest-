@@ -1,7 +1,17 @@
 package com.monsterquest.app.ui.art
 
 import android.graphics.Canvas
+import com.monsterquest.core.Appearance
 import com.monsterquest.core.Armor
+import com.monsterquest.core.BodyType
+import com.monsterquest.core.CloakColor
+import com.monsterquest.core.EarShape
+import com.monsterquest.core.EyeStyle
+import com.monsterquest.core.FaceShape
+import com.monsterquest.core.GameState
+import com.monsterquest.core.HairColor
+import com.monsterquest.core.HairStyle
+import com.monsterquest.core.SkinTone
 import com.monsterquest.core.ArmorSlot
 import com.monsterquest.core.ArmorType
 import com.monsterquest.core.Element
@@ -48,6 +58,33 @@ private fun heroLook(cls: HeroClass) = when (cls) {
     HeroClass.ROGUE -> HeroLook(Argb.hex("3b4448"), Argb.hex("121719"), Argb.hex("2f3a3d"), Argb.hex("4b5a5c"), Argb.hex("23302f"), Argb.hex("0b1112"))
 }
 
+/** The hero's own traveller's clothes in the colour picked on the setup screen. */
+private fun cloakLook(c: CloakColor) = when (c) {
+    CloakColor.FOREST -> HeroLook(Argb.hex("52817a"), Argb.hex("163b3e"), Argb.hex("547f73"), Argb.hex("6e8c7b"), Argb.hex("35565a"), Argb.hex("152e32"))
+    CloakColor.CRIMSON -> HeroLook(Argb.hex("9a4a3e"), Argb.hex("3a1513"), Argb.hex("8a4a40"), Argb.hex("8a6a60"), Argb.hex("4a2a28"), Argb.hex("2a1210"))
+    CloakColor.MIDNIGHT -> HeroLook(Argb.hex("3f5a8a"), Argb.hex("121b33"), Argb.hex("3c5580"), Argb.hex("6a7d9a"), Argb.hex("26324d"), Argb.hex("0e1626"))
+    CloakColor.ASH -> HeroLook(Argb.hex("6a7072"), Argb.hex("1e2224"), Argb.hex("5c6466"), Argb.hex("7d8587"), Argb.hex("33393b"), Argb.hex("15191a"))
+    CloakColor.OCHRE -> HeroLook(Argb.hex("a07a3c"), Argb.hex("3a2a12"), Argb.hex("8e6c38"), Argb.hex("8a7a5a"), Argb.hex("4a3a22"), Argb.hex("241a0c"))
+    CloakColor.PLUM -> HeroLook(Argb.hex("6b5b95"), Argb.hex("2b2140"), Argb.hex("7c6aa6"), Argb.hex("8e7fb5"), Argb.hex("3b3157"), Argb.hex("1d1730"))
+}
+
+/** Swatch colours for the setup screen. */
+fun skinColor(t: SkinTone): Int = Argb.hex(
+    when (t) {
+        SkinTone.PORCELAIN -> "f3d7c0"; SkinTone.FAIR -> "e8c09c"; SkinTone.SAND -> "d6a57c"; SkinTone.OLIVE -> "b98260"
+        SkinTone.BRONZE -> "9a6646"; SkinTone.UMBER -> "7a4e34"; SkinTone.DEEP -> "5a3826"; SkinTone.EBONY -> "3e2619"
+    },
+)
+
+fun hairColor(h: HairColor): Int = Argb.hex(
+    when (h) {
+        HairColor.RAVEN -> "1d1714"; HairColor.CHESTNUT -> "3e2a1e"; HairColor.OAK -> "6b4a2e"; HairColor.EMBER -> "8a3c24"
+        HairColor.WHEAT -> "d6b46a"; HairColor.ASH -> "9a9ea2"; HairColor.FROST -> "ece6da"; HairColor.DUSK -> "3b4566"
+    },
+)
+
+fun cloakColor(c: CloakColor): Int = cloakLook(c).capeTop
+
 /** What the hero wears and holds; a null weapon or armor means nothing equipped. */
 data class HeroOutfit(
     val weapon: WeaponType? = null,
@@ -62,8 +99,18 @@ data class HeroOutfit(
     val boots: GearRarity? = null,
     /** The head piece is a metal Helm (drawn as a helmet instead of a cloth hood). */
     val helm: Boolean = false,
+    /** A second weapon, drawn put away: at the hip or across the back. */
+    val offhand: WeaponType? = null,
+    /** The hero's chosen look (null: the classic hooded hero, as for traders and nomads). */
+    val look: Appearance? = null,
+    /** Show the face with the hood lowered (menus); battles and dungeons keep it up. */
+    val hoodDown: Boolean = false,
 ) {
     companion object {
+        /** The player's hero as it is now; [hoodDown] for menus, false in battles and dungeons. */
+        fun of(s: GameState, hoodDown: Boolean) =
+            of(s.equippedGear, s.equippedArmor, s.equippedPieces).copy(offhand = s.offhandGear?.type, look = s.appearance, hoodDown = hoodDown)
+
         fun of(gear: Gear?, armor: Armor?, pieces: Map<ArmorSlot, Armor> = emptyMap()) = HeroOutfit(
             gear?.type, gear?.rarity ?: GearRarity.NORMAL, gear?.element ?: Element.NEUTRAL,
             armor?.type, armor?.rarity ?: GearRarity.NORMAL,
@@ -105,7 +152,10 @@ private fun cloth(r: GearRarity): Pair<Int, Int> = when (r) {
 internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: Boolean, outfit: HeroOutfit = HeroOutfit.classic(cls)) {
     c.save()
     ArtPainter.fit(c, w, h, 300f, 280f)
-    val look = heroLook(cls)
+    val app = outfit.look
+    val look = app?.let { cloakLook(it.cloak) } ?: heroLook(cls)
+    val female = app?.body == BodyType.FEMALE
+    val skin = app?.let { skinColor(it.skin) } ?: Argb.hex(SKIN_HAND)
     if (portrait) {
         ArtPainter.glow(c, 150f, 140f, 125f, Argb.hex("d2b266"), 0.25f)
         ArtPainter.ringStroke(c, 150f, 135f, 100f, Argb.hex("bfa164"), 1.5f, 0.25f)
@@ -126,7 +176,10 @@ internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: B
     ArtPainter.stroke(c, cape, INK, 2f, 0.75f)
     // A trimmed hem shows the cloak's rarity.
     outfit.cloak?.let { ArtPainter.stroke(c, "M93 228Q150 252 211 228", trim(it), 3f, 0.9f) }
-    val legs = "M124 154L118 238L141 238L151 186L159 238L182 238L176 154Z"
+    // Weapons put away on the back (and a bow's quiver) sit behind the body.
+    if (outfit.weapon == WeaponType.BOW) drawQuiver(c)
+    outfit.offhand?.takeIf { it in BACK_CARRY }?.let { drawOnBack(c, it) }
+    val legs = if (female) "M126 154L120 238L142 238L151 186L158 238L180 238L174 154Z" else "M124 154L118 238L141 238L151 186L159 238L182 238L176 154Z"
     val pants = outfit.pants
     if (pants == null) {
         ArtPainter.fill(c, legs, Argb.hex("14272d"))
@@ -148,10 +201,13 @@ internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: B
         ArtPainter.stroke(c, "M119 224H142M159 224H183", trim(boots), 2.5f)
         ArtPainter.stroke(c, "M119 222H142V248H108Q106 238 119 234ZM159 222H183V234L194 248H159Z", INK, 1.4f, 0.6f)
     }
-    drawArmor(c, outfit, look)
+    drawArmor(c, outfit, look, if (female) ARMS_F else ARMS, if (female) TORSO_F else TORSO)
     val helmRarity = outfit.hood?.takeIf { outfit.helm }
+    val showFace = app != null && outfit.hoodDown && !app.hoodAlwaysUp && helmRarity == null
     if (helmRarity != null) {
         drawHelm(c, helmRarity)
+    } else if (showFace) {
+        drawHead(c, app!!, outfit.hood?.let { cloth(it).first } ?: look.hood, outfit.hood?.let { trim(it) })
     } else {
         val hood = "M120 106Q111 66 151 47Q192 67 181 106L168 122H132Z"
         val hoodColor = outfit.hood?.let { cloth(it).first } ?: look.hood
@@ -166,11 +222,14 @@ internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: B
     ArtPainter.fill(c, "M150 112Q160 117 150 127Q140 117 150 112Z", Argb.hex("8fb58a"))
     ArtPainter.stroke(c, "M150 113V126", Argb.hex("e6c277"), 1.2f)
     ArtPainter.stroke(c, "M150 112Q160 117 150 127Q140 117 150 112Z", Argb.hex("e6c277"), 1.2f)
-    ArtPainter.stroke(c, "M139 96H147M157 96H165", Argb.hex("edce83"), 3f)
-    if (helmRarity == null) ArtPainter.fill(c, "M145 58L151 47L158 60L151 70Z", Argb.hex("e6c277"))
+    // Hood up: the face is lost in shadow, only the eyes catch the light.
+    if (!showFace) ArtPainter.stroke(c, "M139 96H147M157 96H165", Argb.hex("edce83"), 3f)
+    if (helmRarity == null && !showFace) ArtPainter.fill(c, "M145 58L151 47L158 60L151 70Z", Argb.hex("e6c277"))
+    outfit.offhand?.takeIf { it !in BACK_CARRY }?.let { drawAtHip(c, it) }
     drawWeapon(c, outfit)
-    ArtPainter.fill(c, "M109 166L126 165L129 184L116 187Z", Argb.hex(SKIN_HAND))
-    ArtPainter.fill(c, "M180 163L194 162L199 179L185 185Z", Argb.hex(SKIN_HAND))
+    // Closed fists: the weapon hand grips the handle, the other hangs free.
+    drawFist(c, 118f, 176f, skin, holding = false)
+    drawFist(c, 190f, 173f, skin, holding = outfit.weapon != null)
     if (portrait) {
         val spark = Argb.hex("e9cb83")
         ArtPainter.fill(c, "M62 94l3 6 6 3-6 3-3 6-3-6-6-3 6-3z", spark)
@@ -211,18 +270,21 @@ private fun drawHelm(c: Canvas, rarity: GearRarity) {
 
 private const val ARMS = "M116 121L106 165L126 177L139 144M179 121L194 164L177 176L164 142"
 private const val TORSO = "M127 112L171 112L182 173L119 173Z"
+/** A slightly narrower build: shoulders and waist in by a few points. */
+private const val ARMS_F = "M118 121L108 165L127 177L139 144M178 121L192 164L176 176L164 142"
+private const val TORSO_F = "M129 112L169 112L174 146L180 173L120 173L126 146Z"
 
-private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook) {
+private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook, arms: String, torso: String) {
     val t = trim(o.armorRarity)
     // Hoods, cloaks, pants and boots never go in the body slot; draw plain clothes if one does.
     when (o.armor) {
         null, ArmorType.HOOD, ArmorType.CLOAK, ArmorType.PANTS, ArmorType.BOOTS,
         ArmorType.HELM, ArmorType.MANTLE, ArmorType.LEGGINGS, ArmorType.SANDALS -> {
             // Plain traveler's clothes.
-            ArtPainter.fill(c, ARMS, look.arms)
-            ArtPainter.fill(c, TORSO, look.torso)
-            ArtPainter.stroke(c, TORSO, INK, 1.6f, 0.6f)
-            ArtPainter.stroke(c, ARMS, INK, 1.4f, 0.5f)
+            ArtPainter.fill(c, arms, look.arms)
+            ArtPainter.fill(c, torso, look.torso)
+            ArtPainter.stroke(c, torso, INK, 1.6f, 0.6f)
+            ArtPainter.stroke(c, arms, INK, 1.4f, 0.5f)
             ArtPainter.fill(c, "M124 148H176V158H124Z", Argb.hex("b49b6d"))
             ArtPainter.fill(c, "M142 146H157V160H142Z", Argb.hex("eac774"))
         }
@@ -233,10 +295,10 @@ private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook) {
                 GearRarity.EPIC -> Argb.hex("a594cf") to Argb.hex("2d2547")
                 GearRarity.LEGENDARY -> Argb.hex("f0d58f") to Argb.hex("6b5126")
             }
-            ArtPainter.fill(c, ARMS, ArtPainter.linear(106f, 121f, 194f, 177f, hi, lo))
-            ArtPainter.fill(c, TORSO, ArtPainter.linear(127f, 112f, 182f, 173f, hi, lo))
-            ArtPainter.stroke(c, TORSO, INK, 1.6f, 0.6f)
-            ArtPainter.stroke(c, ARMS, INK, 1.4f, 0.5f)
+            ArtPainter.fill(c, arms, ArtPainter.linear(106f, 121f, 194f, 177f, hi, lo))
+            ArtPainter.fill(c, torso, ArtPainter.linear(127f, 112f, 182f, 173f, hi, lo))
+            ArtPainter.stroke(c, torso, INK, 1.6f, 0.6f)
+            ArtPainter.stroke(c, arms, INK, 1.4f, 0.5f)
             ArtPainter.stroke(c, "M150 116V170M132 128Q150 136 168 128", lo, 2f)
             // Pauldrons.
             ArtPainter.fill(c, "M104 128Q106 110 128 112L132 126Q118 122 104 128Z", hi)
@@ -248,10 +310,10 @@ private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook) {
         ArmorType.LEATHER -> {
             val hide = Argb.hex("7a5438")
             val dark = Argb.hex("3d2a1d")
-            ArtPainter.fill(c, ARMS, look.arms)
-            ArtPainter.fill(c, TORSO, ArtPainter.linear(127f, 112f, 182f, 173f, hide, dark))
-            ArtPainter.stroke(c, TORSO, INK, 1.6f, 0.6f)
-            ArtPainter.stroke(c, ARMS, INK, 1.4f, 0.5f)
+            ArtPainter.fill(c, arms, look.arms)
+            ArtPainter.fill(c, torso, ArtPainter.linear(127f, 112f, 182f, 173f, hide, dark))
+            ArtPainter.stroke(c, torso, INK, 1.6f, 0.6f)
+            ArtPainter.stroke(c, arms, INK, 1.4f, 0.5f)
             ArtPainter.stroke(c, "M129 116L176 168", dark, 5f)
             ArtPainter.stroke(c, "M129 116L176 168", t, 1.5f, 0.8f)
             // Bracers.
@@ -270,10 +332,10 @@ private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook) {
             }
             ArtPainter.fill(c, "M124 150L112 240Q150 250 188 240L176 150Z", ArtPainter.linear(150f, 150f, 150f, 245f, hi, lo))
             ArtPainter.stroke(c, "M150 160V244", t, 2f, 0.7f)
-            ArtPainter.fill(c, ARMS, hi)
-            ArtPainter.fill(c, TORSO, ArtPainter.linear(127f, 112f, 182f, 173f, hi, lo))
-            ArtPainter.stroke(c, TORSO, INK, 1.6f, 0.6f)
-            ArtPainter.stroke(c, ARMS, INK, 1.4f, 0.5f)
+            ArtPainter.fill(c, arms, hi)
+            ArtPainter.fill(c, torso, ArtPainter.linear(127f, 112f, 182f, 173f, hi, lo))
+            ArtPainter.stroke(c, torso, INK, 1.6f, 0.6f)
+            ArtPainter.stroke(c, arms, INK, 1.4f, 0.5f)
             ArtPainter.stroke(c, "M134 113L150 136L166 113", t, 2.5f)
             ArtPainter.fill(c, "M122 150H178V158H122Z", t)
         }
@@ -287,93 +349,324 @@ private fun drawWeapon(c: Canvas, o: HeroOutfit) {
     val bladeLo = if (e == Element.NEUTRAL) Argb.hex("96c8ba") else palette(e).base
     val guard = trim(o.weaponRarity).let { if (o.weaponRarity == GearRarity.NORMAL) Argb.hex("c9a86a") else it }
     val wood = Argb.hex("8c6951")
-    if (o.weaponRarity >= GearRarity.EPIC) ArtPainter.glow(c, 196f, 120f, 46f, trim(o.weaponRarity), 0.4f)
+    if (o.weaponRarity >= GearRarity.EPIC) ArtPainter.glow(c, 190f, 120f, 46f, trim(o.weaponRarity), 0.4f)
+    // Every weapon runs through the weapon fist at (190, 173): grip inside the hand, guard above it, pommel below.
     when (type) {
         WeaponType.SWORD -> {
-            ArtPainter.fill(c, "M187 90L195 77L203 90L198 179H190Z", bladeHi)
-            ArtPainter.fill(c, "M186 90L195 77V178H190Z", bladeLo)
-            ArtPainter.fill(c, "M179 176H210V183H179Z", guard)
-            ArtPainter.fill(c, "M191 183H198V203H191Z", wood)
+            ArtPainter.fill(c, "M185 72L190 60L195 72L194 160H186Z", bladeHi)
+            ArtPainter.fill(c, "M185 72L190 60V160H186Z", bladeLo)
+            ArtPainter.fill(c, "M176 158H204L202 165H178Z", guard)
+            ArtPainter.fill(c, "M187 164H193V186H187Z", wood)
+            ArtPainter.circle(c, 190f, 188f, 4f, guard)
         }
         WeaponType.BROADSWORD -> {
-            ArtPainter.fill(c, "M183 66L196 46L209 66L205 179H187Z", bladeHi)
-            ArtPainter.fill(c, "M183 66L196 46V179H187Z", bladeLo)
-            ArtPainter.stroke(c, "M196 60V170", bladeLo, 1.5f, 0.6f)
-            ArtPainter.fill(c, "M172 175H220L216 184H176Z", guard)
-            ArtPainter.fill(c, "M192 184H200V207H192Z", wood)
-            ArtPainter.circle(c, 196f, 210f, 4.5f, guard)
+            // Planted point-down, the fist resting on the hilt.
+            ArtPainter.fill(c, "M181 192H199L197 240L190 252L183 240Z", bladeHi)
+            ArtPainter.fill(c, "M181 192H190V252L183 240Z", bladeLo)
+            ArtPainter.stroke(c, "M190 196V238", bladeLo, 1.5f, 0.6f)
+            ArtPainter.fill(c, "M170 184H210L206 192H174Z", guard)
+            ArtPainter.fill(c, "M186 160H194V184H186Z", wood)
+            ArtPainter.circle(c, 190f, 157f, 5f, guard)
         }
         WeaponType.DAGGER -> {
-            // One dagger in the weapon hand; the grip sits inside the fist (hands are drawn on top).
-            ArtPainter.fill(c, "M184 118L190 104L196 118L193 160H187Z", bladeHi)
-            ArtPainter.fill(c, "M184 118L190 104V160H187Z", bladeLo)
-            ArtPainter.fill(c, "M177 158H203V164H177Z", guard)
-            ArtPainter.fill(c, "M187 164H193V186H187Z", wood)
-            ArtPainter.circle(c, 190f, 188f, 3.5f, guard)
+            ArtPainter.fill(c, "M186 136L190 124L194 136L193 160H187Z", bladeHi)
+            ArtPainter.fill(c, "M186 136L190 124V160H187Z", bladeLo)
+            ArtPainter.fill(c, "M180 158H200V164H180Z", guard)
+            ArtPainter.fill(c, "M187 164H193V184H187Z", wood)
+            ArtPainter.circle(c, 190f, 186f, 3.2f, guard)
         }
         WeaponType.STAFF -> {
-            ArtPainter.stroke(c, "M196 86V206", wood, 7f)
+            ArtPainter.stroke(c, "M190 64V248", wood, 7f)
             val orb = if (e == Element.NEUTRAL) Argb.hex("9cd2bd") else palette(e).base
             val core = if (e == Element.NEUTRAL) Argb.hex("bfeedd") else palette(e).light
-            ArtPainter.glow(c, 196f, 74f, 30f, orb, 0.55f)
-            ArtPainter.circle(c, 196f, 74f, 11f, core)
-            ArtPainter.circle(c, 193f, 71f, 4f, Argb.hex("ffffff"), 0.8f)
-            ArtPainter.stroke(c, "M187 86Q196 92 205 86", guard, 3f)
+            ArtPainter.glow(c, 190f, 52f, 30f, orb, 0.55f)
+            ArtPainter.circle(c, 190f, 52f, 11f, core)
+            ArtPainter.circle(c, 187f, 49f, 4f, Argb.hex("ffffff"), 0.8f)
+            ArtPainter.stroke(c, "M181 64Q190 72 199 64", guard, 3f)
         }
         WeaponType.WAND -> {
-            ArtPainter.stroke(c, "M190 186L204 124", wood, 5f)
-            ArtPainter.stroke(c, "M201 136L205 120", guard, 5f)
+            ArtPainter.stroke(c, "M186 194L204 128", wood, 5f)
+            ArtPainter.stroke(c, "M201 138L205 124", guard, 5f)
             val tip = if (e == Element.NEUTRAL) Argb.hex("f5e7a1") else palette(e).light
-            ArtPainter.glow(c, 206f, 114f, 20f, tip, 0.6f)
-            ArtPainter.fill(c, "M206 103l3 8 8 3-8 3-3 8-3-8-8-3 8-3z", tip)
+            ArtPainter.glow(c, 206f, 118f, 20f, tip, 0.6f)
+            ArtPainter.fill(c, "M206 107l3 8 8 3-8 3-3 8-3-8-8-3 8-3z", tip)
         }
         WeaponType.AXE -> {
             // A double-bladed battle axe: a long two-tone haft, a gold-banded head and two crescent blades.
-            val haft = Argb.hex("5a3326")
-            val grip = Argb.hex("1e1a1c")
             val gold = Argb.hex("e3b54a")
-            ArtPainter.stroke(c, "M196 72V214", haft, 7f)
-            ArtPainter.stroke(c, "M196 172V214", grip, 7f)
-            ArtPainter.fill(c, "M191 168H201V173H191Z", gold)
-            ArtPainter.fill(c, "M191 210H201V215H191Z", gold)
-            // Blades, wide at the edge and narrow at the head.
-            val left = "M190 76Q172 72 160 60Q150 88 160 118Q172 106 190 102Z"
-            val right = "M202 76Q220 72 232 60Q242 88 232 118Q220 106 202 102Z"
+            ArtPainter.stroke(c, "M190 64V230", Argb.hex("5a3326"), 7f)
+            ArtPainter.stroke(c, "M190 158V230", Argb.hex("1e1a1c"), 7f)
+            ArtPainter.fill(c, "M185 154H195V158H185ZM185 226H195V231H185Z", gold)
+            val left = "M184 68Q166 64 154 52Q144 80 154 110Q166 98 184 94Z"
+            val right = "M196 68Q214 64 226 52Q236 80 226 110Q214 98 196 94Z"
             ArtPainter.fill(c, left, bladeHi)
             ArtPainter.fill(c, right, bladeHi)
-            ArtPainter.stroke(c, "M160 60Q150 88 160 118", bladeLo, 2.5f)
-            ArtPainter.stroke(c, "M232 60Q242 88 232 118", bladeLo, 2.5f)
+            ArtPainter.stroke(c, "M154 52Q144 80 154 110M226 52Q236 80 226 110", bladeLo, 2.5f)
             // Cut-outs in each blade.
-            ArtPainter.fill(c, "M170 82L178 82L174 74Z", bladeLo, 0.8f)
-            ArtPainter.fill(c, "M170 96L178 96L174 104Z", bladeLo, 0.8f)
-            ArtPainter.fill(c, "M214 82L222 82L218 74Z", bladeLo, 0.8f)
-            ArtPainter.fill(c, "M214 96L222 96L218 104Z", bladeLo, 0.8f)
+            ArtPainter.fill(c, "M164 74H172L168 66ZM164 88H172L168 96ZM208 74H216L212 66ZM208 88H216L212 96Z", bladeLo, 0.8f)
             ArtPainter.stroke(c, left, INK, 1.2f, 0.5f)
             ArtPainter.stroke(c, right, INK, 1.2f, 0.5f)
-            // The gold head and cap.
-            ArtPainter.fill(c, "M189 68H203V112H189Z", gold)
-            ArtPainter.stroke(c, "M189 80H203M189 92H203M189 104H203", Argb.hex("a87a22"), 1.2f)
-            ArtPainter.fill(c, "M191 60H201V68H191Z", gold)
-            ArtPainter.fill(c, "M189 112H203L199 120H193Z", gold)
+            ArtPainter.fill(c, "M183 60H197V104H183Z", gold)
+            ArtPainter.stroke(c, "M183 72H197M183 84H197M183 96H197", Argb.hex("a87a22"), 1.2f)
+            ArtPainter.fill(c, "M185 52H195V60H185ZM183 104H197L193 112H187Z", gold)
         }
         WeaponType.BOW -> {
-            // A tall longbow held at the side: limbs curving away from the hero, the string on the near side, an arrow nocked and pointing out.
-            ArtPainter.stroke(c, "M196 66Q234 138 196 212", wood, 5f)
-            ArtPainter.stroke(c, "M196 66Q230 138 196 212", guard, 1.5f, 0.6f)
-            ArtPainter.stroke(c, "M196 66L196 212", Argb.hex("e8e2d0"), 1.2f, 0.9f)
-            ArtPainter.stroke(c, "M190 138H236", bladeLo, 2.5f)
-            ArtPainter.fill(c, "M236 133L246 138L236 143Z", bladeHi)
-            // Fletching at the string.
-            ArtPainter.fill(c, "M190 138L183 133L186 138L183 143Z", guard)
+            // Held at the grip: limbs curve away from the hero, the string on the near side.
+            ArtPainter.stroke(c, "M178 104Q208 173 178 242", wood, 5f)
+            ArtPainter.stroke(c, "M178 104Q204 173 178 242", guard, 1.5f, 0.6f)
+            ArtPainter.stroke(c, "M178 104V242", Argb.hex("e8e2d0"), 1.2f, 0.9f)
         }
         WeaponType.SCYTHE -> {
-            // A long snath and a sweeping blade above the head.
-            ArtPainter.stroke(c, "M202 54L190 208", wood, 6f)
-            ArtPainter.fill(c, "M202 56Q162 42 136 82Q164 64 200 72Z", bladeHi)
-            ArtPainter.stroke(c, "M200 60Q166 50 142 78", bladeLo, 2f, 0.8f)
-            ArtPainter.fill(c, "M193 120H205V127H193Z", guard)
+            // A long snath, the blade sweeping outward above the hero.
+            ArtPainter.stroke(c, "M198 40L186 246", wood, 6f)
+            ArtPainter.fill(c, "M198 42Q240 34 266 74Q238 54 200 58Z", bladeHi)
+            ArtPainter.stroke(c, "M198 42Q240 34 266 74Q238 54 200 58Z", INK, 1f, 0.4f)
+            ArtPainter.stroke(c, "M202 46Q236 42 258 68", bladeLo, 2f, 0.8f)
+            ArtPainter.fill(c, "M191 128H203V134H191Z", guard)
         }
     }
+}
+
+/** Off-hand weapons too big for the hip ride across the back. */
+private val BACK_CARRY = setOf(WeaponType.BROADSWORD, WeaponType.AXE, WeaponType.STAFF, WeaponType.BOW, WeaponType.SCYTHE)
+private val SHEATH = Argb.hex("3a2a20")
+private val BRASS = Argb.hex("c9a86a")
+private val HAFT_WOOD = Argb.hex("8c6951")
+
+/** A closed fist centred at ([cx], [cy]): finger creases, and a thumb over the front when [holding] a handle. */
+private fun drawFist(c: Canvas, cx: Float, cy: Float, skin: Int, holding: Boolean) {
+    val x = cx - 8; val y = cy - 9
+    val d = "M$x ${y + 3}Q$x $y ${x + 3} ${y}H${x + 13}Q${x + 16} $y ${x + 16} ${y + 3}V${y + 15}Q${x + 16} ${y + 18} ${x + 13} ${y + 18}H${x + 3}Q$x ${y + 18} $x ${y + 15}Z"
+    ArtPainter.fill(c, d, skin)
+    ArtPainter.stroke(c, d, INK, 1.3f, 0.7f)
+    if (holding) {
+        ArtPainter.stroke(c, "M${x + 1} ${y + 5}H${x + 7}M${x + 1} ${y + 9.5f}H${x + 7}M${x + 1} ${y + 14}H${x + 7}", INK, 1f, 0.45f)
+        ArtPainter.stroke(c, "M${x + 9} ${y + 2}Q${x + 17} ${y + 4} ${x + 15} ${y + 10}", INK, 1f, 0.45f)
+    } else {
+        ArtPainter.stroke(c, "M${x + 3} ${y + 6}H${x + 9}M${x + 3} ${y + 10}H${x + 9}M${x + 3} ${y + 14}H${x + 9}", INK, 0.9f, 0.35f)
+    }
+}
+
+/** Arrows in a quiver behind the shoulder. */
+private fun drawQuiver(c: Canvas) {
+    ArtPainter.fill(c, "M104 90L124 70L138 84L118 104Z", Argb.hex("5a3a26"))
+    ArtPainter.stroke(c, "M104 90L124 70L138 84L118 104Z", INK, 1.2f, 0.6f)
+    ArtPainter.stroke(c, "M108 78L100 66M114 72L108 58M120 66L116 54", Argb.hex("e8e2d0"), 1.2f)
+    ArtPainter.fill(c, "M100 66l-5-4 1 6zM108 58l-4-5v6zM116 54l-3-5-1 6z", BRASS)
+}
+
+/** A big second weapon slung across the back, its hilt or head over the shoulder. */
+private fun drawOnBack(c: Canvas, t: WeaponType) {
+    c.save()
+    c.rotate(-38f, 150f, 140f)
+    when (t) {
+        WeaponType.BROADSWORD -> {
+            ArtPainter.fill(c, "M142 70H158V200L150 212L142 200Z", SHEATH)
+            ArtPainter.stroke(c, "M142 70H158V200L150 212L142 200Z", INK, 1.2f, 0.6f)
+            ArtPainter.fill(c, "M144 40H156V64H144Z", HAFT_WOOD)
+            ArtPainter.circle(c, 150f, 38f, 4f, BRASS)
+            ArtPainter.fill(c, "M136 62H164V70H136Z", BRASS)
+        }
+        WeaponType.AXE -> {
+            ArtPainter.stroke(c, "M150 40V210", Argb.hex("5a3326"), 6f)
+            ArtPainter.fill(c, "M146 30Q132 26 124 18Q118 34 124 50Q132 42 146 42Z", Argb.hex("dcf5e3"))
+            ArtPainter.stroke(c, "M146 30Q132 26 124 18Q118 34 124 50Q132 42 146 42Z", INK, 1f, 0.5f)
+            ArtPainter.fill(c, "M146 26H154V48H146Z", Argb.hex("e3b54a"))
+        }
+        WeaponType.STAFF -> {
+            ArtPainter.stroke(c, "M150 30V220", HAFT_WOOD, 6f)
+            ArtPainter.circle(c, 150f, 26f, 8f, Argb.hex("bfeedd"))
+        }
+        WeaponType.BOW -> {
+            ArtPainter.stroke(c, "M140 30Q170 120 140 210", HAFT_WOOD, 4f)
+            ArtPainter.stroke(c, "M140 30V210", Argb.hex("e8e2d0"), 1f)
+        }
+        WeaponType.SCYTHE -> {
+            ArtPainter.stroke(c, "M150 30V220", HAFT_WOOD, 5f)
+            ArtPainter.fill(c, "M150 32Q122 22 104 48Q124 36 150 42Z", Argb.hex("dcf5e3"))
+        }
+        else -> {}
+    }
+    c.restore()
+}
+
+/** A short second weapon sheathed at the hip, the hilt by the belt. */
+private fun drawAtHip(c: Canvas, t: WeaponType) {
+    if (t == WeaponType.WAND) {
+        ArtPainter.stroke(c, "M128 150L120 186", HAFT_WOOD, 4f)
+        ArtPainter.stroke(c, "M128 150L130 144", BRASS, 4f)
+        return
+    }
+    val long = t == WeaponType.SWORD
+    val tip = if (long) 236 else 196
+    c.save()
+    c.rotate(if (long) 24f else 18f, 130f, 152f)
+    val sheath = "M126 160H134V${tip}L130 ${tip + 6}L126 ${tip}Z"
+    ArtPainter.fill(c, sheath, SHEATH)
+    ArtPainter.stroke(c, sheath, INK, 1.2f, 0.6f)
+    ArtPainter.stroke(c, "M126 ${tip - 8}H134", BRASS, 2f)
+    ArtPainter.fill(c, "M122 156H138V160H122Z", BRASS)
+    ArtPainter.fill(c, "M128 140H132V156H128Z", HAFT_WOOD)
+    ArtPainter.circle(c, 130f, 138f, 3f, BRASS)
+    c.restore()
+}
+
+// ---------------------------------------------------------------------------
+// The hero's face, with the hood lowered into a cowl.
+// ---------------------------------------------------------------------------
+
+private fun facePath(f: FaceShape) = when (f) {
+    FaceShape.OVAL -> "M134 84Q134 64 151 64Q168 64 168 84Q168 100 151 108Q134 100 134 84Z"
+    FaceShape.ROUND -> "M133 85Q133 64 151 64Q169 64 169 85Q169 106 151 107Q133 106 133 85Z"
+    FaceShape.ANGULAR -> "M134 82Q134 64 151 64Q168 64 168 82L166 98L156 108H146L136 98Z"
+    FaceShape.LONG -> "M135 82Q135 61 151 61Q167 61 167 82L165 100Q160 111 151 112Q142 111 137 100Z"
+    FaceShape.HEART -> "M133 82Q133 64 151 64Q169 64 169 82Q167 96 151 109Q135 96 133 82Z"
+}
+
+private fun ellipse(cx: Float, cy: Float, rx: Float, ry: Float) =
+    "M${cx - rx} ${cy}A$rx $ry 0 1 1 ${cx + rx} ${cy}A$rx $ry 0 1 1 ${cx - rx} ${cy}Z"
+
+private const val CROWN = "M131 84Q128 57 151 54Q174 57 171 84Q166 68 151 67Q136 68 131 84Z"
+
+private fun hairShape(c: Canvas, d: String, color: Int) {
+    ArtPainter.fill(c, d, color)
+    ArtPainter.stroke(c, d, INK, 1.5f, 0.65f)
+}
+
+/** Hair behind the head (long hair, tails, locs). */
+private fun drawHairBack(c: Canvas, style: HairStyle, color: Int) {
+    when (style) {
+        HairStyle.LONG -> hairShape(c, "M130 80Q128 57 151 54Q174 57 172 80L177 134L162 129L156 112H146L140 129L125 134Z", color)
+        HairStyle.PONYTAIL -> hairShape(c, "M164 64Q192 66 190 98Q188 120 178 130Q182 102 168 84Z", color)
+        HairStyle.TOPKNOT -> { ArtPainter.circle(c, 151f, 49f, 9f, color); ArtPainter.ringStroke(c, 151f, 49f, 9f, INK, 1.4f, 0.65f) }
+        HairStyle.LOCS -> listOf(132f, 138f, 144f, 158f, 164f, 170f).forEachIndexed { i, x ->
+            val out = if (x < 151) -1 else 1
+            val end = if (i == 2 || i == 3) 106 else 124
+            ArtPainter.stroke(c, "M$x 72Q${x + 5 * out} 100 ${x + 6 * out} $end", color, 5f)
+        }
+        else -> {}
+    }
+}
+
+/** Hair over the forehead and crown. */
+private fun drawHairFront(c: Canvas, style: HairStyle, color: Int) {
+    when (style) {
+        HairStyle.WINDSWEPT -> hairShape(c, "M130 86Q125 60 144 53L149 44L156 52Q167 47 180 42L173 56Q182 58 186 66L172 68Q173 77 171 86Q166 73 158 70L161 78Q150 70 141 73L144 65Q135 72 130 86Z", color)
+        HairStyle.WAYFARER -> hairShape(c, "M131 84Q127 59 151 54Q175 59 171 84L167 74L163 79L159 70L153 77L148 69L142 78L137 71Z", color)
+        HairStyle.SHAGGY -> hairShape(c, "M129 96Q124 58 151 53Q178 58 173 96L169 88L168 76L163 82L160 72L154 80L149 70L144 80L139 72L136 82L133 78Z", color)
+        HairStyle.SWEEP -> hairShape(c, "M131 88Q126 57 151 54Q177 57 171 84Q164 69 150 72Q141 79 135 92Z", color)
+        HairStyle.LONG -> hairShape(c, "M131 86Q129 57 151 55Q173 57 171 86Q167 66 151 63Q135 66 131 86Z", color)
+        HairStyle.PONYTAIL -> {
+            hairShape(c, CROWN, color)
+            ArtPainter.fill(c, "M164.5 61.5L170.6 65L167 71.1L160.9 67.6Z", BRASS)
+        }
+        HairStyle.BRAID -> {
+            hairShape(c, CROWN, color)
+            for (i in 0 until 6) {
+                val e = ellipse(168f + if (i % 2 == 1) 1.5f else -1.5f, 94f + i * 8, 5f, 5.5f)
+                ArtPainter.fill(c, e, color)
+                ArtPainter.stroke(c, e, INK, 1.2f, 0.6f)
+            }
+            ArtPainter.fill(c, "M164 140H172V144H164Z", BRASS)
+        }
+        HairStyle.TOPKNOT -> {
+            hairShape(c, "M132 82Q130 58 151 56Q172 58 170 82Q166 66 151 64Q136 66 132 82Z", color)
+            ArtPainter.fill(c, "M145 55H157V59H145Z", BRASS)
+        }
+        HairStyle.LOCS -> hairShape(c, CROWN, color)
+        HairStyle.SHORN -> ArtPainter.fill(c, "M134 78Q134 60 151 60Q168 60 168 78Q161 68 151 68Q141 68 134 78Z", color, 0.85f)
+    }
+}
+
+private val SCLERA = Argb.hex("f4ede0")
+
+private fun drawEyes(c: Canvas, style: EyeStyle, female: Boolean) {
+    // Female eyes add a lash flick at the outer corners.
+    fun lash(y: Float) {
+        if (female) ArtPainter.stroke(c, "M140.3 ${y}L138 ${y - 2.3f}M161.7 ${y}L164 ${y - 2.3f}", INK, 1.3f)
+    }
+    when (style) {
+        EyeStyle.GENTLE -> {
+            lash(87.5f)
+            ArtPainter.stroke(c, "M140.5 87.5Q144 85 147.5 87.5M154.5 87.5Q158 85 161.5 87.5", INK, 1.8f)
+            ArtPainter.circle(c, 144.3f, 89f, 1.9f, INK); ArtPainter.circle(c, 157.7f, 89f, 1.9f, INK)
+            ArtPainter.circle(c, 144.9f, 88.4f, 0.6f, EYE); ArtPainter.circle(c, 158.3f, 88.4f, 0.6f, EYE)
+        }
+        EyeStyle.STERN -> {
+            lash(88.4f)
+            ArtPainter.fill(c, "M140.5 88.6Q144.5 90.6 147.8 88.4Q144.5 87.6 140.5 88.6ZM154.2 88.4Q157.5 90.6 161.5 88.6Q157.5 87.6 154.2 88.4Z", SCLERA)
+            ArtPainter.circle(c, 144.6f, 89f, 1.25f, INK); ArtPainter.circle(c, 157.4f, 89f, 1.25f, INK)
+            ArtPainter.stroke(c, "M140 88.4L148 87.6M154 87.6L162 88.4", INK, 2.2f)
+        }
+        EyeStyle.KEEN -> {
+            lash(88.6f)
+            ArtPainter.fill(c, "M140.5 89Q144 86.4 148 88Q144.5 91 140.5 89ZM154 88Q158 86.4 161.5 89Q157.5 91 154 88Z", SCLERA)
+            ArtPainter.circle(c, 144.6f, 88.7f, 1.6f, Argb.hex("3d6b5f")); ArtPainter.circle(c, 157.4f, 88.7f, 1.6f, Argb.hex("3d6b5f"))
+            ArtPainter.circle(c, 144.6f, 88.7f, 0.8f, INK); ArtPainter.circle(c, 157.4f, 88.7f, 0.8f, INK)
+            ArtPainter.stroke(c, "M140 89.2Q144 85.8 148.4 87.8M153.6 87.8Q158 85.8 162 89.2", INK, 1.8f)
+        }
+        EyeStyle.DOT -> {
+            lash(87.4f)
+            ArtPainter.fill(c, ellipse(144.4f, 88.6f, 1.7f, 2.4f), INK)
+            ArtPainter.fill(c, ellipse(157.6f, 88.6f, 1.7f, 2.4f), INK)
+        }
+        EyeStyle.DASH -> {
+            lash(88.4f)
+            ArtPainter.stroke(c, "M140.5 88.6L147.6 87.8M154.4 87.8L161.5 88.6", INK, 2.4f)
+            ArtPainter.stroke(c, "M144 88.4V90M158 88.4V90", INK, 2f)
+        }
+        EyeStyle.BRIGHT -> {
+            // Tall bright eyes: white, a slate-blue iris, a dark pupil and a highlight, under a bold lash line.
+            ArtPainter.fill(c, ellipse(144.2f, 88.6f, 2.9f, 3.8f), Argb.hex("f8f4ec"))
+            ArtPainter.fill(c, ellipse(157.8f, 88.6f, 2.9f, 3.8f), Argb.hex("f8f4ec"))
+            ArtPainter.fill(c, ellipse(144.6f, 89.3f, 2.2f, 3f), Argb.hex("56688f"))
+            ArtPainter.fill(c, ellipse(157.4f, 89.3f, 2.2f, 3f), Argb.hex("56688f"))
+            ArtPainter.fill(c, ellipse(144.6f, 89.8f, 1.1f, 1.8f), Argb.hex("1f2638"))
+            ArtPainter.fill(c, ellipse(157.4f, 89.8f, 1.1f, 1.8f), Argb.hex("1f2638"))
+            ArtPainter.circle(c, 145.3f, 88f, 0.9f, Argb.hex("ffffff")); ArtPainter.circle(c, 158.1f, 88f, 0.9f, Argb.hex("ffffff"))
+            ArtPainter.stroke(c, "M140.6 86.4Q144 83.6 147.8 85.8M154.2 85.8Q158 83.6 161.4 86.4", INK, 2f)
+            lash(86.4f)
+        }
+    }
+}
+
+/** The face with the hood lowered: hair, ears, face, features and a cowl gathered round the shoulders. */
+private fun drawHead(c: Canvas, a: Appearance, hoodColor: Int, hoodTrim: Int?) {
+    val skin = skinColor(a.skin)
+    val hair = hairColor(a.hairColor)
+    val female = a.body == BodyType.FEMALE
+    drawHairBack(c, a.hair, hair)
+    val cowl = "M118 124Q116 106 136 104Q151 112 166 104Q186 106 184 124Q170 116 151 122Q132 116 118 124Z"
+    ArtPainter.fill(c, cowl, hoodColor)
+    ArtPainter.stroke(c, cowl, INK, 1.8f, 0.75f)
+    // Neck, with a little shadow under the jaw.
+    ArtPainter.fill(c, "M144 100H158V116H144Z", skin)
+    ArtPainter.fill(c, "M144 108Q151 112 158 108V116H144Z", INK, 0.18f)
+    if (a.ears == EarShape.POINTED) {
+        listOf("M136 82L121 70L134 96Z", "M166 82L181 70L168 96Z").forEach { ArtPainter.fill(c, it, skin); ArtPainter.stroke(c, it, INK, 1.4f, 0.7f) }
+    } else {
+        listOf(ellipse(133.5f, 88f, 3.5f, 6f), ellipse(168.5f, 88f, 3.5f, 6f)).forEach { ArtPainter.fill(c, it, skin); ArtPainter.stroke(c, it, INK, 1.4f, 0.7f) }
+    }
+    c.save()
+    if (female) c.scale(0.94f, 1f, 151f, 0f)
+    val face = facePath(a.face)
+    ArtPainter.fill(c, face, skin)
+    ArtPainter.stroke(c, face, INK, 1.6f, 0.7f)
+    c.restore()
+    // Brows in the hair colour, shaped to the eyes.
+    val brow = when (a.eyes) {
+        EyeStyle.STERN -> "M139.5 82L147.5 83.5M154.5 83.5L162.5 82"
+        EyeStyle.KEEN -> "M140 82.5L147.5 82M154.5 82L162 82.5"
+        else -> "M140 81.5L147 80.5M155 80.5L162 81.5"
+    }
+    ArtPainter.stroke(c, brow, hair, if (female) 1.4f else 2.2f)
+    drawEyes(c, a.eyes, female)
+    ArtPainter.stroke(c, "M151 90L149 96H152", INK, 1.1f, 0.4f)
+    if (a.eyes == EyeStyle.BRIGHT) ArtPainter.stroke(c, "M146.5 100.8Q151 104.6 155.5 100.8", INK, 1.4f, 0.7f)
+    else ArtPainter.stroke(c, if (female) "M147.5 101.5Q151 103.5 154.5 101.5" else "M147.5 101.5Q151 102.5 154.5 101.5", INK, 1.3f, if (female) 0.65f else 0.5f)
+    if (female) { ArtPainter.circle(c, 141f, 95f, 2.5f, Argb.hex("d9734a"), 0.18f); ArtPainter.circle(c, 161f, 95f, 2.5f, Argb.hex("d9734a"), 0.18f) }
+    drawHairFront(c, a.hair, hair)
+    ArtPainter.stroke(c, "M120 122Q151 130 182 122", hoodTrim ?: Argb.hex("e6c277"), if (hoodTrim != null) 2.5f else 1.6f, if (hoodTrim != null) 0.9f else 0.6f)
 }
 
 // ---------------------------------------------------------------------------

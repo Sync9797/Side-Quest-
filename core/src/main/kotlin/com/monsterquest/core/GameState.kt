@@ -299,6 +299,8 @@ data class GameState(
     val equippedGear: Gear? = null,
     /** Second weapon, carried with the Kleptomaniac skill. */
     val offhandGear: Gear? = null,
+    /** How the hero looks (null until the setup screen has been seen). */
+    val appearance: Appearance? = null,
     /** Unequipped armor (each takes a bag slot). */
     val armor: List<Armor> = emptyList(),
     /** Body armor (plate, leather or robe). */

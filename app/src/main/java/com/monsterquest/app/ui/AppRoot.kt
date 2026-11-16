@@ -91,12 +91,12 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         vm.lootPopup?.let { LootPopupCard(it) { vm.lootPopup = null } }
         vm.availableUpdate?.let { UpdateDialog(vm, it) }
         // Level 50: new weapons, and three mystery chests to choose from (not mid-battle or mid-dungeon).
-        val calm = vm.battle == null && vm.state.dungeonRun == null
+        val calm = vm.battle == null && vm.state.dungeonRun == null && !com.monsterquest.core.Looks.due(vm.state) && !vm.mirrorOpen
         if (calm && (com.monsterquest.core.ExoticChests.due(vm.state) || vm.exoticReveal != null)) ExoticChestDialog(vm)
         // Level 100: the Centurion reward (not mid-battle or mid-dungeon).
         if (com.monsterquest.core.Centurion.due(vm.state) && vm.battle == null && vm.state.dungeonRun == null) CenturionDialog(vm)
         // After an update: what changed (not while an update offer is up).
-        if (vm.availableUpdate == null) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
+        if (vm.availableUpdate == null && !com.monsterquest.core.Looks.due(vm.state)) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }
 }
 
@@ -267,7 +267,12 @@ private fun AppScreens(vm: GameViewModel, initialTab: Tab, initialSettings: Bool
     if (!state.starterChosen) {
         // A new player: the basics, then the tutorial dungeon, where the starter joins in the first room.
         val run = state.dungeonRun
-        if (run != null) DungeonScreen(vm, run) else TutorialIntro(onStart = vm::startTutorial)
+        when {
+            run != null -> DungeonScreen(vm, run)
+            // First, who sets out: the hero's look and name.
+            com.monsterquest.core.Looks.due(state) -> LookScreen(vm, firstTime = true)
+            else -> TutorialIntro(onStart = vm::startTutorial)
+        }
         return
     }
     val focus = state.focus
@@ -276,15 +281,20 @@ private fun AppScreens(vm: GameViewModel, initialTab: Tab, initialSettings: Bool
         return
     }
     // A one-on-one fight is about to start: who goes first? (A dialog, so it shows over any screen.)
-    vm.leadChoice?.let { c -> LeadPicker(vm, c, HeroOutfit.of(state.equippedGear, state.equippedArmor, state.equippedPieces)) }
+    vm.leadChoice?.let { c -> LeadPicker(vm, c, HeroOutfit.of(state, hoodDown = false)) }
     val battle = vm.battle
     if (battle != null) {
-        BattleScreen(battle, onAction = vm::battleAction, onClose = vm::closeBattle, onNext = vm::nextVillainMonster, outfit = HeroOutfit.of(state.equippedGear, state.equippedArmor, state.equippedPieces), onTarget = vm::selectTarget, onReplace = vm::replaceFainted, onLearn = vm::learnMove, speed = state.settings.battleSpeed.factor, scene = vm.scene)
+        BattleScreen(battle, onAction = vm::battleAction, onClose = vm::closeBattle, onNext = vm::nextVillainMonster, outfit = HeroOutfit.of(state, hoodDown = false), onTarget = vm::selectTarget, onReplace = vm::replaceFainted, onLearn = vm::learnMove, speed = state.settings.battleSpeed.factor, scene = vm.scene)
         return
     }
     // Inside a dungeon: its rooms take over the screen until you leave.
     state.dungeonRun?.let { run ->
         DungeonScreen(vm, run)
+        return
+    }
+    // Players from before customization pick a look once; the Mirror reopens it any time.
+    if (com.monsterquest.core.Looks.due(state) || vm.mirrorOpen) {
+        LookScreen(vm, firstTime = com.monsterquest.core.Looks.due(state))
         return
     }
 

@@ -90,6 +90,7 @@ abstract class ScreenshotBase(private val device: String) {
         )
         val now = System.currentTimeMillis()
         return GameState(
+            appearance = com.monsterquest.core.Appearance(eyes = com.monsterquest.core.EyeStyle.KEEN, hair = com.monsterquest.core.HairStyle.WINDSWEPT, cloak = com.monsterquest.core.CloakColor.CRIMSON),
             hero = Hero(
                 name = "Aaronimus",
                 level = 12,
@@ -168,7 +169,7 @@ abstract class ScreenshotBase(private val device: String) {
         return FoldInfo(isSeparating = true, isVertical = false, bounds = Rect(0, mid, dm.widthPixels, mid))
     }
 
-    @Test fun starter() { val v = vm(GameState()); shot("01_starter") { AppRoot(v) } }
+    @Test fun starter() { val v = vm(GameState(appearance = com.monsterquest.core.Appearance())); shot("01_starter") { AppRoot(v) } }
     @Test fun quests() {
         val v = vm()
         shot("02_quests") { AppRoot(v, Tab.QUESTS) }
@@ -1277,7 +1278,7 @@ abstract class ScreenshotBase(private val device: String) {
 
     /** A new player's intro pages, then the tutorial dungeon with its guide. */
     @Test fun tutorialDungeon() {
-        val v = vm(GameState())
+        val v = vm(GameState(appearance = com.monsterquest.core.Appearance()))
         shot("40_tutorial_intro") { AppRoot(v) }
         v.startTutorial()
         v.tutorialStarter("voltfawn")
@@ -1343,6 +1344,79 @@ abstract class ScreenshotBase(private val device: String) {
         shot("47_centurion") { AppRoot(v, Tab.QUESTS) }
         rule.onNodeWithText("Centurion!").assertExists()
         rule.onNodeWithText("Take the egg").assertExists()
+    }
+
+    /** A new player first picks a look and a name; saving it moves on to the intro. */
+    @Test fun lookSetup() {
+        val v = vm(GameState())
+        shot("50_look_setup") { AppRoot(v) }
+        rule.onNodeWithText("WHO SETS OUT?").assertExists()
+        v.saveLook(com.monsterquest.core.Appearance(body = com.monsterquest.core.BodyType.FEMALE), "Wren")
+        androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        capture("50b_after_look", 500)
+        rule.onNodeWithText("WHO SETS OUT?").assertDoesNotExist()
+        org.junit.Assert.assertEquals("Wren", v.state.hero.name)
+    }
+
+    /** Players from before customization see it once, with their own name kept; the Mirror reopens it. */
+    @Test fun lookForOldSaveAndMirror() {
+        val v = vm(sampleState().copy(appearance = null))
+        shot("51_look_old_save") { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("WHO SETS OUT?").assertExists()
+        rule.onNodeWithText("Aaronimus").assertExists()
+        v.saveLook(com.monsterquest.core.Appearance(), "Aaronimus")
+        v.mirrorOpen = true
+        androidx.compose.runtime.snapshots.Snapshot.sendApplyNotifications()
+        capture("51b_mirror", 500)
+        rule.onNodeWithText("MIRROR").assertExists()
+    }
+
+    /** Heroes with their own looks: hood down in menus, hood up in battle, and Always hood up. */
+    @Test fun heroLooks() {
+        val A = com.monsterquest.core.Appearance()
+        val looks = listOf(
+            A,
+            A.copy(body = com.monsterquest.core.BodyType.FEMALE, hair = com.monsterquest.core.HairStyle.PONYTAIL, skin = com.monsterquest.core.SkinTone.OLIVE, hairColor = com.monsterquest.core.HairColor.EMBER, eyes = com.monsterquest.core.EyeStyle.BRIGHT),
+            A.copy(hair = com.monsterquest.core.HairStyle.LOCS, skin = com.monsterquest.core.SkinTone.DEEP, hairColor = com.monsterquest.core.HairColor.RAVEN, eyes = com.monsterquest.core.EyeStyle.STERN, ears = com.monsterquest.core.EarShape.ROUNDED, cloak = com.monsterquest.core.CloakColor.MIDNIGHT),
+            A.copy(body = com.monsterquest.core.BodyType.FEMALE, hair = com.monsterquest.core.HairStyle.BRAID, skin = com.monsterquest.core.SkinTone.PORCELAIN, hairColor = com.monsterquest.core.HairColor.FROST, eyes = com.monsterquest.core.EyeStyle.KEEN, face = com.monsterquest.core.FaceShape.HEART, cloak = com.monsterquest.core.CloakColor.PLUM),
+            A.copy(hair = com.monsterquest.core.HairStyle.TOPKNOT, skin = com.monsterquest.core.SkinTone.BRONZE, eyes = com.monsterquest.core.EyeStyle.DASH, face = com.monsterquest.core.FaceShape.ANGULAR, cloak = com.monsterquest.core.CloakColor.OCHRE),
+            A.copy(body = com.monsterquest.core.BodyType.FEMALE, hair = com.monsterquest.core.HairStyle.SWEEP, hairColor = com.monsterquest.core.HairColor.DUSK, eyes = com.monsterquest.core.EyeStyle.DOT, face = com.monsterquest.core.FaceShape.LONG, cloak = com.monsterquest.core.CloakColor.ASH),
+        )
+        shot("52_hero_looks", content = onBackground {
+            androidx.compose.foundation.layout.Column {
+                androidx.compose.foundation.layout.Row {
+                    looks.take(3).forEach { HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.SWORD, look = it, hoodDown = true)) }
+                }
+                androidx.compose.foundation.layout.Row {
+                    looks.drop(3).forEach { HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.STAFF, look = it, hoodDown = true)) }
+                }
+                androidx.compose.foundation.layout.Row {
+                    // In battle (hood up), Always hood up, and a worn helm.
+                    HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.SWORD, look = looks[1], hoodDown = false))
+                    HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.SWORD, look = looks[2].copy(hoodAlwaysUp = true), hoodDown = true))
+                    HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.SWORD, look = looks[0], hoodDown = true, hood = com.monsterquest.core.GearRarity.RARE, helm = true))
+                }
+            }
+        })
+    }
+
+    /** Every weapon held in the fist, and second weapons put away at the hip or on the back. */
+    @Test fun heldWeapons() {
+        val look = com.monsterquest.core.Appearance(eyes = com.monsterquest.core.EyeStyle.KEEN)
+        shot("53_held_weapons", content = onBackground {
+            androidx.compose.foundation.layout.Column {
+                WeaponType.entries.chunked(4).forEach { row ->
+                    androidx.compose.foundation.layout.Row {
+                        row.forEach { t -> HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(100.dp), portrait = false, outfit = HeroOutfit(t, look = look, hoodDown = true)) }
+                    }
+                }
+                androidx.compose.foundation.layout.Row {
+                    listOf(WeaponType.SWORD to WeaponType.SWORD, WeaponType.DAGGER to WeaponType.DAGGER, WeaponType.SWORD to WeaponType.BROADSWORD, WeaponType.WAND to WeaponType.STAFF).forEach { (m, o) ->
+                        HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(100.dp), portrait = false, outfit = HeroOutfit(m, offhand = o, look = look, hoodDown = true))
+                    }
+                }
+            }
+        })
     }
 
     /** Help search: one word finds every point that mentions it. */

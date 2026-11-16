@@ -71,6 +71,19 @@ fun HeroArt(cls: HeroClass, modifier: Modifier, portrait: Boolean = true, outfit
     ArtCanvas(modifier, "hero:$cls:$portrait:$outfit") { c, w, h -> drawHero(c, w, h, cls, portrait, outfit) }
 }
 
+/** Just the hero's head and shoulders, for the look editor's thumbnails. */
+@Composable
+fun HeroHeadArt(cls: HeroClass, outfit: HeroOutfit, modifier: Modifier) {
+    ArtCanvas(modifier, "herohead:$cls:$outfit") { c, w, h ->
+        // Show the 86-point square around the head (from 108, 40) of the hero's 300x280 art.
+        val k = minOf(w, h) / 86f
+        c.save()
+        c.translate(-108f * k + (w - 86f * k) / 2, -40f * k + (h - 86f * k) / 2)
+        drawHero(c, 300f * k, 280f * k, cls, false, outfit)
+        c.restore()
+    }
+}
+
 /** An evil thug; the look depends on their class (Brute, Hexer or Cutthroat). */
 @Composable
 fun ThugArt(cls: HeroClass, modifier: Modifier) {

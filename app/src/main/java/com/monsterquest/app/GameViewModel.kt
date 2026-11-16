@@ -505,6 +505,15 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     var exoticReveal by mutableStateOf<com.monsterquest.core.Gear?>(null)
         private set
 
+    /** The Mirror (the look editor) is open from the Hero screen. */
+    var mirrorOpen by mutableStateOf(false)
+
+    /** Saves the hero's look (and name) from the setup screen or the Mirror. */
+    fun saveLook(look: com.monsterquest.core.Appearance, name: String) {
+        set(com.monsterquest.core.Looks.save(state, look, name))
+        mirrorOpen = false
+    }
+
     /** Level 50: opens one of the three mystery chests. */
     fun openExoticChest(index: Int) {
         val u = com.monsterquest.core.ExoticChests.open(state, index)

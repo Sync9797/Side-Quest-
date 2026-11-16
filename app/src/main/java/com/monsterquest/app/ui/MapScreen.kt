@@ -330,7 +330,7 @@ fun MapScreen(vm: GameViewModel) {
                         add(MapSprite("nm:${n.id}", n.lat, n.lon, sprite("nomad", 52, 52) { c, w, h -> drawNomadOn(c, w, h) }, 52, 52, anchorY = 0.9f) { pick = MapPick.NomadPick(n) })
                     }
                     if (loc != null) {
-                        val outfit = HeroOutfit.of(vm.state.equippedGear, vm.state.equippedArmor, vm.state.equippedPieces)
+                        val outfit = HeroOutfit.of(vm.state, hoodDown = true)
                         val stars = com.monsterquest.core.Stars.of(vm.state.hero.level)
                         add(MapSprite("hero", loc.first, loc.second, at = { glide.value }, image = sprite("player_${vm.state.hero.heroClass}_${outfit}_${stars}_${com.monsterquest.core.Titles.CENTURION in vm.state.titles}", 60, 60) { c, w, h -> drawPlayerOn(c, w, h, vm.state.hero.heroClass, outfit, stars, centurion = com.monsterquest.core.Titles.CENTURION in vm.state.titles) }, wDp = 60, hDp = 60, anchorY = 0.86f) {})
                     }

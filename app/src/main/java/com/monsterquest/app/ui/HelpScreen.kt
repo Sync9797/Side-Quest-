@@ -245,6 +245,13 @@ private val topics = listOf(
         GameIcon.HERO, "Your hero",
         listOf(
             section(
+                "Your look and the Mirror",
+                "Pick your look and name when you begin: male or female, skin, face, eyes, hair and hair colour, ears and your cloak colour.",
+                "Change it any time for free: tap your hero or the Mirror button on the Hero tab.",
+                "Your hood is down in menus and up in battles and dungeons, where only your eyes show. Turn on Always hood up to keep your face hidden everywhere.",
+                "Your weapon is held in your hand. A second weapon is put away: swords, daggers and wands at the hip, bigger weapons across your back.",
+            ),
+            section(
                 "Classes and stats",
                 "Each level gives 3 attribute points. At level 5 choose Warrior, Mage or Rogue; at 15 a subclass. Dungeon champions raise a stat for good.",
                 "Skills open at levels 30, 45 and 60 and rank up every 10 levels.",
