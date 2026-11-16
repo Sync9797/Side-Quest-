@@ -393,6 +393,9 @@ private fun drawWeapon(c: Canvas, o: HeroOutfit) {
         }
         WeaponType.AXE -> {
             // A double-bladed battle axe: a long two-tone haft, a gold-banded head and two crescent blades.
+            // Tilted out from the fist so the head clears the hero's face.
+            c.save()
+            c.rotate(16f, 190f, 173f)
             val gold = Argb.hex("e3b54a")
             ArtPainter.stroke(c, "M190 64V230", Argb.hex("5a3326"), 7f)
             ArtPainter.stroke(c, "M190 158V230", Argb.hex("1e1a1c"), 7f)
@@ -409,6 +412,7 @@ private fun drawWeapon(c: Canvas, o: HeroOutfit) {
             ArtPainter.fill(c, "M183 60H197V104H183Z", gold)
             ArtPainter.stroke(c, "M183 72H197M183 84H197M183 96H197", Argb.hex("a87a22"), 1.2f)
             ArtPainter.fill(c, "M185 52H195V60H185ZM183 104H197L193 112H187Z", gold)
+            c.restore()
         }
         WeaponType.BOW -> {
             // Held at the grip: limbs curve away from the hero, the string on the near side.
