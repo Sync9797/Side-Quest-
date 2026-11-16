@@ -49,3 +49,23 @@ Ideas for later. None of these are planned yet.
 
 - **Spell rank and champion limits** are in (3.13). If heroes still max out too
   fast, slow the late XP curve or tie star ranks to a longer climb.
+
+## Art
+
+- **Hero art redesign (shelved):** redraw the hero with sharp edges instead of
+  round shapes. Mockups and the scripts that drew them are in
+  [ideas-art](ideas-art/).
+  - **Angular directions** (`angular-directions.png`): Faceted (lit and shadow
+    planes, like a cut gem), Shard (flat colour, thick ink, spiked shoulders and
+    a tall pointed hood) and Carved (woodcut hatching with gold edges).
+  - **Sharp edges, fewer polygons** (`sharp-edges-directions.png`): curves that
+    always end in points, with pointed chins, hair in pointed locks, a tattered
+    cloak hem and hard-edged shadows. D keeps today's proportions. E,
+    Storybook hero, has a head about 30% bigger, like a handheld RPG. F is E
+    with a light pixel texture.
+  - The favourite so far was **E, Storybook hero** (`storybook-hero.png`). It
+    stays readable at battle and map sizes (`game-sizes.png`). The pixel
+    texture turned muddy on the 64 px map marker, so use it only on large
+    portraits if at all.
+  - If it's picked up, redraw the setup screen's face, eye and hair options in
+    the new style so every saved look carries over.
