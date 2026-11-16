@@ -328,20 +328,43 @@ private fun drawWeapon(c: Canvas, o: HeroOutfit) {
             ArtPainter.fill(c, "M206 103l3 8 8 3-8 3-3 8-3-8-8-3 8-3z", tip)
         }
         WeaponType.AXE -> {
-            // A long haft with a broad, bearded head.
-            ArtPainter.stroke(c, "M196 70V206", wood, 6f)
-            ArtPainter.fill(c, "M197 72Q226 66 230 100Q216 90 197 96Z", bladeHi)
-            ArtPainter.stroke(c, "M200 75Q224 72 227 96", bladeLo, 2f, 0.8f)
-            ArtPainter.fill(c, "M195 76L180 84L195 92Z", bladeLo)
-            ArtPainter.fill(c, "M191 96H201V103H191Z", guard)
+            // A double-bladed battle axe: a long two-tone haft, a gold-banded head and two crescent blades.
+            val haft = Argb.hex("5a3326")
+            val grip = Argb.hex("1e1a1c")
+            val gold = Argb.hex("e3b54a")
+            ArtPainter.stroke(c, "M196 72V214", haft, 7f)
+            ArtPainter.stroke(c, "M196 172V214", grip, 7f)
+            ArtPainter.fill(c, "M191 168H201V173H191Z", gold)
+            ArtPainter.fill(c, "M191 210H201V215H191Z", gold)
+            // Blades, wide at the edge and narrow at the head.
+            val left = "M190 76Q172 72 160 60Q150 88 160 118Q172 106 190 102Z"
+            val right = "M202 76Q220 72 232 60Q242 88 232 118Q220 106 202 102Z"
+            ArtPainter.fill(c, left, bladeHi)
+            ArtPainter.fill(c, right, bladeHi)
+            ArtPainter.stroke(c, "M160 60Q150 88 160 118", bladeLo, 2.5f)
+            ArtPainter.stroke(c, "M232 60Q242 88 232 118", bladeLo, 2.5f)
+            // Cut-outs in each blade.
+            ArtPainter.fill(c, "M170 82L178 82L174 74Z", bladeLo, 0.8f)
+            ArtPainter.fill(c, "M170 96L178 96L174 104Z", bladeLo, 0.8f)
+            ArtPainter.fill(c, "M214 82L222 82L218 74Z", bladeLo, 0.8f)
+            ArtPainter.fill(c, "M214 96L222 96L218 104Z", bladeLo, 0.8f)
+            ArtPainter.stroke(c, left, INK, 1.2f, 0.5f)
+            ArtPainter.stroke(c, right, INK, 1.2f, 0.5f)
+            // The gold head and cap.
+            ArtPainter.fill(c, "M189 68H203V112H189Z", gold)
+            ArtPainter.stroke(c, "M189 80H203M189 92H203M189 104H203", Argb.hex("a87a22"), 1.2f)
+            ArtPainter.fill(c, "M191 60H201V68H191Z", gold)
+            ArtPainter.fill(c, "M189 112H203L199 120H193Z", gold)
         }
         WeaponType.BOW -> {
-            // A tall longbow, string drawn straight, an arrow nocked.
-            ArtPainter.stroke(c, "M204 66Q168 138 204 212", wood, 5f)
-            ArtPainter.stroke(c, "M204 66Q172 138 204 212", guard, 1.5f, 0.6f)
-            ArtPainter.stroke(c, "M204 66L204 212", Argb.hex("e8e2d0"), 1.2f, 0.9f)
-            ArtPainter.stroke(c, "M178 138H222", bladeLo, 2.5f)
-            ArtPainter.fill(c, "M222 133L232 138L222 143Z", bladeHi)
+            // A tall longbow held at the side: limbs curving away from the hero, the string on the near side, an arrow nocked and pointing out.
+            ArtPainter.stroke(c, "M196 66Q234 138 196 212", wood, 5f)
+            ArtPainter.stroke(c, "M196 66Q230 138 196 212", guard, 1.5f, 0.6f)
+            ArtPainter.stroke(c, "M196 66L196 212", Argb.hex("e8e2d0"), 1.2f, 0.9f)
+            ArtPainter.stroke(c, "M190 138H236", bladeLo, 2.5f)
+            ArtPainter.fill(c, "M236 133L246 138L236 143Z", bladeHi)
+            // Fletching at the string.
+            ArtPainter.fill(c, "M190 138L183 133L186 138L183 143Z", guard)
         }
         WeaponType.SCYTHE -> {
             // A long snath and a sweeping blade above the head.
