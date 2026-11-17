@@ -172,10 +172,10 @@ class GearTiersTest {
         ArmorSlot.entries.forEach { slot ->
             assertTrue(ArmorType.entries.count { it.slot == slot } >= 2, slot.label)
         }
-        // The new kinds drop and can be forged like the rest.
+        // The new kinds drop and can be forged like the rest (the Furcloak only comes from champions).
         val r = Random(9)
         val seen = (0 until 400).map { Armory.rollArmor(10, r).type }.toSet()
-        assertTrue(ArmorType.entries.all { it in seen }, "${ArmorType.entries - seen}")
+        assertTrue(ArmorType.common.all { it in seen }, "${ArmorType.common - seen}")
         var s = hero(10).copy(armorParts = mapOf(ArmorType.SANDALS to PARTS_TO_FORGE))
         s = GameEngine.forgeArmor(s, ArmorType.SANDALS, Random(2)).state
         assertEquals(ArmorType.SANDALS, s.armor.single().type)

@@ -101,4 +101,20 @@ class RecapTest {
         val old = SleepLog.record(tired, SleepNight(at(23, d = day.minusDays(3)), at(7, d = day.minusDays(2))), zone)
         assertEquals(30, SleepLog.restEnergy(old, at(8), zone).state.heroEnergyUsed)
     }
+
+    @Test
+    fun aFullNightHealsTheTeamAndWakesTheFainted() {
+        val rng = kotlin.random.Random(2)
+        val hurt = Monster.create(Bestiary.get("ember_pup"), 10, rng).copy(damage = 12)
+        val down = Monster.create(Bestiary.get("zapmouse"), 10, rng).copy(fainted = true)
+        val base = started().copy(monsters = listOf(hurt, down), heroDamage = 15)
+        val full = SleepLog.record(base, SleepNight(at(23, d = day.minusDays(1)), at(7, d = day)), zone)
+        val rested = SleepLog.restEnergy(full, at(8), zone)
+        assertTrue(rested.state.monsters.all { it.damage == 0 && !it.fainted })
+        assertEquals(0, rested.state.heroDamage)
+        assertTrue("fainted one wakes up" in rested.message)
+        // A short night heals nobody.
+        val short = SleepLog.record(base, SleepNight(at(1, d = day), at(6, d = day)), zone)
+        assertEquals(base.monsters, SleepLog.restEnergy(short, at(8), zone).state.monsters)
+    }
 }

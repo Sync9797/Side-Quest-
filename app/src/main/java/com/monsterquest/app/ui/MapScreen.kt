@@ -214,6 +214,27 @@ fun MapScreen(vm: GameViewModel) {
         com.monsterquest.core.MapStyle.DARK -> true
     }
     val gameMap = rememberGameMap(darkMap)
+    // Walking somewhere: close what's open, and work out the route along the streets in the loaded map,
+    // again every ~20 m you walk. Arriving ends it.
+    val route = vm.walkRoute
+    LaunchedEffect(route?.lat, route?.lon) { if (route != null) { pick = null; focus = null } }
+    LaunchedEffect(route?.lat, route?.lon, gameMap.styleReady, loc?.let { (it.first * 5_000).toInt() to (it.second * 5_000).toInt() }) {
+        val r = vm.walkRoute ?: return@LaunchedEffect
+        val here = vm.location ?: return@LaunchedEffect
+        if (World.distanceMeters(here.first, here.second, r.lat, r.lon) < com.monsterquest.core.Routing.ARRIVED_M) {
+            vm.walkRoute = null
+            vm.toast("You've arrived at ${r.label}!")
+            return@LaunchedEffect
+        }
+        if (r.path == null) kotlinx.coroutines.delay(300)
+        val lines = gameMap.readWalkways()
+        val path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            com.monsterquest.core.Routing.route(com.monsterquest.core.Routing.build(lines), here, r.lat to r.lon)
+        }
+        if (vm.walkRoute?.lat == r.lat && vm.walkRoute?.lon == r.lon) {
+            vm.walkRoute = r.copy(path = path ?: com.monsterquest.core.Routing.straight(here, r.lat to r.lon), straight = path == null)
+        }
+    }
     val icons = remember { HashMap<String, androidx.compose.ui.graphics.ImageBitmap>() }
     fun sprite(key: String, wDp: Int, hDp: Int, draw: (android.graphics.Canvas, Float, Float) -> Unit) =
         icons.getOrPut("$key:${ArtQuality.reduced}") { spriteDrawable(context, wDp, hDp, draw).bitmap.asImageBitmap() }
@@ -341,6 +362,7 @@ fun MapScreen(vm: GameViewModel) {
                 GameMapView(gameMap, Modifier.fillMaxSize(), onUserTurn = onUserTurn) {
                     // Reach circle for shrines.
                     if (loc != null) MapCircle(gameMap, { glide.value }, World.SHRINE_RANGE_M, Color(0x228B5CF6), Color(0x888B5CF6))
+                    vm.walkRoute?.path?.let { MapRoute(gameMap, it, vm.walkRoute?.straight == true) }
                     risen?.let { RisenShrineFx(gameMap, it) }
                     MapSprites(gameMap, sprites)
                 }
@@ -354,6 +376,7 @@ fun MapScreen(vm: GameViewModel) {
                     weatherBadge(Modifier.align(Alignment.BottomStart).padding(10.dp))
                 }
                 focus?.let { f -> FocusCard(vm, f, Modifier.align(Alignment.BottomCenter)) { focus = null } }
+                vm.walkRoute?.let { r -> RouteCard(vm, r, Modifier.align(Alignment.TopStart).padding(end = 64.dp)) }
                 if (loc == null) {
                     Text(
                         "Finding your location…",
@@ -708,14 +731,43 @@ private fun PlaceTitle(icon: GameIcon, title: String, color: Color, subtitle: St
     }
 }
 
-/** Opens walking directions to a point in the phone's map app. */
+/** Draws the walking route to a point on the game's own map (the phone's map app is a tap away on the route card). */
 @Composable
-private fun WalkHereButton(lat: Double, lon: Double, label: String) {
-    val context = LocalContext.current
-    OutlinedButton(onClick = { Navigation.walkTo(context, lat, lon, label) }, modifier = Modifier.padding(top = 8.dp)) {
+private fun WalkHereButton(vm: GameViewModel, lat: Double, lon: Double, label: String) {
+    OutlinedButton(onClick = { vm.walkTo(lat, lon, label) }, modifier = Modifier.padding(top = 8.dp)) {
         GIcon(GameIcon.WALK, Modifier.size(16.dp), Gold)
         Spacer(Modifier.width(6.dp))
         Text("Walk here")
+    }
+}
+
+/** The route you're walking: how far and how long, the phone's map app if you want turn-by-turn, and End. */
+@Composable
+private fun RouteCard(vm: GameViewModel, r: GameViewModel.WalkRoute, modifier: Modifier) {
+    val context = LocalContext.current
+    val imperial = vm.state.settings.imperialUnits
+    val meters = r.path?.let { com.monsterquest.core.Routing.length(it) }
+    Column(
+        modifier
+            .padding(8.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .border(1.dp, Gold, RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        IconText(GameIcon.WALK, "Walking to ${r.label}", tint = Gold, bold = true)
+        Text(
+            when {
+                meters == null -> "Finding a route…"
+                r.straight -> "${formatDistance(meters, imperial)} as the crow flies (no streets loaded there yet)"
+                else -> "${formatDistance(meters, imperial)} along the streets  •  about ${com.monsterquest.core.Routing.minutes(meters)} min"
+            },
+            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(onClick = { Navigation.walkTo(context, r.lat, r.lon, r.label) }) { Text("Phone maps") }
+            TextButton(onClick = { vm.walkRoute = null }) { Text("End") }
+        }
     }
 }
 
@@ -745,7 +797,7 @@ private fun FocusCard(vm: GameViewModel, f: MapFocus, modifier: Modifier, onClos
             TextButton(onClick = onClose) { Text("Close") }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            WalkHereButton(f.lat, f.lon, f.title)
+            WalkHereButton(vm, f.lat, f.lon, f.title)
             OutlinedButton(onClick = f.details, modifier = Modifier.padding(top = 8.dp)) { Text("Details") }
         }
     }
@@ -834,7 +886,7 @@ private fun ShrineDialog(vm: GameViewModel, shrine: Shrine, now: Long, onDismiss
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp),
                     )
-                    WalkHereButton(shrine.lat, shrine.lon, shrine.place ?: shrine.name)
+                    WalkHereButton(vm, shrine.lat, shrine.lon, shrine.place ?: shrine.name)
                 }
             }
         },
@@ -895,7 +947,7 @@ private fun DenDialog(vm: GameViewModel, den: Den, onDismiss: () -> Unit) {
                 )
                 if (!inRange) {
                     Text("Walk within ${formatDistance(Dens.RANGE_M, imperial)} to fight.", modifier = Modifier.padding(top = 6.dp))
-                    WalkHereButton(den.lat, den.lon, den.name)
+                    WalkHereButton(vm, den.lat, den.lon, den.name)
                 }
             }
         },
@@ -934,7 +986,7 @@ private fun VillainDialog(vm: GameViewModel, camp: VillainCamp, onDismiss: () ->
                 }
                 if (!inRange) {
                     Text("Walk within ${formatDistance(Villains.RANGE_M, vm.state.settings.imperialUnits)} to fight.", modifier = Modifier.padding(top = 6.dp))
-                    WalkHereButton(camp.lat, camp.lon, camp.leader)
+                    WalkHereButton(vm, camp.lat, camp.lon, camp.leader)
                 }
             }
         },
@@ -1089,7 +1141,7 @@ private fun TraderDialog(vm: GameViewModel, trader: com.monsterquest.core.Trader
                 }
                 if (!inRange) {
                     Text("Walk within ${formatDistance(com.monsterquest.core.Wanderers.RANGE_M, vm.state.settings.imperialUnits)} to trade.", modifier = Modifier.padding(top = 6.dp))
-                    WalkHereButton(trader.lat, trader.lon, trader.name)
+                    WalkHereButton(vm, trader.lat, trader.lon, trader.name)
                 }
             }
         },
@@ -1119,7 +1171,7 @@ private fun NomadDialog(vm: GameViewModel, nomad: com.monsterquest.core.Nomad, o
                 NomadTeamRow(vm, nomad.reserve)
                 if (!inRange) {
                     Text("Walk within ${formatDistance(com.monsterquest.core.Wanderers.RANGE_M, vm.state.settings.imperialUnits)} to accept.", modifier = Modifier.padding(top = 6.dp))
-                    WalkHereButton(nomad.lat, nomad.lon, nomad.name)
+                    WalkHereButton(vm, nomad.lat, nomad.lon, nomad.name)
                 }
             }
         },
@@ -1227,7 +1279,7 @@ private fun FacilityDialog(vm: GameViewModel, v: com.monsterquest.core.Venue, on
                 if (used) Text("Already used today. Come back tomorrow.", color = HpYellow, modifier = Modifier.padding(top = 6.dp))
                 if (!inRange) {
                     Text("Walk within ${formatDistance(com.monsterquest.core.Facilities.RANGE_M, vm.state.settings.imperialUnits)} to use it (${distanceText(dist, vm.state.settings.imperialUnits)}).", modifier = Modifier.padding(top = 6.dp))
-                    WalkHereButton(v.lat, v.lon, v.name ?: v.kind ?: "Here")
+                    WalkHereButton(vm, v.lat, v.lon, v.name ?: v.kind ?: "Here")
                 }
             }
         },

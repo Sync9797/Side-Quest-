@@ -535,8 +535,7 @@ object Moves {
      * Default loadout: the three strongest attacks (own type first on ties)
      * plus the newest status move, so monsters get better moves as they grow.
      */
-    fun autoLoadout(species: Species, level: Int): List<Move> {
-        val known = learned(species, level)
+    fun autoLoadout(species: Species, level: Int, known: List<Move> = learned(species, level)): List<Move> {
         val attacks = known.filter { it.isDamaging }
             .sortedWith(compareByDescending<Move> { it.expectedPower }.thenByDescending { it.type == species.element })
         val status = known.filter { !it.isDamaging }.lastOrNull()

@@ -99,6 +99,8 @@ data class HeroOutfit(
     val boots: GearRarity? = null,
     /** The head piece is a metal Helm (drawn as a helmet instead of a cloth hood). */
     val helm: Boolean = false,
+    /** The cloak is a Furcloak: a thick fur collar round the shoulders. */
+    val fur: Boolean = false,
     /** A second weapon, drawn put away: at the hip or across the back. */
     val offhand: WeaponType? = null,
     /** The hero's chosen look (null: the classic hooded hero, as for traders and nomads). */
@@ -119,6 +121,7 @@ data class HeroOutfit(
             pants = pieces[ArmorSlot.LEGS]?.rarity,
             boots = pieces[ArmorSlot.FEET]?.rarity,
             helm = pieces[ArmorSlot.HEAD]?.type == ArmorType.HELM,
+            fur = pieces[ArmorSlot.BACK]?.type == ArmorType.FURCLOAK,
         )
 
         /** The typical look of a class, for previews. */
@@ -218,6 +221,7 @@ internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: B
         outfit.hood?.let { ArtPainter.stroke(c, "M124 104Q116 70 151 51Q186 70 177 104", trim(it), 2.5f, 0.9f) }
         ArtPainter.fill(c, "M130 91Q150 64 172 91L164 112H137Z", look.hoodShade)
     }
+    if (outfit.fur) drawFurCollar(c, outfit.cloak?.let { trim(it) })
     // A leaf-shaped brooch pins the cloak, in the style of old elven craft.
     ArtPainter.fill(c, "M150 112Q160 117 150 127Q140 117 150 112Z", Argb.hex("8fb58a"))
     ArtPainter.stroke(c, "M150 113V126", Argb.hex("e6c277"), 1.2f)
@@ -279,7 +283,7 @@ private fun drawArmor(c: Canvas, o: HeroOutfit, look: HeroLook, arms: String, to
     // Hoods, cloaks, pants and boots never go in the body slot; draw plain clothes if one does.
     when (o.armor) {
         null, ArmorType.HOOD, ArmorType.CLOAK, ArmorType.PANTS, ArmorType.BOOTS,
-        ArmorType.HELM, ArmorType.MANTLE, ArmorType.LEGGINGS, ArmorType.SANDALS -> {
+        ArmorType.HELM, ArmorType.MANTLE, ArmorType.LEGGINGS, ArmorType.SANDALS, ArmorType.FURCLOAK -> {
             // Plain traveler's clothes.
             ArtPainter.fill(c, arms, look.arms)
             ArtPainter.fill(c, torso, look.torso)
@@ -429,6 +433,16 @@ private fun drawWeapon(c: Canvas, o: HeroOutfit) {
             ArtPainter.fill(c, "M191 128H203V134H191Z", guard)
         }
     }
+}
+
+/** A Furcloak's thick ruff: tufts of pale fur round the shoulders, with a darker underside. */
+private fun drawFurCollar(c: Canvas, trimColor: Int?) {
+    val ruff = "M108 128L112 118L106 112L118 110L120 102L130 106L136 100L142 108L151 114L160 108L166 100L172 106L182 102L184 110L196 112L190 118L194 128L184 126L178 134L170 128L160 134L151 128L142 134L132 128L124 134L118 126Z"
+    ArtPainter.fill(c, ruff, Argb.hex("cfc0a2"))
+    ArtPainter.fill(c, "M108 128L112 118L124 122L132 128L142 134L132 128L124 134L118 126ZM194 128L190 118L178 122L170 128L160 134L170 128L178 134L184 126Z", Argb.hex("8e7c62"))
+    ArtPainter.stroke(c, "M118 114L126 120M130 110L136 118M172 110L166 118M184 114L176 120M146 116L151 122L156 116", Argb.hex("8e7c62"), 1.2f, 0.8f)
+    ArtPainter.stroke(c, ruff, INK, 1.6f, 0.75f)
+    trimColor?.let { ArtPainter.stroke(c, "M114 124L124 130L132 126L142 132L151 126L160 132L170 126L178 130L188 124", it, 1.6f, 0.7f) }
 }
 
 /** Off-hand weapons too big for the hip ride across the back. */

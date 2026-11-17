@@ -1419,6 +1419,43 @@ abstract class ScreenshotBase(private val device: String) {
         })
     }
 
+    /** A Furcloak's fur collar, hood down and up. */
+    @Test fun furcloak() {
+        val look = com.monsterquest.core.Appearance(eyes = com.monsterquest.core.EyeStyle.KEEN)
+        shot("54_furcloak", content = onBackground {
+            androidx.compose.foundation.layout.Row {
+                HeroArt(HeroClass.NONE, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.SWORD, look = look, hoodDown = true, cloak = com.monsterquest.core.GearRarity.EPIC, fur = true))
+                HeroArt(HeroClass.WARRIOR, androidx.compose.ui.Modifier.size(130.dp), outfit = HeroOutfit(WeaponType.AXE, look = look, hoodDown = false, cloak = com.monsterquest.core.GearRarity.LEGENDARY, fur = true))
+            }
+        })
+    }
+
+    /** The Move Tutor: moves of a monster's own type, for its line's candy and gold. */
+    @Test fun moveTutor() {
+        val base = sampleState()
+        val m = base.monsters.first()
+        val v = vm(base.copy(gold = 5_000, candy = mapOf(m.species.family to 40)))
+        shot("55_move_tutor") { com.monsterquest.app.ui.MoveTutorDialog(v, m.uid) {} }
+        rule.onNodeWithText("Move Tutor: ${m.displayName}").assertExists()
+        val offer = com.monsterquest.core.MoveTutor.offers(m).first { com.monsterquest.core.MoveTutor.blocker(v.state, m, it) == null }
+        rule.onAllNodesWithText("Teach")[0].performClick()
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(v.state.monsters.first().taught.contains(offer.move.id))
+    }
+
+    /** The Health card's week of steps, by day, with the goal line. */
+    @Test fun stepWeek() {
+        val base = sampleState()
+        val today = java.time.LocalDate.now().toEpochDay()
+        val v = vm(base.copy(stepHistory = (1..29).associate { (today - it) to (1_500 + (it * 1_237) % 7_000) }))
+        shot("56_steps_week") { com.monsterquest.app.ui.HealthCard(v, System.currentTimeMillis()) }
+        rule.onNodeWithText("Week").performClick()
+        capture("56b_steps_week", 300)
+        rule.onNodeWithText("Goal reached on", substring = true).assertExists()
+        rule.onNodeWithText("Month").performClick()
+        capture("56c_steps_month", 300)
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }

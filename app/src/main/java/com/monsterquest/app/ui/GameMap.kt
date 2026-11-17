@@ -300,6 +300,24 @@ class GameMap internal constructor(val fake: Boolean) {
         return MapPlaces(venues, streets, tiles, shrines)
     }
 
+    /** The streets and paths you can walk along in the loaded map tiles, as lines of (lat, lon). */
+    fun readWalkways(): List<List<Pair<Double, Double>>> {
+        val m = map ?: return emptyList()
+        val style = m.style ?: return emptyList()
+        if (!style.isFullyLoaded) return emptyList()
+        val src = style.getSourceAs<VectorSource>(SOURCE_ID) ?: return emptyList()
+        val lines = ArrayList<List<Pair<Double, Double>>>()
+        for (f in runCatching { src.querySourceFeatures(arrayOf("transportation"), null) }.getOrDefault(emptyList())) {
+            if (f.prop("class") !in WALK_CLASSES) continue
+            when (val g = f.geometry()) {
+                is org.maplibre.geojson.LineString -> lines += g.coordinates().map { it.latitude() to it.longitude() }
+                is org.maplibre.geojson.MultiLineString -> g.coordinates().forEach { l -> lines += l.map { it.latitude() to it.longitude() } }
+                else -> {}
+            }
+        }
+        return lines
+    }
+
     companion object {
         const val START_ZOOM = 16.0
         const val MIN_ZOOM = 14.0
@@ -314,6 +332,8 @@ class GameMap internal constructor(val fake: Boolean) {
         private const val SOURCE_ZOOM = 14
         private const val STREET_STEP_M = 70.0
         private val STREET_CLASSES = setOf("primary", "secondary", "tertiary", "minor")
+        /** Ways people walk: streets, service roads, tracks and footpaths (not motorways or rail). */
+        private val WALK_CLASSES = setOf("primary", "secondary", "tertiary", "minor", "service", "track", "path", "pedestrian")
 
         /**
          * Share of the screen's height kept clear above the hero's focus: 0 when
@@ -618,6 +638,29 @@ fun MapSprites(gm: GameMap, sprites: List<MapSprite>) {
                 p.place(x.toInt(), y.toInt(), zIndex = at.y)
             }
         }
+    }
+}
+
+/** A walking route on the ground: a dark edge under a dashed gold line, from the hero to the destination. */
+@Composable
+fun MapRoute(gm: GameMap, path: List<Pair<Double, Double>>, straight: Boolean) {
+    Canvas(Modifier.fillMaxSize()) {
+        @Suppress("UNUSED_VARIABLE") val t = gm.tick
+        val p = Path()
+        path.forEachIndexed { i, (lat, lon) ->
+            val o = gm.toScreen(lat, lon) ?: return@Canvas
+            if (i == 0) p.moveTo(o.x, o.y) else p.lineTo(o.x, o.y)
+        }
+        val round = androidx.compose.ui.graphics.StrokeCap.Round
+        val join = androidx.compose.ui.graphics.StrokeJoin.Round
+        drawPath(p, Color(0xAA140D0A), style = Stroke(width = 12f, cap = round, join = join))
+        drawPath(
+            p, Color(0xFFEBC678),
+            style = Stroke(
+                width = 6f, cap = round, join = join,
+                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(if (straight) floatArrayOf(4f, 14f) else floatArrayOf(18f, 10f)),
+            ),
+        )
     }
 }
 

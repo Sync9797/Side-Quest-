@@ -115,14 +115,14 @@ private val topics = listOf(
             ),
             section(
                 "Sleep and rest",
-                "Sleep syncs from Health Connect (or log it by hand on the Health card). A full night (7+ hours) refills your Energy, once a day.",
+                "Sleep syncs from Health Connect (or log it by hand on the Health card). A full night (7+ hours) refills your Energy and HP, heals every monster and wakes the fainted ones, once a day.",
                 "8 hours or more: you're Well rested, so your hero and monsters fight 10% better all day. Under 7 hours: Tired, 10% weaker for the day.",
             ),
             section(
                 "Buddy, eggs and water",
                 "Your first party slot is your buddy: it finds its line's candy as you walk (every mile for Common monsters, up to 10 for Legendary).",
                 "Eggs: a male and a female of the same line (level 20+) can make one; adventures and nomads bring some too. Carry 5, but walking warms only 3 at a time (tap Warm to swap one in). An Incubator (800 gold) halves an egg's distance once.",
-                "The Health card shows steps by hour, water (just for you, no rewards) and sleep. Each morning a recap shows yesterday.",
+                "The Health card shows steps by hour (or by day for the last week or month, with your average and goal days), water (just for you, no rewards) and sleep. Each morning a recap shows yesterday.",
                 "Water syncs with Health Connect once you allow it (Sync water on the Health card): water logged in Samsung Health, Fitbit or other apps counts here (the last 30 days), each glass you add goes there too, and − takes back the last glass the game added (other apps' entries can only be changed in those apps).",
                 "Water history: the History tab under the water tracker lists each day's glasses against that day's goal, with your current and best streak of goal days. The calendar on Home marks goal days with a blue dot, and the water streak above it opens the history. Changing your goal never rewrites past days.",
                 "Everyone rests on their own: 5% HP an hour; fainted monsters wake after about 2 hours.",
@@ -134,7 +134,7 @@ private val topics = listOf(
         listOf(
             section(
                 "Getting around the map",
-                "The map follows you. Pinch or double-tap to zoom (out to about a quarter mile), and it tilts toward the horizon as you zoom in. Your position updates every second and your hero walks smoothly between fixes. Drag around yourself or twist two fingers to turn the map. Tap the compass to have the map turn with your phone, so what's in front of you is up the screen (a gold ring shows it's on); tap it again, or turn the map yourself, for north up. It never moves more than a mile away. Coffee shops, doctors, restaurants, groceries, pharmacies, gyms, parks and bars come from the map itself, so they show up even where place lookups are slow. Tap Walk here on anything for directions.",
+                "The map follows you. Pinch or double-tap to zoom (out to about a quarter mile), and it tilts toward the horizon as you zoom in. Your position updates every second and your hero walks smoothly between fixes. Drag around yourself or twist two fingers to turn the map. Tap the compass to have the map turn with your phone, so what's in front of you is up the screen (a gold ring shows it's on); tap it again, or turn the map yourself, for north up. It never moves more than a mile away. Coffee shops, doctors, restaurants, groceries, pharmacies, gyms, parks and bars come from the map itself, so they show up even where place lookups are slow. Tap Walk here on anything to draw the walking route on the map, along the streets when they're loaded (a straight line otherwise). The route card shows the distance and time, and Phone maps opens turn-by-turn directions. Arriving ends it.",
                 "The weather badge shows the real weather. It changes which types find you on battery-saver walks (tap the badge to see how), and rain and heat carry into battles (Rain or Drought). Storms, heatwaves, fog and snow are events: their type surges, and once a day each sends a rare visitor of that type to find you on your next battery-saver walk.",
                 "The weather also picks favorites: in battle their monsters (yours and theirs) get +10% Attack and Speed, and the types it holds back get −10% Attack. Clear skies favor Fire and Flight, heat Fire and Earth, cloud and fog Gas and Corrupt, rain and storms Water and Electric, snow Water and Earth, and wind Flight. Rain holds back Fire, wind Gas, and so on: the battle log says who's helped.",
             ),
@@ -222,6 +222,7 @@ private val topics = listOf(
             section(
                 "Candy, evolving and levels",
                 "Taming gives candy for the line (5 for first forms, 3 otherwise). Spend it on a monster's page to level up, or to evolve once it reaches its evolution level.",
+                "The Move Tutor (in the Store, or Move Tutor on a monster's page) teaches a move of the monster's own type early, for its line's candy plus gold. Stronger moves cost more, and each opens 10 levels before the monster would learn it.",
                 "Levelling is slow: it takes a while to raise a monster, so every battle counts.",
                 "Alphas: big first forms with 3 perfect stats and a strong move. They wait in dungeons' Alpha dens.",
             ),
@@ -275,7 +276,7 @@ private val topics = listOf(
             ),
             section(
                 "Gear",
-                "Armor comes in five slots, with at least two kinds each: body (Plate for Warriors, Leather for Rogues, Robe for Mages), head (Hood or Helm), back (Cloak or Mantle), legs (Greaves or Leggings) and feet (Boots or Sandals). Each kind suits certain classes, which get +20% from it.",
+                "Armor comes in five slots, with at least two kinds each: body (Plate for Warriors, Leather for Rogues, Robe for Mages), head (Hood or Helm), back (Cloak or Mantle, or a rare Furcloak with a fur collar that only dungeon champions carry), legs (Greaves or Leggings) and feet (Boots or Sandals). Each kind suits certain classes, which get +20% from it.",
                 "Weapons and armor of your class get +20% and extra stats by rarity. Better materials turn up as you level; diamond is always rare. Smelt a weapon for its parts and forge new gear from parts.",
                 "Adventures (Monsters tab) send a team to real places for gold, items and sometimes eggs while you're away.",
             ),

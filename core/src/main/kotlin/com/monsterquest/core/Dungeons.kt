@@ -613,7 +613,12 @@ object Dungeons {
         BossReward("Incubator", 6 + 2 * d.stars, item = Item.INCUBATOR),
         BossReward("Golden Berry", 20, item = Item.GOLDEN_BERRY),
         BossReward("Mood Crystal", 3 + d.stars, item = Item.MOOD_CRYSTAL),
+        BossReward("Furcloak (a cloak with a fur collar)", furcloakPct(d), BossReward.Kind.ARMOR),
     )
+
+    /** A champion's chance of carrying a Furcloak: none in the tutorial, more the more stars. */
+    fun furcloakPct(d: Dungeon): Int = if (d.tutorial) 0 else FURCLOAK_PCT + 2 * d.stars
+    const val FURCLOAK_PCT = 4
 
     private fun clear(state: GameState, run: DungeonRun, nowMs: Long, rng: Random, zone: ZoneId): Update {
         val d = run.dungeon
@@ -664,6 +669,7 @@ object Dungeons {
         if (hit(7)) { item(Item.INCUBATOR, 1); got += "an Incubator" }
         if (hit(8)) { item(Item.GOLDEN_BERRY, 1); got += "a Golden Berry" }
         if (hit(9)) { item(Item.MOOD_CRYSTAL, 1); got += "a Mood Crystal" }
+        if (hit(10)) Armory.rollArmor(d.level, rng, type = ArmorType.FURCLOAK, luck = 20 + 10 * d.stars, minimum = GearRarity.RARE).let { r = r.copy(armor = r.armor + it); got += "${it.rarity.label} ${it.name}"; loot += Reward.ArmorDrop(it) }
         s = s.copy(dungeonsCleared = s.dungeonsCleared.filterValues { it >= day - 1 } + (d.id to day))
         // Late in the game, the hardest champions sometimes guard a relic of old legend.
         if (d.stars >= 5) Relic.roll(s.hero.level, rng, if (d.stars >= MYTHIC_STARS) MYTHIC_RELIC_CHANCE else RELIC_CHANCE)?.let {

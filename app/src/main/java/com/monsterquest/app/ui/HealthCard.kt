@@ -128,6 +128,23 @@ private fun StepsSection(vm: GameViewModel, today: LocalDate, steps: Int, nowMs:
         Text("%,d".format(steps), fontSize = 26.sp, fontWeight = FontWeight.Bold)
         Text(" today", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 4.dp))
     }
+    // Today by the hour, or the last week or month by the day.
+    var range by remember { mutableIntStateOf(1) }
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        listOf(1 to "Today", 7 to "Week", 30 to "Month").forEach { (n, label) ->
+            val on = range == n
+            Box(
+                Modifier.clip(RoundedCornerShape(10.dp))
+                    .background(if (on) Mint.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { range = n }
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+            ) { Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal) }
+        }
+    }
+    if (range > 1) {
+        StepDaysChart(vm, today, steps, range)
+        return
+    }
     // Progress toward the day's goal.
     val pct = (steps.toFloat() / Health.STEP_GOAL).coerceIn(0f, 1f)
     Box(Modifier.fillMaxWidth().height(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)) {
@@ -180,6 +197,67 @@ private fun StepsSection(vm: GameViewModel, today: LocalDate, steps: Int, nowMs:
     )
     Text(
         if (fromHealth != null) "From Health Connect" else "Counted by the game while it gets step updates",
+        fontSize = 11.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** Steps for each of the last [days] days, with the goal line, the average and a tapped day's count. */
+@Composable
+private fun StepDaysChart(vm: GameViewModel, today: LocalDate, steps: Int, days: Int) {
+    val list = Health.stepDays(vm.state, today, days, steps)
+    var selected by remember(days) { mutableIntStateOf(list.lastIndex) }
+    val max = maxOf(list.maxOf { it.second }, Health.STEP_GOAL + Health.STEP_GOAL / 5)
+    val track = MaterialTheme.colorScheme.surfaceVariant
+    val gold = Gold
+    val mint = Mint
+    val line = MaterialTheme.colorScheme.onSurfaceVariant
+    Canvas(
+        Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .semantics { contentDescription = "Steps by day" }
+            .pointerInput(days) {
+                detectTapGestures { o -> selected = (o.x / size.width * days).toInt().coerceIn(0, days - 1) }
+            },
+    ) {
+        val slot = size.width / days
+        val barW = slot * if (days > 10) 0.7f else 0.55f
+        list.forEachIndexed { i, (_, v) ->
+            val x = i * slot + (slot - barW) / 2
+            drawRoundRect(track, Offset(x, 0f), Size(barW, size.height), CornerRadius(barW / 2))
+            if (v > 0) {
+                val bh = (v.toFloat() / max * size.height).coerceAtLeast(barW)
+                val c = when {
+                    i == selected -> gold
+                    v >= Health.STEP_GOAL -> mint
+                    else -> mint.copy(alpha = 0.45f)
+                }
+                drawRoundRect(c, Offset(x, size.height - bh), Size(barW, bh), CornerRadius(barW / 2))
+            }
+        }
+        // The daily goal.
+        val gy = size.height - Health.STEP_GOAL.toFloat() / max * size.height
+        drawLine(line.copy(alpha = 0.6f), Offset(0f, gy), Offset(size.width, gy), strokeWidth = 2f, pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f)))
+    }
+    val fmt = java.time.format.DateTimeFormatter.ofPattern(if (days > 10) "MMM d" else "EEE")
+    Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
+        if (days <= 10) list.forEach { (d, _) ->
+            Text(d.format(fmt).take(2), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        } else {
+            Text(list.first().first.format(fmt), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text("Today", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    val (day, v) = list[selected]
+    Text(
+        "${if (day == today) "Today" else day.format(java.time.format.DateTimeFormatter.ofPattern("EEE, MMM d"))}: ${"%,d".format(v)} steps",
+        fontSize = 12.sp,
+        modifier = Modifier.padding(top = 4.dp),
+    )
+    val goalDays = list.count { it.second >= Health.STEP_GOAL }
+    Text(
+        "Average ${"%,d".format(Health.stepAverage(list))} a day  •  Goal reached on $goalDays of $days days",
         fontSize = 11.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

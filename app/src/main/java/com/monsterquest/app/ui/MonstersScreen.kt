@@ -955,8 +955,12 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
                 MoveCard(mv, sp.types, onClick = { editingSlot = i })
             }
         }
-        if (m.moves != null) {
-            TextButton(onClick = { vm.resetMoves(m.uid) }) { Text("Reset to automatic") }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (m.moves != null) TextButton(onClick = { vm.resetMoves(m.uid) }) { Text("Reset to automatic") }
+            Spacer(Modifier.weight(1f))
+            var tutor by remember(m.uid) { mutableStateOf(false) }
+            TextButton(onClick = { tutor = true }) { Text("Move Tutor", color = Gold) }
+            if (tutor) MoveTutorDialog(vm, m.uid) { tutor = false }
         }
         val upcoming = Moves.learnable(sp).filter { it.first > m.level }
         if (upcoming.isNotEmpty()) {

@@ -302,6 +302,7 @@ fun StoreScreen(vm: GameViewModel) {
         compact = {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
                 buy()
+                MoveTutorCard(vm)
                 food()
                 SellSection(vm)
                 Spacer(Modifier.height(24.dp))
@@ -310,6 +311,7 @@ fun StoreScreen(vm: GameViewModel) {
         first = {
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp)) {
                 buy()
+                MoveTutorCard(vm)
                 food()
                 Spacer(Modifier.height(24.dp))
             }

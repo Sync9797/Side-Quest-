@@ -64,6 +64,18 @@ object Health {
     }
 
     /** Steps in each hour (0..23) of [day], as the game counted them. */
+    /** Steps for each of the last [days] days, oldest first; today's count is [stepsToday]. */
+    fun stepDays(state: GameState, today: LocalDate, days: Int, stepsToday: Int): List<Pair<LocalDate, Int>> =
+        (days - 1 downTo 0).map { today.minusDays(it.toLong()) }.map { d ->
+            d to if (d == today) maxOf(stepsToday, state.stepHistory[d.toEpochDay()] ?: 0) else (state.stepHistory[d.toEpochDay()] ?: 0)
+        }
+
+    /** Average steps a day over [days] (days before any steps were counted are left out). */
+    fun stepAverage(days: List<Pair<LocalDate, Int>>): Int {
+        val counted = days.dropWhile { it.second == 0 }
+        return if (counted.isEmpty()) 0 else counted.sumOf { it.second } / counted.size
+    }
+
     fun hourly(state: GameState, day: LocalDate): List<Int> =
         (0 until 24).map { state.stepsByHour[hourKey(day, it)] ?: 0 }
 

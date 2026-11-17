@@ -505,6 +505,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     var exoticReveal by mutableStateOf<com.monsterquest.core.Gear?>(null)
         private set
 
+    /** Where you're walking on the map, and the route there (null while it's worked out or with no streets loaded). */
+    data class WalkRoute(val lat: Double, val lon: Double, val label: String, val path: List<Pair<Double, Double>>? = null, val straight: Boolean = false)
+
+    var walkRoute by mutableStateOf<WalkRoute?>(null)
+
+    /** Shows the walking route to a place on the game's map. */
+    fun walkTo(lat: Double, lon: Double, label: String) { walkRoute = WalkRoute(lat, lon, label) }
+
     /** The Mirror (the look editor) is open from the Hero screen. */
     var mirrorOpen by mutableStateOf(false)
 
@@ -940,6 +948,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun restore(uid: String) = apply(GameEngine.restore(state, uid))
     fun setMoves(uid: String, moveIds: List<String>) = apply(GameEngine.setMoves(state, uid, moveIds))
+    fun buyMove(uid: String, moveId: String) = apply(com.monsterquest.core.MoveTutor.buy(state, uid, moveId))
     fun learnMove(uid: String, newId: String, replaceId: String) {
         apply(GameEngine.learnMove(state, uid, newId, replaceId))
         if (state.settings.bigMomentHaptics) Haptics.learned(getApplication())

@@ -432,6 +432,8 @@ data class Monster(
     val bond: Int = 0,
     /** Ascension ranks past level 100 (see [Ascension]): each adds 1% to every stat. */
     val ascension: Int = 0,
+    /** Moves bought from the Move Tutor, kept for good (see [MoveTutor]). */
+    val taught: List<String> = emptyList(),
 ) {
     val species: Species get() = Bestiary.get(speciesId)
     val bondLevel: Int get() = Bonds.level(bond)
@@ -471,7 +473,7 @@ data class Monster(
     val cureNeeded: Int get() = 3 + level / 8 + species.rarity.ordinal
 
     /** Every move this monster knows at its level. */
-    val learnedMoves: List<Move> get() = Moves.learned(species, level)
+    val learnedMoves: List<Move> get() = (Moves.learned(species, level) + taught.mapNotNull { Moves.find(it) }).distinctBy { it.id }
 
     /** A wild one: fights with 4 random moves it knows (see [Moves.wildLoadout]), and keeps them if tamed. */
     fun withWildMoves(rng: kotlin.random.Random): Monster = copy(moves = Moves.wildLoadout(species, level, rng).map { it.id })
@@ -481,7 +483,7 @@ data class Monster(
         get() {
             val learned = learnedMoves
             val chosen = moves?.mapNotNull { id -> learned.find { it.id == id } }?.take(Moves.MAX_MOVES)
-            return if (chosen.isNullOrEmpty()) Moves.autoLoadout(species, level) else chosen
+            return if (chosen.isNullOrEmpty()) Moves.autoLoadout(species, level, learned) else chosen
         }
 
     val stats: StatBlock

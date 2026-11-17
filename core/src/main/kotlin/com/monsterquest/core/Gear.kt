@@ -287,6 +287,17 @@ enum class ArmorType(
         "Sandals", setOf(HeroClass.MAGE, HeroClass.NONE), 0.15, 0.4, 6, 0, "Light soles for long study walks: Magic and a little Speed",
         ArmorSlot.FEET, signature = GearEffect.FOCUSED,
     ),
+    /** Never rolled at random: only dungeon champions carry one (see [Dungeons.FURCLOAK_PCT]). */
+    FURCLOAK(
+        "Furcloak", setOf(HeroClass.WARRIOR, HeroClass.ROGUE, HeroClass.NONE), 0.7, 0.1, -2, 2, "A heavy cloak with a thick fur collar: strong Defense and a little dodge",
+        ArmorSlot.BACK, signature = GearEffect.GUARDED,
+    ),
+    ;
+
+    companion object {
+        /** The kinds that can turn up anywhere (the Furcloak only comes from champions). */
+        val common: List<ArmorType> get() = entries - FURCLOAK
+    }
 }
 
 /** Effects armor can roll (the on-hit ones only make sense on weapons). */
@@ -333,6 +344,7 @@ data class Armor(
                 ArmorType.MANTLE -> "Mantle"
                 ArmorType.LEGGINGS -> "Leggings"
                 ArmorType.SANDALS -> "Sandals"
+                ArmorType.FURCLOAK -> "Furcloak"
             }
             val cursedName = curse?.let { "${if (cursed) "Cursed " else ""}${it.label} " } ?: ""
             return "$cursedName${material.armorLabel} $noun"
@@ -389,7 +401,7 @@ object Armory {
         return Material.BASIC
     }
 
-    fun randomArmorPartType(rng: Random): ArmorType = ArmorType.entries.random(rng)
+    fun randomArmorPartType(rng: Random): ArmorType = ArmorType.common.random(rng)
 
     /** A cursed weapon (Legendary) for the weekend Gold shrine. */
     fun cursedWeapon(heroLevel: Int, rng: Random): Gear =
@@ -418,7 +430,7 @@ object Armory {
     fun rollArmor(heroLevel: Int, rng: Random, type: ArmorType? = null, luck: Int = 0, minimum: GearRarity = GearRarity.NORMAL): Armor {
         val lvl = (heroLevel + rng.nextInt(-1, 2)).coerceAtLeast(1)
         val rarity = rollRarity(lvl, rng, luck, minimum)
-        val t = type ?: ArmorType.entries.random(rng)
+        val t = type ?: ArmorType.common.random(rng)
         // Rare and better always carry the piece's signature buff, then random extras.
         val effects = if (rarity.effectCount == 0) emptyList()
         else listOf(t.signature) + (ARMOR_EFFECTS - t.signature).shuffled(rng).take(rarity.effectCount - 1)

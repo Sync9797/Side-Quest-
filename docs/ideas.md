@@ -15,6 +15,11 @@ Ideas for later. None of these are planned yet.
 - **Collection goals:** Journal pages for shinies and perfect-gene monsters,
   with titles for completing them.
 
+- **Spear and war hammer:** two more exotic weapons that join at level 50,
+  hard to master like the axe, bow and scythe, each with a trade-off. Spear:
+  strikes first and pierces Defense, but deals less damage. War hammer: huge
+  hits that can stun, but slow and inaccurate.
+
 ## Dungeons and torches
 
 - **Scout the champion:** spend a torch before the champion fight to see their

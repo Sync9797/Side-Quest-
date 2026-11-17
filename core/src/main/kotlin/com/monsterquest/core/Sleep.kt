@@ -65,19 +65,26 @@ object SleepLog {
         week(state, today).mapNotNull { it.second?.asleepMin }.takeIf { it.isNotEmpty() }?.average()?.toInt()
 
     /**
-     * Last night was a full night's sleep: refill the hero's Energy. Only for the
-     * night that ended today, and only once a day.
+     * Last night was a full night's sleep: refill the hero's Energy and HP,
+     * heal every monster and wake the fainted ones. Only for the night that
+     * ended today, and only once a day.
      */
     fun restEnergy(state: GameState, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): Update {
         val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
         val night = lastNight(state, today) ?: return Update(state, "")
         if (night.asleepMin < FULL_NIGHT_MIN || state.sleepEnergyDay == today.toEpochDay()) return Update(state, "")
-        val s = state.copy(sleepEnergyDay = today.toEpochDay())
-        if (state.heroEnergyUsed <= 0) return Update(s, "")
-        return Update(
-            s.copy(heroEnergyUsed = 0, energyRegenMs = nowMs),
-            "A full night's sleep (${label(night.asleepMin)}): your Energy is restored!",
-        )
+        var s = state.copy(sleepEnergyDay = today.toEpochDay())
+        val woke = state.monsters.count { it.fainted }
+        val healed = state.monsters.count { it.damage > 0 || it.fainted }
+        val got = mutableListOf<String>()
+        if (state.heroEnergyUsed > 0) { s = s.copy(heroEnergyUsed = 0, energyRegenMs = nowMs); got += "your Energy is restored" }
+        if (state.heroDamage > 0) { s = s.copy(heroDamage = 0); got += "you're back to full health" }
+        if (healed > 0) {
+            s = s.copy(monsters = s.monsters.map { if (it.damage > 0 || it.fainted) it.copy(damage = 0, fainted = false) else it })
+            got += if (woke > 0) "your monsters are healed and $woke fainted ${if (woke == 1) "one wakes" else "ones wake"} up" else "your monsters are healed"
+        }
+        if (got.isEmpty()) return Update(s, "")
+        return Update(s, "A full night's sleep (${label(night.asleepMin)}): ${got.joinToString(", ")}!")
     }
 
     /** "7h 35m". */
