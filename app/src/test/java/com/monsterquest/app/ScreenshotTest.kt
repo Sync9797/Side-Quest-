@@ -1447,7 +1447,7 @@ abstract class ScreenshotBase(private val device: String) {
     @Test fun stepWeek() {
         val base = sampleState()
         val today = java.time.LocalDate.now().toEpochDay()
-        val v = vm(base.copy(stepHistory = (1..29).associate { (today - it) to (1_500 + (it * 1_237) % 7_000) }))
+        val v = vm(base.copy(settings = base.settings.copy(healthOpen = true), stepHistory = (1..29).associate { (today - it) to (1_500 + (it * 1_237) % 7_000) }))
         shot("56_steps_week") { com.monsterquest.app.ui.HealthCard(v, System.currentTimeMillis()) }
         rule.onNodeWithText("Week").performClick()
         capture("56b_steps_week", 300)
