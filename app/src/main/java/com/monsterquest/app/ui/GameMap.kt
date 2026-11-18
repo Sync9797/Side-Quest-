@@ -332,8 +332,8 @@ class GameMap internal constructor(val fake: Boolean) {
         private const val SOURCE_ZOOM = 14
         private const val STREET_STEP_M = 70.0
         private val STREET_CLASSES = setOf("primary", "secondary", "tertiary", "minor")
-        /** Ways people walk: streets, service roads, tracks and footpaths (not motorways or rail). */
-        private val WALK_CLASSES = setOf("primary", "secondary", "tertiary", "minor", "service", "track", "path", "pedestrian")
+        /** Streets a walking route may use: real streets only (no motorways, driveways, parking aisles, tracks or footpaths). */
+        private val WALK_CLASSES = setOf("primary", "secondary", "tertiary", "minor")
 
         /**
          * Share of the screen's height kept clear above the hero's focus: 0 when
@@ -641,9 +641,9 @@ fun MapSprites(gm: GameMap, sprites: List<MapSprite>) {
     }
 }
 
-/** A walking route on the ground: a dark edge under a dashed gold line, from the hero to the destination. */
+/** A walking route on the ground: a dark edge under a dashed gold line, along the streets to the destination. */
 @Composable
-fun MapRoute(gm: GameMap, path: List<Pair<Double, Double>>, straight: Boolean) {
+fun MapRoute(gm: GameMap, path: List<Pair<Double, Double>>) {
     Canvas(Modifier.fillMaxSize()) {
         @Suppress("UNUSED_VARIABLE") val t = gm.tick
         val p = Path()
@@ -658,7 +658,7 @@ fun MapRoute(gm: GameMap, path: List<Pair<Double, Double>>, straight: Boolean) {
             p, Color(0xFFEBC678),
             style = Stroke(
                 width = 6f, cap = round, join = join,
-                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(if (straight) floatArrayOf(4f, 14f) else floatArrayOf(18f, 10f)),
+                pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(18f, 10f)),
             ),
         )
     }

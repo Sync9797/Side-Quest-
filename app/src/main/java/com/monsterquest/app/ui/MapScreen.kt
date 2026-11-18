@@ -227,12 +227,19 @@ fun MapScreen(vm: GameViewModel) {
             return@LaunchedEffect
         }
         if (r.path == null) kotlinx.coroutines.delay(300)
-        val lines = gameMap.readWalkways()
-        val path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            com.monsterquest.core.Routing.route(com.monsterquest.core.Routing.build(lines), here, r.lat to r.lon)
+        // The streets there may still be loading: try a few times before giving up.
+        var path: List<Pair<Double, Double>>? = null
+        for (attempt in 0 until 3) {
+            if (attempt > 0) kotlinx.coroutines.delay(2_500)
+            val lines = gameMap.readWalkways()
+            path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                com.monsterquest.core.Routing.route(com.monsterquest.core.Routing.build(lines), here, r.lat to r.lon)
+            }
+            if (path != null) break
         }
         if (vm.walkRoute?.lat == r.lat && vm.walkRoute?.lon == r.lon) {
-            vm.walkRoute = r.copy(path = path ?: com.monsterquest.core.Routing.straight(here, r.lat to r.lon), straight = path == null)
+            // No street route: show none rather than a line across buildings.
+            vm.walkRoute = r.copy(path = path ?: emptyList(), straight = path == null)
         }
     }
     val icons = remember { HashMap<String, androidx.compose.ui.graphics.ImageBitmap>() }
@@ -362,7 +369,7 @@ fun MapScreen(vm: GameViewModel) {
                 GameMapView(gameMap, Modifier.fillMaxSize(), onUserTurn = onUserTurn) {
                     // Reach circle for shrines.
                     if (loc != null) MapCircle(gameMap, { glide.value }, World.SHRINE_RANGE_M, Color(0x228B5CF6), Color(0x888B5CF6))
-                    vm.walkRoute?.path?.let { MapRoute(gameMap, it, vm.walkRoute?.straight == true) }
+                    vm.walkRoute?.path?.takeIf { it.size >= 2 }?.let { MapRoute(gameMap, it) }
                     risen?.let { RisenShrineFx(gameMap, it) }
                     MapSprites(gameMap, sprites)
                 }
@@ -746,7 +753,7 @@ private fun WalkHereButton(vm: GameViewModel, lat: Double, lon: Double, label: S
 private fun RouteCard(vm: GameViewModel, r: GameViewModel.WalkRoute, modifier: Modifier) {
     val context = LocalContext.current
     val imperial = vm.state.settings.imperialUnits
-    val meters = r.path?.let { com.monsterquest.core.Routing.length(it) }
+    val meters = r.path?.takeIf { it.size >= 2 }?.let { com.monsterquest.core.Routing.length(it) }
     Column(
         modifier
             .padding(8.dp)
@@ -758,8 +765,8 @@ private fun RouteCard(vm: GameViewModel, r: GameViewModel.WalkRoute, modifier: M
         IconText(GameIcon.WALK, "Walking to ${r.label}", tint = Gold, bold = true)
         Text(
             when {
-                meters == null -> "Finding a route…"
-                r.straight -> "${formatDistance(meters, imperial)} as the crow flies (no streets loaded there yet)"
+                r.straight -> "No street route here yet: the streets between you aren't loaded. Zoom out or walk a little, or use Phone maps."
+                meters == null -> "Finding a route along the streets…"
                 else -> "${formatDistance(meters, imperial)} along the streets  •  about ${com.monsterquest.core.Routing.minutes(meters)} min"
             },
             fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,

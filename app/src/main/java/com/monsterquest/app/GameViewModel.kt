@@ -505,7 +505,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     var exoticReveal by mutableStateOf<com.monsterquest.core.Gear?>(null)
         private set
 
-    /** Where you're walking on the map, and the route there (null while it's worked out or with no streets loaded). */
+    /**
+     * Where you're walking on the map, and the route there along the streets
+     * (null while it's worked out). [straight] means no street route was found,
+     * so none is drawn.
+     */
     data class WalkRoute(val lat: Double, val lon: Double, val label: String, val path: List<Pair<Double, Double>>? = null, val straight: Boolean = false)
 
     var walkRoute by mutableStateOf<WalkRoute?>(null)

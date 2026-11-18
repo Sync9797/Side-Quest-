@@ -1,5 +1,6 @@
 package com.monsterquest.core
 
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -16,22 +17,47 @@ class RoutingTest {
         listOf(0.0 to 2 * d, d to 2 * d),
     )
 
+    /** On one of the grid's streets (to a few centimeters). */
+    private fun onStreet(p: Pair<Double, Double>): Boolean {
+        val e = 1e-7
+        val (lat, lon) = p
+        val alongEastWest = (abs(lat) < e || abs(lat - d) < e) && lon in -e..(2 * d + e)
+        val alongNorthSouth = (abs(lon) < e || abs(lon - 2 * d) < e) && lat in -e..(d + e)
+        return alongEastWest || alongNorthSouth
+    }
+
     @Test fun followsTheStreetsAroundTheBlock() {
         val g = Routing.build(lines)
-        val from = 0.0 to 0.0
-        val to = d to 2 * d
-        val path = assertNotNull(Routing.route(g, from, to))
-        assertEquals(from, path.first())
-        assertEquals(to, path.last())
+        val path = assertNotNull(Routing.route(g, 0.0 to 0.0, d to 2 * d))
+        assertTrue(path.all(::onStreet), "$path")
         // Along the streets it's an L, longer than the straight line.
         val walk = Routing.length(path)
-        val straight = Routing.length(Routing.straight(from, to))
+        val straight = World.distanceMeters(0.0, 0.0, d, 2 * d)
         assertTrue(walk > straight * 1.2, "$walk vs $straight")
         assertTrue(walk < straight * 1.6, "$walk vs $straight")
     }
 
+    @Test fun startAndEndOffTheStreetSnapOntoIt() {
+        val g = Routing.build(lines)
+        // Standing in the middle of the block, heading for a spot set back from the far street.
+        val from = 0.0003 to 0.0009
+        val to = 0.0011 to 0.0015
+        val path = assertNotNull(Routing.route(g, from, to))
+        assertTrue(path.all(::onStreet), "$path")
+        // It starts on the street nearest you (the south one, about 33 m away), not at a corner.
+        assertEquals(0.0, path.first().first, 1e-9)
+        assertEquals(0.0009, path.first().second, 1e-9)
+        assertEquals(d, path.last().first, 1e-9)
+        assertEquals(0.0015, path.last().second, 1e-9)
+    }
+
+    @Test fun samePieceOfStreetIsAStraightWalkAlongIt() {
+        val g = Routing.build(lines)
+        val path = assertNotNull(Routing.route(g, 0.0001 to 0.0002, 0.0001 to 0.0008))
+        assertEquals(listOf(0.0 to 0.0002, 0.0 to 0.0008), path)
+    }
+
     @Test fun joinsLinesThatShareAPoint() {
-        // Two separate lines meeting at the middle corner are one network.
         val g = Routing.build(listOf(listOf(0.0 to 0.0, 0.0 to d), listOf(0.0 to d, d to d)))
         assertNotNull(Routing.route(g, 0.0 to 0.0, d to d))
     }
