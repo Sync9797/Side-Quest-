@@ -300,18 +300,19 @@ class GameMap internal constructor(val fake: Boolean) {
         return MapPlaces(venues, streets, tiles, shrines)
     }
 
-    /** The streets and paths you can walk along in the loaded map tiles, as lines of (lat, lon). */
-    fun readWalkways(): List<List<Pair<Double, Double>>> {
+    /** The streets you can walk along in the loaded map tiles, each marked as a bridge, a tunnel or on the ground. */
+    fun readWalkways(): List<com.monsterquest.core.Routing.Way> {
         val m = map ?: return emptyList()
         val style = m.style ?: return emptyList()
         if (!style.isFullyLoaded) return emptyList()
         val src = style.getSourceAs<VectorSource>(SOURCE_ID) ?: return emptyList()
-        val lines = ArrayList<List<Pair<Double, Double>>>()
+        val lines = ArrayList<com.monsterquest.core.Routing.Way>()
         for (f in runCatching { src.querySourceFeatures(arrayOf("transportation"), null) }.getOrDefault(emptyList())) {
             if (f.prop("class") !in WALK_CLASSES) continue
+            val level = when (f.prop("brunnel")) { "bridge" -> 1; "tunnel" -> -1; else -> 0 }
             when (val g = f.geometry()) {
-                is org.maplibre.geojson.LineString -> lines += g.coordinates().map { it.latitude() to it.longitude() }
-                is org.maplibre.geojson.MultiLineString -> g.coordinates().forEach { l -> lines += l.map { it.latitude() to it.longitude() } }
+                is org.maplibre.geojson.LineString -> lines += com.monsterquest.core.Routing.Way(g.coordinates().map { it.latitude() to it.longitude() }, level)
+                is org.maplibre.geojson.MultiLineString -> g.coordinates().forEach { l -> lines += com.monsterquest.core.Routing.Way(l.map { it.latitude() to it.longitude() }, level) }
                 else -> {}
             }
         }

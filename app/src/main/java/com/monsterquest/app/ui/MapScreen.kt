@@ -233,7 +233,7 @@ fun MapScreen(vm: GameViewModel) {
             if (attempt > 0) kotlinx.coroutines.delay(2_500)
             val lines = gameMap.readWalkways()
             path = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                com.monsterquest.core.Routing.route(com.monsterquest.core.Routing.build(lines), here, r.lat to r.lon)
+                com.monsterquest.core.Routing.route(com.monsterquest.core.Routing.buildWays(lines), here, r.lat to r.lon)
             }
             if (path != null) break
         }
