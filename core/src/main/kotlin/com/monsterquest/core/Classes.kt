@@ -128,15 +128,15 @@ enum class Subclass(val parent: HeroClass, val label: String, val summary: Strin
 
 // ---------------------------------------------------------------------------
 // Skills: passive abilities that grow every 10 levels. Heroes pick theirs
-// (one at level 30, a second at 45 and a third at 60); a monster gets one
+// (one at level 30, a second at 45 and a third with the first star, level 51); a monster gets one
 // at level 30 that fits its type and kind.
 // ---------------------------------------------------------------------------
 
 const val MAX_SKILL_RANK = 5
 /** Levels between skill ranks. */
 const val SKILL_RANK_LEVELS = 10
-/** Hero levels that open the 1st, 2nd and 3rd skill slot. */
-val HERO_SKILL_LEVELS = listOf(30, 45, 60)
+/** Hero levels that open the 1st, 2nd and 3rd skill slot (the 3rd comes with the first star). */
+val HERO_SKILL_LEVELS = listOf(30, 45, Stars.LEVELS_PER_STAR + 1)
 const val MONSTER_SKILL_LEVEL = 30
 const val SKILL_CHANGE_COST = 500
 /** From this rank, skills that only helped their owner cover the whole team. */

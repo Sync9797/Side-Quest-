@@ -24,5 +24,7 @@ class StarCelebrationTest {
         assertTrue(p.first().contains("★1 · Lv 1"))
         assertTrue(p.any { "20" in it && "champions" in it.lowercase() })
         assertTrue(p.any { "Every 50 levels" in it })
+        assertTrue(p.any { "third skill slot" in it })
+        assertTrue(Stars.perks(2, 101).none { "skill slot" in it })
     }
 }

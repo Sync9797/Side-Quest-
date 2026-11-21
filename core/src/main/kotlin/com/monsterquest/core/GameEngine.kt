@@ -261,7 +261,7 @@ object GameEngine {
     }
 
     /**
-     * Puts a skill in slot [slot] (slots open at levels 30, 45 and 60). Filling
+     * Puts a skill in slot [slot] (slots open at levels 30, 45 and 51, the first star). Filling
      * an empty slot is free; swapping a skill out costs gold. A slot's rank
      * comes from your level, so a new skill there starts at the same rank.
      */

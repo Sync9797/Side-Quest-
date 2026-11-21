@@ -255,7 +255,7 @@ private val topics = listOf(
             section(
                 "Classes and stats",
                 "Each level gives 3 attribute points. At level 5 choose Warrior, Mage or Rogue; at 15 a subclass. Dungeon champions raise a stat for good.",
-                "Skills open at levels 30, 45 and 60 and rank up every 10 levels.",
+                "Skills open at levels 30, 45 and your first star (★1 · Lv 1, level 51) and rank up every 10 levels.",
             ),
             section(
                 "Choosing your path",

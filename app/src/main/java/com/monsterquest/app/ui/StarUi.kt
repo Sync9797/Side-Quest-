@@ -132,7 +132,14 @@ fun StarCelebration(vm: GameViewModel) {
                 AnimatedVisibility(visible = stage >= 2 + i, enter = fadeIn(tween(350)) + slideInVertically { it / 3 }) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
                         GIcon(
-                            listOf(GameIcon.STAR, GameIcon.CHEST, GameIcon.SHIELD, GameIcon.PIN, GameIcon.SPARK).getOrElse(i) { GameIcon.SPARK },
+                            when {
+                                "box" in p -> GameIcon.CHEST
+                                "champions" in p -> GameIcon.SHIELD
+                                "skill" in p -> GameIcon.BOOK
+                                "map" in p -> GameIcon.PIN
+                                i == 0 -> GameIcon.STAR
+                                else -> GameIcon.SPARK
+                            },
                             Modifier.size(18.dp).padding(top = 2.dp), Gold,
                         )
                         Spacer(Modifier.width(10.dp))

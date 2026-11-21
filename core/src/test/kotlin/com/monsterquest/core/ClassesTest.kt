@@ -86,7 +86,9 @@ class ClassesTest {
         assertEquals(0, Hero(level = 29).skillSlots)
         assertEquals(1, Hero(level = 30).skillSlots)
         assertEquals(2, Hero(level = 45).skillSlots)
-        assertEquals(3, Hero(level = 60).skillSlots)
+        assertEquals(2, Hero(level = 50).skillSlots)
+        // The third slot comes with the first star.
+        assertEquals(3, Hero(level = 51).skillSlots)
         assertTrue("level 30" in GameEngine.learnSkill(atLevel(29), 0, Trait.HOVER).message)
         assertTrue("level 45" in GameEngine.learnSkill(atLevel(30), 1, Trait.HOVER).message)
 

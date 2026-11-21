@@ -698,7 +698,7 @@ private fun SubclassSection(vm: GameViewModel) {
     }
 }
 
-/** Skill slots (levels 30, 45 and 60); each skill ranks up every 10 levels. */
+/** Skill slots (levels 30, 45 and the first star); each skill ranks up every 10 levels. */
 @Composable
 private fun SkillsSection(vm: GameViewModel) {
     val s = vm.state
@@ -706,7 +706,7 @@ private fun SkillsSection(vm: GameViewModel) {
     var picking by remember { mutableStateOf<Int?>(null) }
     SectionTitle("Skills")
     Text(
-        "Passive skills. A slot opens at levels ${HERO_SKILL_LEVELS.joinToString()}, and each skill ranks up every " +
+        "Passive skills. A slot opens at levels ${HERO_SKILL_LEVELS.dropLast(1).joinToString()} and your first star (${com.monsterquest.core.Stars.label(HERO_SKILL_LEVELS.last())}), and each skill ranks up every " +
             "$SKILL_RANK_LEVELS levels after (up to rank $MAX_SKILL_RANK) for a bigger effect. From rank $TEAM_RANGE_RANK " +
             "some cover your whole team.",
         fontSize = 12.sp,
@@ -719,7 +719,11 @@ private fun SkillsSection(vm: GameViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     when {
-                        h.level < at -> IconText(GameIcon.LOCK, "Slot ${slot + 1}: opens at level $at", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        h.level < at -> IconText(
+                            GameIcon.LOCK,
+                            "Slot ${slot + 1}: opens at " + if (com.monsterquest.core.Stars.of(at) > 0) "your first star (${com.monsterquest.core.Stars.label(at)})" else "level $at",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                         skill == null -> Text("Slot ${slot + 1}: choose a skill!", color = Gold, fontWeight = FontWeight.SemiBold)
                         else -> {
                             Text(
