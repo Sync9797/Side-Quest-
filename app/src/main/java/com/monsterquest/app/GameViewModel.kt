@@ -517,6 +517,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Shows the walking route to a place on the game's map. */
     fun walkTo(lat: Double, lon: Double, label: String) { walkRoute = WalkRoute(lat, lon, label) }
 
+    /** The new star's celebration was seen. */
+    fun celebrateStar() = set(com.monsterquest.core.Stars.celebrate(state))
+
     /** The Mirror (the look editor) is open from the Hero screen. */
     var mirrorOpen by mutableStateOf(false)
 

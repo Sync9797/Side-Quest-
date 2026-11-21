@@ -95,6 +95,8 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         if (calm && (com.monsterquest.core.ExoticChests.due(vm.state) || vm.exoticReveal != null)) ExoticChestDialog(vm)
         // Level 100: the Centurion reward (not mid-battle or mid-dungeon).
         if (com.monsterquest.core.Centurion.due(vm.state) && vm.battle == null && vm.state.dungeonRun == null) CenturionDialog(vm)
+        // A new star (level 51, 101...): the badge turns over, and what it brings. After the level 50 and 100 rewards.
+        else if (calm && com.monsterquest.core.Stars.due(vm.state) && !com.monsterquest.core.ExoticChests.due(vm.state) && vm.exoticReveal == null) StarCelebration(vm)
         // After an update: what changed (not while an update offer is up).
         if (vm.availableUpdate == null && !com.monsterquest.core.Looks.due(vm.state)) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }

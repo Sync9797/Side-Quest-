@@ -71,6 +71,12 @@ fun HeroArt(cls: HeroClass, modifier: Modifier, portrait: Boolean = true, outfit
     ArtCanvas(modifier, "hero:$cls:$portrait:$outfit") { c, w, h -> drawHero(c, w, h, cls, portrait, outfit) }
 }
 
+/** The hero as they stand on the map, with their stars. */
+@Composable
+fun PlayerMarkerArt(cls: HeroClass, outfit: HeroOutfit, stars: Int, modifier: Modifier) {
+    ArtCanvas(modifier, "marker:$cls:$outfit:$stars") { c, w, h -> drawPlayerOn(c, w, h, cls, outfit, stars) }
+}
+
 /** Just the hero's head and shoulders, for the look editor's thumbnails. */
 @Composable
 fun HeroHeadArt(cls: HeroClass, outfit: HeroOutfit, modifier: Modifier) {

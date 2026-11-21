@@ -299,6 +299,8 @@ data class GameState(
     val equippedGear: Gear? = null,
     /** Second weapon, carried with the Kleptomaniac skill. */
     val offhandGear: Gear? = null,
+    /** The highest star whose celebration has been shown (see [Stars.due]). */
+    val starsCelebrated: Int = 0,
     /** How the hero looks (null until the setup screen has been seen). */
     val appearance: Appearance? = null,
     /** Unequipped armor (each takes a bag slot). */

@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -1454,6 +1455,20 @@ abstract class ScreenshotBase(private val device: String) {
         rule.onNodeWithText("Goal reached on", substring = true).assertExists()
         rule.onNodeWithText("Month").performClick()
         capture("56c_steps_month", 300)
+    }
+
+    /** Level 51: the first star's celebration, the badge turning over, then what it brings; Onward closes it for good. */
+    @Test fun firstStar() {
+        val base = sampleState()
+        val v = vm(base.copy(hero = base.hero.copy(level = 51), exoticChestOpened = true))
+        shot("57_first_star_start", advanceMs = 300) { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("YOUR FIRST STAR").assertExists()
+        capture("57b_first_star", 4_000)
+        rule.onNodeWithText("Every 50 levels brings another star", substring = true).assertExists()
+        rule.onNodeWithTag("star-onward").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("YOUR FIRST STAR").assertDoesNotExist()
+        org.junit.Assert.assertEquals(1, v.state.starsCelebrated)
     }
 
     /** Help search: one word finds every point that mentions it. */
