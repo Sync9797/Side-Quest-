@@ -261,7 +261,7 @@ object GameEngine {
     }
 
     /**
-     * Puts a skill in slot [slot] (slots open at levels 30, 45 and 51, the first star). Filling
+     * Puts a skill in slot [slot] (slots open at levels 30, 45 and 60, shown as ★1 · Lv 10). Filling
      * an empty slot is free; swapping a skill out costs gold. A slot's rank
      * comes from your level, so a new skill there starts at the same rank.
      */
@@ -269,7 +269,7 @@ object GameEngine {
         val h = state.hero
         if (slot !in 0 until h.skillSlots) {
             val at = HERO_SKILL_LEVELS.getOrNull(slot) ?: return Update(state, "There's no such skill slot.")
-            return Update(state, "This skill slot opens at level $at.")
+            return Update(state, "This skill slot opens at ${Stars.levelText(at)}.")
         }
         if (!skill.forHero) return Update(state, "Only monsters can have ${skill.label}.")
         val current = h.skills.getOrNull(slot)
@@ -484,7 +484,7 @@ object GameEngine {
 
     fun buy(state: GameState, item: Item, qty: Int = 1, nowMs: Long = System.currentTimeMillis()): Update {
         if (item.price <= 0) return Update(state, "${item.label} can't be bought.")
-        if (state.hero.level < item.minLevel) return Update(state, "${item.label}s unlock at level ${item.minLevel}.")
+        if (state.hero.level < item.minLevel) return Update(state, "${item.label}s unlock at ${Stars.levelText(item.minLevel)}.")
         // Buying the same thing again and again marks it up for a while (see Prices).
         val cost = Prices.price(state, item, qty, nowMs)
         if (state.gold < cost) return Update(state, "Not enough gold.")
@@ -1479,7 +1479,7 @@ object GameEngine {
         if (rank == 0) return Update(state, "Learn ${spell.name} first.")
         if (rank >= Spells.MAX_RANK) return Update(state, "${spell.name} is already at max rank.")
         val needLevel = SpellMastery.levelForRank(rank + 1)
-        if (state.hero.level < needLevel) return Update(state, "Rank ${rank + 1} opens at hero level $needLevel.")
+        if (state.hero.level < needLevel) return Update(state, "Rank ${rank + 1} opens at hero ${Stars.levelText(needLevel)}.")
         val pages = state.spellPages[spellId] ?: 0
         val needPages = Spells.pagesToUpgrade(rank)
         val needGold = Spells.goldToUpgrade(rank)

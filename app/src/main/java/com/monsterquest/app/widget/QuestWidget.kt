@@ -138,7 +138,7 @@ private fun WidgetBody(state: GameState) {
                 style = TextStyle(color = colors.onSurface, fontSize = 15.sp, fontWeight = FontWeight.Bold),
                 modifier = GlanceModifier.defaultWeight(),
             )
-            Text("Lv ${summary.heroLevel}", style = TextStyle(color = colors.onSurfaceVariant, fontSize = 12.sp))
+            Text(com.monsterquest.core.Stars.label(summary.heroLevel), style = TextStyle(color = colors.onSurfaceVariant, fontSize = 12.sp))
         }
         Spacer(GlanceModifier.height(6.dp))
         if (summary.isEmpty) {

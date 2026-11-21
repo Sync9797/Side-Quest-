@@ -7,8 +7,8 @@ import kotlin.math.sin
 /** How well a binding glyph was traced: speed and accuracy together. */
 enum class TraceGrade(val label: String, val multiplier: Double) {
     /** Missed most of the glyph or scribbled: the cast barely holds. */
-    FIZZLE("Fizzle", 0.3),
-    FAINT("Faint", 0.65),
+    FIZZLE("Fizzle", 0.35),
+    FAINT("Faint", 0.7),
     GOOD("Good", 1.0),
     STRONG("Strong", 1.3),
     PERFECT("Perfect", 1.6),
@@ -67,6 +67,38 @@ object Binding {
         GlyphPoint((0.5 + 0.4 * cos(a)).toFloat(), (0.5 + 0.4 * sin(a)).toFloat())
     }
 
+    private fun arc(cx: Double, cy: Double, r: Double, from: Double, to: Double, n: Int = 12): List<GlyphPoint> = (0..n).map { i ->
+        val a = from + (to - from) * i / n
+        GlyphPoint((cx + r * cos(a)).toFloat(), (cy + r * sin(a)).toFloat())
+    }
+
+    /** Three shapes per type; each species always gets the same one (see [glyphFor]). */
+    const val VARIANTS = 3
+
+    private fun base(e: Element, variant: Int): Pair<String, List<GlyphPoint>> = when (variant) {
+        1 -> when (e) {
+            Element.FIRE -> "Ember" to pts(0.1f, 0.9f, 0.3f, 0.4f, 0.45f, 0.7f, 0.6f, 0.15f, 0.75f, 0.6f, 0.9f, 0.3f)
+            Element.ELECTRIC -> "Zigzag" to pts(0.15f, 0.1f, 0.85f, 0.3f, 0.15f, 0.5f, 0.85f, 0.7f, 0.15f, 0.9f)
+            Element.WATER -> "Ripple" to arc(0.5, 0.35, 0.4, 0.0, Math.PI)
+            Element.FLIGHT -> "Glide" to pts(0.05f, 0.7f, 0.35f, 0.3f, 0.65f, 0.55f, 0.95f, 0.15f)
+            Element.GAS -> "Mist" to pts(0.1f, 0.2f, 0.9f, 0.2f, 0.9f, 0.5f, 0.1f, 0.5f, 0.1f, 0.8f, 0.9f, 0.8f)
+            Element.CORRUPT -> "Hook" to pts(0.7f, 0.05f, 0.7f, 0.6f) + arc(0.5, 0.6, 0.2, 0.0, Math.PI, 8) + pts(0.3f, 0.42f)
+            Element.EARTH -> "Steps" to pts(0.05f, 0.9f, 0.05f, 0.65f, 0.35f, 0.65f, 0.35f, 0.4f, 0.65f, 0.4f, 0.65f, 0.15f, 0.95f, 0.15f)
+            Element.NEUTRAL -> "Diamond" to pts(0.5f, 0.05f, 0.9f, 0.5f, 0.5f, 0.95f, 0.1f, 0.5f, 0.5f, 0.05f)
+        }
+        2 -> when (e) {
+            Element.FIRE -> "Torch" to pts(0.2f, 0.2f, 0.5f, 0.9f, 0.8f, 0.2f, 0.55f, 0.45f)
+            Element.ELECTRIC -> "Fork" to pts(0.2f, 0.05f, 0.75f, 0.35f, 0.35f, 0.55f, 0.8f, 0.95f)
+            Element.WATER -> "Droplet" to (listOf(GlyphPoint(0.5f, 0.05f)) + arc(0.5, 0.62, 0.3, -Math.PI / 3, 4 * Math.PI / 3, 16) + GlyphPoint(0.5f, 0.05f))
+            Element.FLIGHT -> "Swoop" to (0..12).map { i -> val t = i / 12f; GlyphPoint(0.05f + 0.9f * t, 0.2f + 2.4f * t * (1 - t)) }
+            Element.GAS -> "Cloud" to (arc(0.25, 0.6, 0.12, Math.PI, 2 * Math.PI, 8) + arc(0.5, 0.6, 0.12, Math.PI, 2 * Math.PI, 8) + arc(0.75, 0.6, 0.12, Math.PI, 2 * Math.PI, 8))
+            Element.CORRUPT -> "Rune" to pts(0.2f, 0.9f, 0.2f, 0.1f, 0.8f, 0.5f, 0.25f, 0.5f)
+            Element.EARTH -> "Boulder" to pts(0.2f, 0.9f, 0.1f, 0.45f, 0.35f, 0.1f, 0.7f, 0.15f, 0.9f, 0.5f, 0.75f, 0.9f, 0.25f, 0.9f)
+            Element.NEUTRAL -> "Arch" to (pts(0.1f, 0.9f) + arc(0.5, 0.55, 0.4, Math.PI, 2 * Math.PI) + pts(0.9f, 0.9f))
+        }
+        else -> base(e)
+    }
+
     private fun base(e: Element): Pair<String, List<GlyphPoint>> = when (e) {
         Element.FIRE -> "Flame" to pts(0.35f, 0.95f, 0.18f, 0.6f, 0.45f, 0.5f, 0.32f, 0.2f, 0.6f, 0.03f, 0.72f, 0.4f, 0.55f, 0.55f, 0.78f, 0.75f, 0.6f, 0.95f)
         Element.ELECTRIC -> "Bolt" to pts(0.65f, 0.02f, 0.28f, 0.52f, 0.58f, 0.5f, 0.3f, 0.98f)
@@ -122,31 +154,53 @@ object Binding {
     /** Every cast with a Perfect Crystal tames (no trace needed). */
     fun needsTrace(crystal: Item): Boolean = crystal != Item.PERFECT_ORB
 
+    /** How many steps simpler a crystal makes the pattern: none for a plain one, 1 for Resonant or Radiant, 2 for Prismatic and up. */
+    fun crystalEase(crystal: Item): Int = (crystals.indexOf(crystal).coerceAtLeast(0) + 1) / 2
+
     /**
-     * The glyph for taming [species] with [crystal]: its main type's shape;
-     * uncommon ones add a flourish, rare and stronger ones double back on
-     * themselves. Rarer monsters also give less time.
+     * How intricate the pattern is, 0..2: the plain shape, the shape with a
+     * flourish, or the shape doubled. Rarer monsters start higher; better
+     * crystals bring it down.
+     */
+    fun complexity(species: Species, crystal: Item): Int {
+        val byRarity = when (species.rarity) {
+            Rarity.COMMON -> 0
+            Rarity.UNCOMMON -> 1
+            else -> 2
+        }
+        return (byRarity - crystalEase(crystal)).coerceAtLeast(0)
+    }
+
+    /**
+     * The glyph for taming [species] with [crystal]: one of its main type's
+     * three shapes (always the same one for that species); intricate ones add
+     * a flourish or double back on themselves. Intricate patterns get extra
+     * time, rarer monsters a little less, and better crystals more.
      */
     fun glyphFor(species: Species, crystal: Item = Item.BINDING_CRYSTAL): Glyph {
-        val (name, shape) = base(species.element)
-        val stroke = when (species.rarity) {
-            Rarity.COMMON -> shape
-            Rarity.UNCOMMON -> clearest(tails(shape))
-            // Rare and up: the shape twice (side by side or stacked), whichever way crosses itself least.
+        val (name, shape) = base(species.element, Math.floorMod(species.id.hashCode(), VARIANTS))
+        val level = complexity(species, crystal)
+        val stroke = when (level) {
+            0 -> shape
+            1 -> clearest(tails(shape))
+            // The shape twice (side by side or stacked), whichever way crosses itself least.
             else -> clearest(doubles(shape) + tails(shape).flatMap { tails(it) })
         }
         val points = fit(stroke)
         val rarityPace = when (species.rarity) {
             Rarity.COMMON -> 1.0
-            Rarity.UNCOMMON -> 0.92
-            Rarity.RARE -> 0.85
-            Rarity.EPIC -> 0.78
-            else -> 0.72
+            Rarity.UNCOMMON -> 0.95
+            Rarity.RARE -> 0.9
+            Rarity.EPIC -> 0.86
+            else -> 0.82
         }
         val tier = crystals.indexOf(crystal).coerceAtLeast(0)
-        val limit = (900 + 750 * length(points)) * rarityPace * (1 + 0.1 * tier)
+        val limit = (1_100 + 850 * length(points) + EXTRA_MS_PER_STEP * level) * rarityPace * (1 + 0.1 * tier)
         return Glyph(name, points, limit.toLong())
     }
+
+    /** Extra time for each step of a pattern's intricacy. */
+    const val EXTRA_MS_PER_STEP = 700
 
     // ---- scoring ----
 
@@ -182,7 +236,7 @@ object Binding {
         set.minOf { hypot((it.x - q.x).toDouble(), (it.y - q.y).toDouble()) }.toFloat()
 
     /** How close (unit square) a trace must pass to count as on the line. */
-    private const val ON_LINE = 0.1f
+    private const val ON_LINE = 0.11f
 
     /** How much of the glyph (0..1) the trace passed over. */
     fun coverage(glyph: Glyph, trace: List<GlyphPoint>): Double {
@@ -234,7 +288,7 @@ object Binding {
     }
 
     /** An average gap this big (unit square) scores no closeness at all. */
-    private const val CLOSE_GAP = 0.05
+    private const val CLOSE_GAP = 0.055
 
     /**
      * The trace's score, 0..1: [accuracy] (on the glyph, all of it, no
@@ -251,10 +305,10 @@ object Binding {
     fun grade(glyph: Glyph, trace: List<GlyphPoint>, durationMs: Long): TraceGrade {
         val score = score(glyph, trace, durationMs)
         return when {
-            score >= 0.85 -> TraceGrade.PERFECT
-            score >= 0.7 -> TraceGrade.STRONG
-            score >= 0.5 -> TraceGrade.GOOD
-            score >= 0.28 -> TraceGrade.FAINT
+            score >= 0.84 -> TraceGrade.PERFECT
+            score >= 0.67 -> TraceGrade.STRONG
+            score >= 0.46 -> TraceGrade.GOOD
+            score >= 0.25 -> TraceGrade.FAINT
             else -> TraceGrade.FIZZLE
         }
     }

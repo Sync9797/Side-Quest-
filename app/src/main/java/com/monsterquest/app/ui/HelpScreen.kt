@@ -175,7 +175,7 @@ private val topics = listOf(
                 "Level 50: exotic weapons join the world (axes, bows and scythes), and you choose one of three mystery chests, each holding a different one. Axe: the heaviest blows, splitting raised Defense and guards, but slow and missing more (85% accuracy). Bow: fast (+10% Speed) with +10% critical hits, but no shield (−15% Defense). Scythe: each swing reaps every foe at 60% power and adds some Magic, but it's slower and lowers Defense. No class gets the class bonus with them, and they take ${com.monsterquest.core.EXOTIC_MASTERY_BATTLES} battles to master (normal weapons take 10).",
                 "Relics: from level 50, the champions of 5-star and Mythic dungeons (and now and then a star box) may hold a relic: a named Legendary weapon of old legend, with its own powers and lore, like Kingsflame, the Blade Reforged, or the Silverleaf Longbow.",
                 "Level 100 and beyond: reaching level 100 makes you a Centurion (a title, a golden frame on the map, and a legendary egg of your choice with 3 perfect stats). Monsters at level 100 keep growing by ascension: each rank adds 1% to every stat, up to 5 ranks past the enemies, and level-100 foes ascend one rank for each hero level past 100. Past level 100, each neighbourhood also hides a Mythic (6-star) dungeon: 14 rooms, 7 torches, the nastiest traps; clear one to become a Mythbreaker.",
-                "Star ranks: every 50 levels earns a star. Level 51 shows as ★1 · Lv 1, level 101 as ★2 · Lv 1, and your star shows by your name and on your map marker. Nothing drops: your hero keeps all their strength and the world keeps up. Each new star opens a star reward box: an Epic weapon, Epic armor, 3 Prismatic Crystals, 2 Restore Potions and 2 Phoenix Feathers. Each star also lets dungeon champions raise every stat 10 more, and a celebration shows what the new star brings.",
+                "Star ranks: every 50 levels earns a star. The level shown starts over: after Lv 50 comes ★1 · Lv 1, after ★1 · Lv 50 comes ★2 · Lv 1, and every hero level requirement past the first star reads that way too (★1 · Lv 10, say). Your star shows by your name and on your map marker. Nothing drops: your hero keeps all their strength and the world keeps up. Each new star opens a star reward box: an Epic weapon, Epic armor, 3 Prismatic Crystals, 2 Restore Potions and 2 Phoenix Feathers. Each star also lets dungeon champions raise every stat 10 more, and a celebration shows what the new star brings.",
                 "Levels stay fair: monsters can't get more than 5 levels above your hero (extra XP is saved and pays out as your hero levels up), and beating foes far below your level gives much less XP.",
                 "Libraries and bookstores: their shrines hold extra spell pages.",
                 "Parks and gardens host dens of Earth, Flight and Gas monsters; fountains host Water dens.",
@@ -215,7 +215,7 @@ private val topics = listOf(
         listOf(
             section(
                 "Taming",
-                "Get a monster below 50% HP, press Tame, pick a Binding Crystal and trace its glyph in one stroke. Your trace is graded: Fizzle (0.3x odds), Faint (0.65x), Good, Strong (1.3x) or Perfect (1.6x). It counts how much of the glyph you cover, how close you stay to the line and how quickly you finish: a fair attempt is Good, a small wobble Strong, and Perfect takes a steady hand and a quick stroke. Scribbling fizzles.",
+                "Get a monster below 50% HP, press Tame, pick a Binding Crystal and trace its glyph in one stroke. Your trace is graded: Fizzle (0.35x odds), Faint (0.7x), Good, Strong (1.3x) or Perfect (1.6x). It counts how much of the glyph you cover, how close you stay to the line and how quickly you finish: a fair attempt is Good, a small wobble Strong, and Perfect takes a steady hand and a quick stroke. Scribbling fizzles. Each type has three patterns, and each species always uses the same one. Rarer monsters get more intricate patterns, with extra time to trace them; better crystals make the pattern simpler (Resonant and Radiant by one step, Prismatic and up by two) and give more time.",
                 "Snap Bind: on the very first turn of a wild fight you can gamble a crystal on a strong catch, even at full health. Land it and the rest scatter; miss and they double down.",
                 "Berries (Sweet 1.5x, Golden 2.5x) before a cast make it likelier. Every cast has a 2% critical catch.",
             ),
@@ -255,7 +255,7 @@ private val topics = listOf(
             section(
                 "Classes and stats",
                 "Each level gives 3 attribute points. At level 5 choose Warrior, Mage or Rogue; at 15 a subclass. Dungeon champions raise a stat for good.",
-                "Skills open at levels 30, 45 and your first star (★1 · Lv 1, level 51) and rank up every 10 levels.",
+                "Skills open at levels 30, 45 and ★1 · Lv 10, and rank up every 10 levels.",
             ),
             section(
                 "Choosing your path",

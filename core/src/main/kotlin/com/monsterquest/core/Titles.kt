@@ -40,7 +40,7 @@ object Centurion {
         val s = Titles.grant(state, Titles.CENTURION).copy(eggs = state.eggs + egg)
         return Update(
             s,
-            "Centurion! You've reached level $LEVEL. A ${sp.name} egg with $PERFECT_STATS perfect stats is yours: walk to hatch it.",
+            "Centurion! You've reached ${Stars.levelText(LEVEL)}. A ${sp.name} egg with $PERFECT_STATS perfect stats is yours: walk to hatch it.",
             rewards = listOf(Reward.Egg(sp.family.removeSuffix(" line"))),
             rewardTitle = "Centurion",
         )

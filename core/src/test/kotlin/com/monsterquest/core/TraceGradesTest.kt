@@ -56,6 +56,8 @@ class TraceGradesTest {
         // Shaky still tames sometimes: mostly Faint or Good, rarely a fizzle.
         val shaky = shares(0.1f, 0.6)
         assertTrue(shaky.atLeast(TraceGrade.STRONG) < 0.01)
-        assertTrue(shaky.getValue(TraceGrade.FIZZLE) < 0.2)
+        assertTrue(shaky.getValue(TraceGrade.FIZZLE) < 0.1)
+        // A little forgiving: a shaky but quick trace is usually Good.
+        assertTrue(shaky.atLeast(TraceGrade.GOOD) > 0.5)
     }
 }

@@ -12,18 +12,30 @@ class BindingTest {
     @Test
     fun glyphsFollowTypeAndGetHarderWithRarity() {
         val g = Binding.glyphFor(common)
-        assertEquals("Bolt", g.name)
+        assertTrue(g.name in setOf("Bolt", "Zigzag", "Fork"), g.name)
+        // The same species always gets the same pattern.
+        assertEquals(g.points, Binding.glyphFor(common).points)
         assertTrue(g.points.all { it.x in 0f..1f && it.y in 0f..1f })
-        // Rarer monsters: a longer stroke and less time per length.
+        // Rarer monsters: a more intricate pattern, with extra time for it.
         val epic = Bestiary.all.first { it.rarity == Rarity.EPIC && it.element == Element.ELECTRIC }
+        assertEquals(2, Binding.complexity(epic, Item.BINDING_CRYSTAL))
+        assertEquals(0, Binding.complexity(common, Item.BINDING_CRYSTAL))
         val hard = Binding.glyphFor(epic)
-        assertTrue(Binding.length(hard.points) > Binding.length(g.points))
-        assertTrue(hard.timeLimitMs / Binding.length(hard.points) < g.timeLimitMs / Binding.length(g.points))
+        val plain = Binding.glyphFor(epic, Item.PRISMATIC_CRYSTAL)
+        // Better crystals make the pattern simpler: Resonant one step, Prismatic two.
+        assertEquals(1, Binding.complexity(epic, Item.RESONANT_CRYSTAL))
+        assertEquals(0, Binding.complexity(epic, Item.PRISMATIC_CRYSTAL))
+        assertTrue(Binding.length(plain.points) < Binding.length(hard.points))
+        assertEquals(hard.name, plain.name)
         // Better crystals give more time to trace.
         assertTrue(Binding.glyphFor(common, Item.PRISMATIC_CRYSTAL).timeLimitMs > g.timeLimitMs)
         assertFalse(Binding.needsTrace(Item.PERFECT_ORB))
-        // Every type has its own shape.
-        assertEquals(Element.entries.size, Element.entries.map { e -> Binding.glyphFor(Bestiary.all.firstOrNull { it.element == e } ?: common).name }.toSet().size - (if (Bestiary.all.none { it.element == Element.NEUTRAL }) -1 else 0))
+        // Every type has its own shapes: no pattern name is shared between types.
+        val byType = Bestiary.all.groupBy { it.element }.mapValues { (_, sps) -> sps.map { Binding.glyphFor(it).name }.toSet() }
+        val names = byType.values.flatten()
+        assertEquals(names.size, names.toSet().size)
+        // There's more than one pattern per type across the bestiary.
+        assertTrue(byType.values.count { it.size > 1 } >= 6, "$byType")
     }
 
     @Test

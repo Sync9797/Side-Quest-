@@ -986,7 +986,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun importSave(imported: GameState) {
         repo.keepBeforeImport()
         set(imported)
-        message = "Save imported: ${imported.hero.name}, level ${imported.hero.level}."
+        message = "Save imported: ${imported.hero.name}, ${com.monsterquest.core.Stars.levelText(imported.hero.level)}."
     }
     fun resetMoves(uid: String) =
         set(state.copy(monsters = state.monsters.map { if (it.uid == uid) it.copy(moves = null) else it }))

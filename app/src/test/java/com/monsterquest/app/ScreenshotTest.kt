@@ -858,7 +858,7 @@ abstract class ScreenshotBase(private val device: String) {
         shot("28_hero_skills") { AppRoot(v, Tab.HERO) }
         check(rule.onAllNodesWithText("Berserker", substring = true).fetchSemanticsNodes().isNotEmpty()) { "subclass shown" }
         rule.onNodeWithText("Menace  ★★☆☆☆").assertExists()
-        rule.onNodeWithText("Slot 3: opens at your first star (★1 · Lv 1)").assertExists()
+        rule.onNodeWithText("Slot 3: opens at ★1 · Lv 10").assertExists()
         rule.onNodeWithText("Off hand", substring = true).assertExists()
         // The class is a dropdown: the other classes only show once it's opened.
         check(rule.onAllNodesWithText("Mage").fetchSemanticsNodes().isEmpty()) { "other classes hidden" }

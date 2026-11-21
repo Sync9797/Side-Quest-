@@ -173,7 +173,7 @@ private fun CenturionDialog(vm: GameViewModel) {
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(
-                    "You've reached level ${com.monsterquest.core.Centurion.LEVEL}. You take the title Centurion, and a golden frame glows around you on the map. " +
+                    "You've reached ${com.monsterquest.core.Stars.levelText(com.monsterquest.core.Centurion.LEVEL)}. You take the title Centurion, and a golden frame glows around you on the map. " +
                         "Choose a legendary egg (with ${com.monsterquest.core.Centurion.PERFECT_STATS} perfect stats) to hatch by walking:",
                     fontSize = 13.sp,
                 )

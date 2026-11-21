@@ -149,7 +149,7 @@ object SpellMastery {
         val m = h.spellMastery[spellId] ?: 0
         if (m >= MAX) return Update(state, "${spell.name} is fully mastered.")
         val next = m + 1
-        if (h.level < levelForMastery(next)) return Update(state, "Mastery $next opens at level ${levelForMastery(next)}.")
+        if (h.level < levelForMastery(next)) return Update(state, "Mastery $next opens at ${Stars.levelText(levelForMastery(next))}.")
         val pages = state.spellPages[spellId] ?: 0
         val needPages = pagesFor(next)
         val needGold = goldFor(next)

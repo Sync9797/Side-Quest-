@@ -114,10 +114,6 @@ fun StarCelebration(vm: GameViewModel) {
                         .padding(horizontal = 18.dp, vertical = 8.dp),
                 )
             }
-            Text(
-                "Real level $level",
-                fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp),
-            )
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 // How you'll look on the map from now on.
@@ -135,7 +131,6 @@ fun StarCelebration(vm: GameViewModel) {
                             when {
                                 "box" in p -> GameIcon.CHEST
                                 "champions" in p -> GameIcon.SHIELD
-                                "skill" in p -> GameIcon.BOOK
                                 "map" in p -> GameIcon.PIN
                                 i == 0 -> GameIcon.STAR
                                 else -> GameIcon.SPARK
