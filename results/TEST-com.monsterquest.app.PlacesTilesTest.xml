@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.monsterquest.app.PlacesTilesTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-21T17:47:00.453Z" hostname="ip-10-0-135-248" time="0.025">
+  <properties/>
+  <testcase name="placesAndWaterLandInTheirTile" classname="com.monsterquest.app.PlacesTilesTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
