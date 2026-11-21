@@ -450,7 +450,7 @@ abstract class ScreenshotBase(private val device: String) {
         val path = glyph.points.zipWithNext().flatMap { (a, b) ->
             (0 until 8).map { i -> com.monsterquest.core.GlyphPoint(a.x + (b.x - a.x) * i / 8f, a.y + (b.y - a.y) * i / 8f) }
         } + glyph.points.last()
-        rule.onNode(androidx.compose.ui.test.hasContentDescription("Binding glyph: Bolt")).performTouchInput {
+        rule.onNode(androidx.compose.ui.test.hasContentDescription("Binding glyph: ${glyph.name}")).performTouchInput {
             down(androidx.compose.ui.geometry.Offset(path[0].x * width, path[0].y * height))
             path.drop(1).forEach { moveTo(androidx.compose.ui.geometry.Offset(it.x * width, it.y * height)) }
             up()
