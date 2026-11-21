@@ -1466,9 +1466,9 @@ abstract class ScreenshotBase(private val device: String) {
         capture("57b_first_star", 4_000)
         rule.onNodeWithText("Every 50 levels brings another star", substring = true).assertExists()
         rule.onNodeWithTag("star-onward").performClick()
-        rule.waitForIdle()
-        rule.onNodeWithText("YOUR FIRST STAR").assertDoesNotExist()
         org.junit.Assert.assertEquals(1, v.state.starsCelebrated)
+        capture("57c_after_star", 500)
+        rule.onNodeWithText("YOUR FIRST STAR").assertDoesNotExist()
     }
 
     /** Help search: one word finds every point that mentions it. */

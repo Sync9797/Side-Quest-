@@ -33,7 +33,7 @@ object Stars {
      */
     fun perks(star: Int, level: Int): List<String> = listOfNotNull(
         "Your level starts over at ★$star · Lv 1, but your real level ($level) keeps counting underneath: you keep all your strength, and enemies and your monsters' level limit still follow it.",
-        "A star reward box is in your Bag: an Epic weapon (sometimes a relic of old legend), Epic armor, ${BOX_ITEMS.entries.joinToString { "${it.value} ${it.key.label}" }}.",
+        "A star reward box is in your Bag: an Epic weapon (sometimes a relic of old legend), Epic armor, ${GameEngine.boxText(BOX_ITEMS)}.",
         "Dungeon champions can now raise each stat up to ${Dungeons.championCap(level)} in total (${Dungeons.CHAMPION_STAT_CAP} more per star).",
         "Your hero wears ${if (star == 1) "a star" else "$star stars"} on the map, for everyone to see.",
         if (star == 1) "Every 50 levels brings another star and another box." else null,
