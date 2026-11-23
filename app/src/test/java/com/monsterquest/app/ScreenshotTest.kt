@@ -1471,6 +1471,22 @@ abstract class ScreenshotBase(private val device: String) {
         rule.onNodeWithText("YOUR FIRST STAR").assertDoesNotExist()
     }
 
+    /** Everyone's free Farwisp: the introduction with the drifting orb, then the orb in the Bag. */
+    @Test fun farwisp() {
+        val v = vm()
+        v.giftFarwisp()
+        shot("58_farwisp_intro", advanceMs = 1_200) { AppRoot(v, Tab.BAG) }
+        rule.onNodeWithText("Farwisp").assertExists()
+        org.junit.Assert.assertEquals(1, v.state.count(com.monsterquest.core.Item.FARWISP))
+        rule.onNodeWithTag("farwisp-ok").performClick()
+        capture("58b_farwisp_bag", 800)
+        rule.onNodeWithTag("farwisp-intro").assertDoesNotExist()
+        rule.onNodeWithText("Farwisp x1").assertExists()
+        // Given once only.
+        v.giftFarwisp()
+        org.junit.Assert.assertFalse(v.farwispIntro)
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }

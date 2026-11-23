@@ -427,6 +427,7 @@ fun DungeonDialog(vm: GameViewModel, d: Dungeon, distance: Double?, onDismiss: (
                         fontSize = 13.sp,
                         modifier = Modifier.padding(top = 8.dp),
                     )
+                    FarwispUse(vm, enabled = s.torches >= d.torchCost) { vm.enterDungeon(d, remote = true); onDismiss() }
                 }
             }
         },

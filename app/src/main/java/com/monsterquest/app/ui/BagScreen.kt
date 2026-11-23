@@ -58,7 +58,8 @@ fun BagScreen(vm: GameViewModel) {
     val itemRow: @Composable (Item) -> Unit = { item ->
         GameCard(Modifier.padding(vertical = 3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                GIcon(item.icon(), Modifier.size(28.dp), item.color())
+                if (item == Item.FARWISP) com.monsterquest.app.ui.art.FarwispOrb(Modifier.size(32.dp))
+                else GIcon(item.icon(), Modifier.size(28.dp), item.color())
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("${item.label} x${s.count(item)}", fontWeight = FontWeight.SemiBold)
@@ -592,6 +593,7 @@ private fun FoodStoreCard(vm: GameViewModel, food: Item) {
 private class BagGroup(val title: String, val icon: GameIcon, val tint: androidx.compose.ui.graphics.Color, val kinds: Set<ItemKind>, val startOpen: Boolean = false)
 
 private val BAG_GROUPS = listOf(
+    BagGroup("Rare finds", GameIcon.ORB, androidx.compose.ui.graphics.Color(0xFF6FC7B8), setOf(ItemKind.REMOTE), startOpen = true),
     BagGroup("Healing", GameIcon.POTION, androidx.compose.ui.graphics.Color(0xFF9CD2BD), setOf(ItemKind.HEAL_HP, ItemKind.HEAL_MP, ItemKind.REVIVE, ItemKind.RESTORE), startOpen = true),
     BagGroup("Binding Crystals", GameIcon.CRYSTAL, androidx.compose.ui.graphics.Color(0xFFC3A6F0), setOf(ItemKind.CAPTURE)),
     BagGroup("Baits & berries", GameIcon.BERRY, androidx.compose.ui.graphics.Color(0xFFE5739A), setOf(ItemKind.BAIT)),

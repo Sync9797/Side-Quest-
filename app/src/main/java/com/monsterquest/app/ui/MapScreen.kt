@@ -894,6 +894,10 @@ private fun ShrineDialog(vm: GameViewModel, shrine: Shrine, now: Long, onDismiss
                         modifier = Modifier.padding(top = 6.dp),
                     )
                     WalkHereButton(vm, shrine.lat, shrine.lon, shrine.place ?: shrine.name)
+                    FarwispUse(vm, enabled = cooldown == 0L && (!shrine.isBoss || access.open)) {
+                        if (shrine.isBoss) vm.challengeBoss(shrine, remote = true) else vm.visitShrine(shrine, remote = true)
+                        onDismiss()
+                    }
                 }
             }
         },
@@ -955,6 +959,7 @@ private fun DenDialog(vm: GameViewModel, den: Den, onDismiss: () -> Unit) {
                 if (!inRange) {
                     Text("Walk within ${formatDistance(Dens.RANGE_M, imperial)} to fight.", modifier = Modifier.padding(top = 6.dp))
                     WalkHereButton(vm, den.lat, den.lon, den.name)
+                    FarwispUse(vm) { vm.challengeDen(den, remote = true); onDismiss() }
                 }
             }
         },
@@ -994,6 +999,7 @@ private fun VillainDialog(vm: GameViewModel, camp: VillainCamp, onDismiss: () ->
                 if (!inRange) {
                     Text("Walk within ${formatDistance(Villains.RANGE_M, vm.state.settings.imperialUnits)} to fight.", modifier = Modifier.padding(top = 6.dp))
                     WalkHereButton(vm, camp.lat, camp.lon, camp.leader)
+                    FarwispUse(vm) { vm.challengeVillain(camp, remote = true); onDismiss() }
                 }
             }
         },
@@ -1179,6 +1185,7 @@ private fun NomadDialog(vm: GameViewModel, nomad: com.monsterquest.core.Nomad, o
                 if (!inRange) {
                     Text("Walk within ${formatDistance(com.monsterquest.core.Wanderers.RANGE_M, vm.state.settings.imperialUnits)} to accept.", modifier = Modifier.padding(top = 6.dp))
                     WalkHereButton(vm, nomad.lat, nomad.lon, nomad.name)
+                    FarwispUse(vm) { vm.challengeNomad(nomad, remote = true); onDismiss() }
                 }
             }
         },

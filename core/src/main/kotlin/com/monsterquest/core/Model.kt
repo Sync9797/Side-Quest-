@@ -588,7 +588,7 @@ fun newId(rng: Random = Random.Default): String =
 const val MASTER_ORB_SELL_PRICE = 200
 
 @Serializable
-enum class ItemKind { HEAL_HP, HEAL_MP, REVIVE, CAPTURE, TREAT, RESTORE, LURE, BAIT, PERSONALITY, FOOD, INCUBATOR }
+enum class ItemKind { HEAL_HP, HEAL_MP, REVIVE, CAPTURE, TREAT, RESTORE, LURE, BAIT, PERSONALITY, FOOD, INCUBATOR, REMOTE }
 
 @Serializable
 enum class Item(
@@ -624,6 +624,11 @@ enum class Item(
     /** Retired in 3.20 (kept so older saves load; save version 12 turns any held into gold). */
     LURE("Lure", ItemKind.LURE, 30.0, 0, "Retired: wild monsters no longer roam the map."),
     INCUBATOR("Incubator", ItemKind.INCUBATOR, 0.5, 800, "Put one egg in it to halve the distance it needs to hatch. One use per incubator, one per egg."),
+    /** Rare and never sold: only from loot boxes (see [Farwisp]). */
+    FARWISP(
+        "Farwisp", ItemKind.REMOTE, 1.0, 0,
+        "A drifting ball of mist that carries you across the map: take on one dungeon, den, shrine, villain or nomad from wherever you are, without walking there. Found only in loot boxes.",
+    ),
     // Foods: set one out and, for 30 minutes, monsters that eat it turn up far more often (see Foods). Power is the tier.
     SEED_MIX("Seed Mix", ItemKind.FOOD, 1.0, 60, "Grain and seeds for grazers, small birds and rodents."),
     ORCHARD_FRUIT("Orchard Fruit", ItemKind.FOOD, 1.0, 80, "Ripe fruit and honey for apes, bears and other omnivores."),

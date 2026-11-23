@@ -520,6 +520,16 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** The new star's celebration was seen. */
     fun celebrateStar() = set(com.monsterquest.core.Stars.celebrate(state))
 
+    /** The Farwisp introduction is waiting to be seen (after the one-time gift). */
+    var farwispIntro by mutableStateOf(false)
+
+    /** Every player's free Farwisp, once, with its introduction. */
+    fun giftFarwisp() {
+        val u = com.monsterquest.core.Farwisp.gift(state) ?: return
+        set(u.state)
+        farwispIntro = true
+    }
+
     /** The Mirror (the look editor) is open from the Hero screen. */
     var mirrorOpen by mutableStateOf(false)
 
@@ -631,6 +641,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         GameEngine.dailyRecovery(state, System.currentTimeMillis())?.let(::apply)
         // The morning's torches for the dungeons.
         com.monsterquest.core.Torches.morning(state, System.currentTimeMillis())?.let(::apply)
+        // A Farwisp for everyone, once.
+        giftFarwisp()
         // Pull in last night's sleep, then show the morning recap if it's the first open today.
         refreshSleep(thenRecap = true)
         refreshWater()
@@ -1133,14 +1145,35 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun distanceTo(lat: Double, lon: Double): Double? =
         location?.let { World.distanceMeters(it.first, it.second, lat, lon) }
 
-    fun visitShrine(shrine: Shrine) {
+    /**
+     * A Farwisp to use for something out of reach: false (with a message) if
+     * there's none. [remote] actions skip the distance check and spend one once they start.
+     */
+    private fun canFarwisp(remote: Boolean): Boolean {
+        if (!remote) return true
+        if (com.monsterquest.core.Farwisp.count(state) > 0) return true
+        message = "You need a Farwisp for that. They're found in loot boxes."
+        return false
+    }
+
+    /** Spends the Farwisp for a remote action that just started. */
+    private fun spendFarwisp(remote: Boolean) {
+        if (!remote) return
+        com.monsterquest.core.Farwisp.spend(state)?.let { set(it) }
+        toast("The Farwisp carries you there. (${com.monsterquest.core.Farwisp.count(state)} left)")
+    }
+
+    fun visitShrine(shrine: Shrine, remote: Boolean = false) {
         val d = distanceTo(shrine.lat, shrine.lon)
-        if (d == null || d > World.SHRINE_RANGE_M) {
+        if (!remote && (d == null || d > World.SHRINE_RANGE_M)) {
             message = "Get closer to ${shrine.name} (within ${dist(World.SHRINE_RANGE_M)})."
             return
         }
+        if (!canFarwisp(remote)) return
         val u = GameEngine.visitShrine(state, shrine, System.currentTimeMillis())
+        val worked = u.state != state
         set(u.state)
+        if (worked) spendFarwisp(remote)
         if (u.rewards.isEmpty()) {
             message = u.message
         } else {
@@ -1153,17 +1186,19 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Loot just collected, shown briefly over the map. */
     var lootPopup by mutableStateOf<LootPopup?>(null)
 
-    fun challengeBoss(shrine: Shrine) {
+    fun challengeBoss(shrine: Shrine, remote: Boolean = false) {
         val d = distanceTo(shrine.lat, shrine.lon)
-        if (d == null || d > World.SHRINE_RANGE_M) {
+        if (!remote && (d == null || d > World.SHRINE_RANGE_M)) {
             message = "Get closer to ${shrine.name} (within ${dist(World.SHRINE_RANGE_M)})."
             return
         }
+        if (!canFarwisp(remote)) return
         val (boss, mode) = GameEngine.bossEncounter(state, shrine, System.currentTimeMillis())
         if (boss == null) {
             message = mode
             return
         }
+        spendFarwisp(remote)
         val type = when (mode) {
             "silver" -> EncounterType.SILVER_BOSS
             "taming" -> EncounterType.BOSS_TAMING
@@ -1242,9 +1277,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun densNear(nowMs: Long): List<com.monsterquest.core.Den> = mapPlan(nowMs).dens
 
-    fun challengeDen(den: com.monsterquest.core.Den) {
+    fun challengeDen(den: com.monsterquest.core.Den, remote: Boolean = false) {
         val d = distanceTo(den.lat, den.lon)
-        if (d == null || d > com.monsterquest.core.Dens.RANGE_M) {
+        if (!remote && (d == null || d > com.monsterquest.core.Dens.RANGE_M)) {
             message = "Get closer to the ${den.name} (within ${dist(com.monsterquest.core.Dens.RANGE_M)})."
             return
         }
@@ -1252,6 +1287,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             message = "You need a monster first."
             return
         }
+        if (!canFarwisp(remote)) return
+        spendFarwisp(remote)
         startBattle(den.monster, EncounterType.DEN, den.id)
     }
 
@@ -1279,12 +1316,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         return onStreets + Villains.near(state, lat, lon, nowMs).filter { scattered(it.lat, it.lon) }
     }
 
-    fun challengeVillain(camp: VillainCamp) {
+    fun challengeVillain(camp: VillainCamp, remote: Boolean = false) {
         val d = distanceTo(camp.lat, camp.lon)
-        if (d == null || d > Villains.RANGE_M) {
+        if (!remote && (d == null || d > Villains.RANGE_M)) {
             message = "Get closer to ${camp.leader} (within ${dist(Villains.RANGE_M)})."
             return
         }
+        if (!canFarwisp(remote)) return
+        spendFarwisp(remote)
         villainRun = VillainRun(camp, 0)
         startBattle(camp.team.first(), EncounterType.VILLAIN, null)
     }
@@ -1323,12 +1362,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     private var nomadRun: com.monsterquest.core.Nomad? = null
 
-    fun challengeNomad(nomad: com.monsterquest.core.Nomad) {
+    fun challengeNomad(nomad: com.monsterquest.core.Nomad, remote: Boolean = false) {
         val d = distanceTo(nomad.lat, nomad.lon)
-        if (d == null || d > com.monsterquest.core.Wanderers.RANGE_M) {
+        if (!remote && (d == null || d > com.monsterquest.core.Wanderers.RANGE_M)) {
             message = "Get closer to ${nomad.name} (within ${dist(com.monsterquest.core.Wanderers.RANGE_M)})."
             return
         }
+        if (!canFarwisp(remote)) return
+        spendFarwisp(remote)
         nomadRun = nomad
         startBattle(
             nomad.active.first(), EncounterType.NOMAD, null, pack = nomad.active.drop(1), thug = nomad.fighter,
@@ -1344,13 +1385,15 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         return mapPlan(nowMs).dungeons
     }
 
-    fun enterDungeon(d: com.monsterquest.core.Dungeon) {
+    fun enterDungeon(d: com.monsterquest.core.Dungeon, remote: Boolean = false) {
         val dist = distanceTo(d.lat, d.lon)
-        if (dist == null || dist > com.monsterquest.core.Dungeons.RANGE_M) {
+        if (!remote && (dist == null || dist > com.monsterquest.core.Dungeons.RANGE_M)) {
             message = "Walk to the ${d.name} first (within ${dist(com.monsterquest.core.Dungeons.RANGE_M)})."
             return
         }
+        if (!canFarwisp(remote)) return
         apply(com.monsterquest.core.Dungeons.enter(state, d))
+        if (state.dungeonRun != null) spendFarwisp(remote)
     }
 
     /** Opens the left or right door: a fight starts a battle, a trap waits for your choice, the rest happen at once. */

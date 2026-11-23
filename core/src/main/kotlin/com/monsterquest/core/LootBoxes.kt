@@ -133,6 +133,8 @@ object LootBoxes {
             val p = if (rng.nextDouble() < 0.08) Item.RESTORE_POTION else potions.random(rng)
             items[p] = (items[p] ?: 0) + 1
         }
+        // Rarely, a Farwisp: likelier in better boxes.
+        if (rng.nextDouble() < Farwisp.boxChance(level)) items[Item.FARWISP] = (items[Item.FARWISP] ?: 0) + 1
         val parts = when (level) {
             1 -> 0
             2 -> rng.nextInt(2, 4)

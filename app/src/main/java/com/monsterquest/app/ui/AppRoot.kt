@@ -97,8 +97,10 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         if (com.monsterquest.core.Centurion.due(vm.state) && vm.battle == null && vm.state.dungeonRun == null) CenturionDialog(vm)
         // A new star (level 51, 101...): the badge turns over, and what it brings. After the level 50 and 100 rewards.
         else if (calm && com.monsterquest.core.Stars.due(vm.state) && !com.monsterquest.core.ExoticChests.due(vm.state) && vm.exoticReveal == null) StarCelebration(vm)
+        // The new Farwisp, once everything else has had its moment (and after the tutorial).
+        else if (calm && vm.farwispIntro && vm.state.starterChosen && !com.monsterquest.core.ExoticChests.due(vm.state) && vm.exoticReveal == null) FarwispIntro(vm)
         // After an update: what changed (not while an update offer is up).
-        if (vm.availableUpdate == null && !com.monsterquest.core.Looks.due(vm.state)) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
+        if (vm.availableUpdate == null && !com.monsterquest.core.Looks.due(vm.state) && !vm.farwispIntro) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
     }
 }
 

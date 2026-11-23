@@ -188,6 +188,7 @@ fun Item.icon(): GameIcon = when (this) {
     Item.MINERAL_SALTS, Item.MINERAL_SALTS_FINE, Item.MINERAL_SALTS_GOURMET -> GameIcon.CRYSTAL
     Item.SPIRIT_INCENSE, Item.SPIRIT_INCENSE_FINE, Item.SPIRIT_INCENSE_GOURMET -> GameIcon.MOON
     Item.DRAGON_FEAST, Item.DRAGON_FEAST_FINE, Item.DRAGON_FEAST_GOURMET -> GameIcon.FLAME
+    Item.FARWISP -> GameIcon.ORB
 }
 
 fun Item.color(): Color = when (this) {
@@ -216,6 +217,7 @@ fun Item.color(): Color = when (this) {
     Item.MINERAL_SALTS, Item.MINERAL_SALTS_FINE, Item.MINERAL_SALTS_GOURMET -> Color(0xFFBFC7D1)
     Item.SPIRIT_INCENSE, Item.SPIRIT_INCENSE_FINE, Item.SPIRIT_INCENSE_GOURMET -> Color(0xFFB59AF0)
     Item.DRAGON_FEAST, Item.DRAGON_FEAST_FINE, Item.DRAGON_FEAST_GOURMET -> Color(0xFFF26B4A)
+    Item.FARWISP -> Color(0xFF6FC7B8)
 }
 
 fun com.monsterquest.core.WeaponType.icon(): GameIcon = when (this) {
