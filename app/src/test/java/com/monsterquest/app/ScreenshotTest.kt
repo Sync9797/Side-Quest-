@@ -1491,10 +1491,14 @@ abstract class ScreenshotBase(private val device: String) {
     @Test fun itemAnimations() {
         val items = com.monsterquest.core.Item.entries.filter { it != com.monsterquest.core.Item.LURE }
         shot("59_item_animations", advanceMs = 1_700, content = onBackground {
-            androidx.compose.foundation.layout.FlowRow(androidx.compose.ui.Modifier.padding(16.dp)) {
-                items.forEach { item ->
-                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(10.dp)) {
-                        com.monsterquest.app.ui.art.AnimatedItemIcon(item, 40.dp)
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
+                items.chunked(7).forEach { row ->
+                    androidx.compose.foundation.layout.Row {
+                        row.forEach { item ->
+                            androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(10.dp)) {
+                                com.monsterquest.app.ui.art.AnimatedItemIcon(item, 40.dp)
+                            }
+                        }
                     }
                 }
             }
