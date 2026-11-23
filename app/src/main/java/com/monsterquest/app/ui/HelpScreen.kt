@@ -224,6 +224,7 @@ private val topics = listOf(
                 "Taming gives candy for the line (5 for first forms, 3 otherwise). Spend it on a monster's page to level up, or to evolve once it reaches its evolution level.",
                 "The Move Tutor (in the Store, or Move Tutor on a monster's page) teaches a move of the monster's own type early, for its line's candy plus gold. Stronger moves cost more, and each opens 10 levels before the monster would learn it.",
                 "A Farwisp, a rare ball of drifting mist, lets you take on one dungeon, den, shrine, villain or nomad on the map from wherever you are: tap it, and when it's out of reach choose Use a Farwisp. It can't be bought: find them in loot boxes, more often in better ones.",
+                "Items in the Bag and the Store move: crystals float, potions bubble, food hops, sways or steams, and Fine and Gourmet food glow. Turn on Reduced visual effects in Settings to keep them still.",
                 "Levelling is slow: it takes a while to raise a monster, so every battle counts.",
                 "Alphas: big first forms with 3 perfect stats and a strong move. They wait in dungeons' Alpha dens.",
             ),

@@ -58,8 +58,7 @@ fun BagScreen(vm: GameViewModel) {
     val itemRow: @Composable (Item) -> Unit = { item ->
         GameCard(Modifier.padding(vertical = 3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (item == Item.FARWISP) com.monsterquest.app.ui.art.FarwispOrb(Modifier.size(32.dp))
-                else GIcon(item.icon(), Modifier.size(28.dp), item.color())
+                com.monsterquest.app.ui.art.AnimatedItemIcon(item, if (item == Item.FARWISP) 32.dp else 28.dp)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("${item.label} x${s.count(item)}", fontWeight = FontWeight.SemiBold)
@@ -270,7 +269,7 @@ fun StoreScreen(vm: GameViewModel) {
         Item.entries.filter { it.price > 0 && it.kind != ItemKind.FOOD && it.kind != ItemKind.LURE }.forEach { item ->
             GameCard(Modifier.padding(vertical = 3.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    GIcon(item.icon(), Modifier.size(28.dp), item.color())
+                    com.monsterquest.app.ui.art.AnimatedItemIcon(item, 28.dp)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(item.label, fontWeight = FontWeight.SemiBold)

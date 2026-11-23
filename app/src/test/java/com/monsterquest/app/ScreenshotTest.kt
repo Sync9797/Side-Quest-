@@ -1487,6 +1487,20 @@ abstract class ScreenshotBase(private val device: String) {
         org.junit.Assert.assertFalse(v.farwispIntro)
     }
 
+    /** Every Bag item with its animation, mid-motion. */
+    @Test fun itemAnimations() {
+        val items = com.monsterquest.core.Item.entries.filter { it != com.monsterquest.core.Item.LURE }
+        shot("59_item_animations", advanceMs = 1_700, content = onBackground {
+            androidx.compose.foundation.layout.FlowRow(androidx.compose.ui.Modifier.padding(16.dp)) {
+                items.forEach { item ->
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(10.dp)) {
+                        com.monsterquest.app.ui.art.AnimatedItemIcon(item, 40.dp)
+                    }
+                }
+            }
+        })
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }
