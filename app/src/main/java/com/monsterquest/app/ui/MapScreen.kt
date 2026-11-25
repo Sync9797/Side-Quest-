@@ -774,7 +774,7 @@ private fun FoodBanner(vm: GameViewModel, food: com.monsterquest.core.Item, modi
             Spacer(Modifier.width(8.dp))
             Column(Modifier.weight(1f, fill = false)) {
                 Text("${food.label} is out", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${formatDuration(left)} left", fontSize = 12.sp, color = tint)
+                Text("%d:%02d left".format(left / 60_000, left / 1_000 % 60), fontSize = 12.sp, color = tint, fontWeight = FontWeight.SemiBold)
             }
         }
         // Time left, draining.

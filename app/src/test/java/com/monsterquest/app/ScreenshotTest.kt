@@ -336,6 +336,7 @@ abstract class ScreenshotBase(private val device: String) {
         rule.onNodeWithTag("food-banner").assertExists()
         rule.onNodeWithText("Gourmet Fresh Fish is out").assertExists()
         rule.onNodeWithText("Turn on the battery saver and walk to draw them").assertExists()
+        rule.onNodeWithText(" left", substring = true).assertExists()
     }
 
     /** Real rain on the map: a badge that says so, and what it brings out. */
