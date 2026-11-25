@@ -14,8 +14,8 @@ android {
         applicationId = "com.monsterquest.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 211
-        versionName = "3.36.1"
+        versionCode = 212
+        versionName = "3.37.0"
     }
 
     signingConfigs {

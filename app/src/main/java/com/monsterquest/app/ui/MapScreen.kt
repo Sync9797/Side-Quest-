@@ -102,6 +102,8 @@ import com.monsterquest.core.VillainCamp
 import com.monsterquest.core.VillainTier
 import com.monsterquest.core.Villains
 import com.monsterquest.core.World
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.layout.widthIn
 import kotlinx.coroutines.delay
 
 /** Nothing farther than this (10 miles) shows in the Nearby list. */
@@ -303,21 +305,9 @@ fun MapScreen(vm: GameViewModel) {
             WeatherBadge(w, vm.state.settings.imperialUnits, mod) { showWeather = true }
         }
     }
-    // Food set out: its icon and time left (tap for who it draws).
+    // Food set out: what it is, a live countdown and who it draws (tap for the full list).
     val foodBadge: @Composable (Modifier) -> Unit = { mod ->
-        com.monsterquest.core.Foods.active(vm.state, now)?.let { food ->
-            Row(
-                mod
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), androidx.compose.foundation.shape.RoundedCornerShape(50))
-                    .clickable { vm.toast("${food.label} is out: monsters that eat it are far likelier to find you on battery-saver walks. ${foodEatersText(vm.state, food)}") }
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                GIcon(food.icon(), Modifier.size(18.dp), food.color())
-                Spacer(Modifier.width(4.dp))
-                Text(formatDuration(vm.state.foodUntilMs - now), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
-            }
-        }
+        com.monsterquest.core.Foods.active(vm.state, now)?.let { food -> FoodBanner(vm, food, mod) }
     }
 
     // Phones show the place counts over the map; big screens show them under the Nearby list.
@@ -369,6 +359,10 @@ fun MapScreen(vm: GameViewModel) {
                 GameMapView(gameMap, Modifier.fillMaxSize(), onUserTurn = onUserTurn) {
                     // Reach circle for shrines.
                     if (loc != null) MapCircle(gameMap, { glide.value }, World.SHRINE_RANGE_M, Color(0x228B5CF6), Color(0x888B5CF6))
+                    // Food set out: its scent ripples round the hero.
+                    com.monsterquest.core.Foods.active(vm.state, now)?.let { food ->
+                        if (loc != null) MapScentAura(gameMap, { glide.value }, food.color(), com.monsterquest.core.Foods.tier(food))
+                    }
                     vm.walkRoute?.path?.takeIf { it.size >= 2 }?.let { MapRoute(gameMap, it) }
                     risen?.let { RisenShrineFx(gameMap, it) }
                     MapSprites(gameMap, sprites)
@@ -745,6 +739,55 @@ private fun WalkHereButton(vm: GameViewModel, lat: Double, lon: Double, label: S
         GIcon(GameIcon.WALK, Modifier.size(16.dp), Gold)
         Spacer(Modifier.width(6.dp))
         Text("Walk here")
+    }
+}
+
+/**
+ * Food set out, over the map: the food (moving as in the Bag), a countdown
+ * that ticks each second with a bar draining toward the end, and who it draws.
+ * Food only works on battery-saver walks, so it says so when the saver is off.
+ */
+@Composable
+private fun FoodBanner(vm: GameViewModel, food: com.monsterquest.core.Item, modifier: Modifier) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(food) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
+    val left = (vm.state.foodUntilMs - now).coerceAtLeast(0)
+    val lines = com.monsterquest.core.Foods.eaters(food).map { com.monsterquest.core.Bestiary.lineOf(it).first().family }.distinct().size
+    val tint = food.color()
+    Column(
+        modifier
+            .widthIn(max = 230.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
+            .border(1.dp, tint.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
+            .clickable { vm.toast("${food.label} is out: monsters that eat it are far likelier to find you on battery-saver walks. ${foodEatersText(vm.state, food)}") }
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .testTag("food-banner"),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.monsterquest.app.ui.art.AnimatedItemIcon(food, 26.dp)
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f, fill = false)) {
+                Text("${food.label} is out", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${formatDuration(left)} left", fontSize = 12.sp, color = tint)
+            }
+        }
+        // Time left, draining.
+        Box(Modifier.padding(top = 6.dp).fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50)).background(tint.copy(alpha = 0.2f))) {
+            Box(Modifier.fillMaxWidth((left.toFloat() / com.monsterquest.core.Foods.DURATION_MS).coerceIn(0f, 1f)).height(4.dp).clip(RoundedCornerShape(50)).background(tint))
+        }
+        Text(
+            "Draws $lines kind${if (lines == 1) "" else "s"} of monster, ${com.monsterquest.core.Foods.BOOST.toInt()}x as often",
+            fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp),
+        )
+        if (!vm.batterySaver) {
+            Text("Turn on the battery saver and walk to draw them", fontSize = 11.sp, color = HpYellow)
+        }
     }
 }
 

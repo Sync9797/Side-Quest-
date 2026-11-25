@@ -326,6 +326,18 @@ abstract class ScreenshotBase(private val device: String) {
         shot("06_map") { AppRoot(v, Tab.MAP) }
     }
 
+    /** Food set out: a banner with what it is, the time left and who it draws, and its scent rippling round the hero. */
+    @Test fun mapFood() {
+        shadowOf(app).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+        val base = sampleState()
+        val v = vm(base.copy(food = com.monsterquest.core.Item.FRESH_FISH_GOURMET, foodUntilMs = System.currentTimeMillis() + 18 * 60_000L))
+        v.debugSetLocation(40.7580, -73.9855, World.proceduralShrines(40.7580, -73.9855))
+        shot("60_map_food", advanceMs = 1_300) { AppRoot(v, Tab.MAP) }
+        rule.onNodeWithTag("food-banner").assertExists()
+        rule.onNodeWithText("Gourmet Fresh Fish is out").assertExists()
+        rule.onNodeWithText("Turn on the battery saver and walk to draw them").assertExists()
+    }
+
     /** Real rain on the map: a badge that says so, and what it brings out. */
     @Test fun mapWeather() {
         shadowOf(app).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)

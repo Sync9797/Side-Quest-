@@ -111,6 +111,7 @@ private val topics = listOf(
                 "Battery saver and wild encounters",
                 "Wild monsters don't roam the map any more. Turn on the battery saver (the battery button at the top, or hold the phone upside down on the map) and walk: now and then a monster, or a thug and their crew, finds you. The phone buzzes three times and the fight starts. The battery saver comes back on afterwards.",
                 "Food: buy it in the Store and set it out from the Bag. For 30 minutes the monsters that eat it are far likelier to be the ones that find you on battery-saver walks; Fine and Gourmet food make their rarer eaters likelier too. While it's out, its icon and time left show under the compass on the map (beside the map on a foldable).",
+                "While food is out, a banner on the map shows what it is, the time left and who it draws, and its scent ripples round your hero in the food's colour (Gourmet food sparkles too).",
                 "Turn these encounters off with Ambushes in Settings.",
             ),
             section(

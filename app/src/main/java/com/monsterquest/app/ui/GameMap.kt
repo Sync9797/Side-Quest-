@@ -665,6 +665,68 @@ fun MapRoute(gm: GameMap, path: List<Pair<Double, Double>>) {
     }
 }
 
+/**
+ * Food set out: its scent around the hero. Rings ripple outward on the ground
+ * in the food's colour (leaning with the map's tilt), and wisps of scent drift
+ * up off the hero and fade. Fine and Gourmet food ripple further, and Gourmet
+ * food adds gold sparkles. With reduced effects, one still ring.
+ */
+@Composable
+fun MapScentAura(gm: GameMap, center: () -> Pair<Double, Double>?, color: Color, tier: Int) {
+    val clock = androidx.compose.runtime.remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    val still = com.monsterquest.app.ui.art.ArtQuality.reduced
+    if (!still) androidx.compose.runtime.LaunchedEffect(Unit) {
+        val start = androidx.compose.runtime.withFrameMillis { it }
+        while (true) androidx.compose.runtime.withFrameMillis { clock.longValue = it - start }
+    }
+    Canvas(Modifier.fillMaxSize()) {
+        @Suppress("UNUSED_VARIABLE") val tick = gm.tick
+        val t = clock.longValue / 1000f
+        val (lat, lon) = center() ?: return@Canvas
+        val hero = gm.toScreen(lat, lon) ?: return@Canvas
+        val reach = 26.0 + 8.0 * tier
+        fun ring(radiusM: Double): Path? {
+            val path = Path()
+            val dLat = radiusM / 111_320.0
+            val dLon = radiusM / (111_320.0 * cos(Math.toRadians(lat)))
+            for (i in 0..40) {
+                val a = 2 * PI * i / 40
+                val p = gm.toScreen(lat + dLat * kotlin.math.sin(a), lon + dLon * cos(a)) ?: return null
+                if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
+            }
+            path.close()
+            return path
+        }
+        if (still) {
+            ring(reach * 0.7)?.let { drawPath(it, color.copy(alpha = 0.5f), style = Stroke(width = 4f)) }
+            return@Canvas
+        }
+        // Rings rippling out from the hero, fading as they spread.
+        for (k in 0 until 3) {
+            val p = ((t / 2.6f) + k / 3f) % 1f
+            ring(6.0 + reach * p)?.let {
+                drawPath(it, color.copy(alpha = 0.16f * (1 - p)))
+                drawPath(it, color.copy(alpha = 0.75f * (1 - p)), style = Stroke(width = 5f * (1 - p) + 1.5f))
+            }
+        }
+        // Wisps of scent drifting up off the hero.
+        val unit = size.minDimension / 100f
+        for (k in 0 until 5) {
+            val p = ((t / 2.2f) + k / 5f) % 1f
+            val x = hero.x + kotlin.math.sin((p * 5f + k * 1.3f).toDouble()).toFloat() * unit * 4f + (k - 2) * unit * 2.2f
+            val y = hero.y - unit * 4f - p * unit * 22f
+            val fade = if (p < 0.2f) p / 0.2f else 1f - (p - 0.2f) / 0.8f
+            drawCircle(color.copy(alpha = 0.55f * fade), unit * (1.1f + 1.4f * p), Offset(x, y))
+        }
+        // Gourmet food: gold sparkles circling the hero.
+        if (tier >= 3) for (k in 0 until 3) {
+            val a = t * 1.4f + k * 2.09f
+            val fade = (kotlin.math.sin((t * 2.5f + k).toDouble()).toFloat() + 1) / 2
+            drawCircle(Color(0xFFEBC678).copy(alpha = fade), unit * 0.9f, Offset(hero.x + kotlin.math.cos(a) * unit * 9f, hero.y - unit * 8f + kotlin.math.sin(a) * unit * 3f))
+        }
+    }
+}
+
 /** A circle on the ground ([radiusM] around a spot); it leans with the map's tilt. */
 @Composable
 fun MapCircle(gm: GameMap, center: () -> Pair<Double, Double>?, radiusM: Double, fill: Color, stroke: Color) {
