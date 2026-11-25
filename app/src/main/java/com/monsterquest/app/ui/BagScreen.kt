@@ -618,8 +618,19 @@ private fun BagFold(
         Row(Modifier.fillMaxWidth().clickable { open = !open }, verticalAlignment = Alignment.CenterVertically) {
             GIcon(icon, Modifier.size(20.dp), tint)
             Spacer(Modifier.width(8.dp))
-            Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text("$summary  ${if (open) "\u25B2" else "\u25BC"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            // The title always fits on one line; a long summary shortens with "..." instead of squeezing it.
+            Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                summary,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                modifier = Modifier.weight(1f),
+            )
+            Text("  ${if (open) "\u25B2" else "\u25BC"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (open) {
             Column(Modifier.padding(top = 4.dp)) { content() }
