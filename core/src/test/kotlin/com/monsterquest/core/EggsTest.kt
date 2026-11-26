@@ -130,4 +130,23 @@ internal fun Monster.withGender(g: Gender): Monster {
     var i = 0
     while (Gender.of("$uid$i") != g) i++
     return copy(uid = "$uid$i")
+
+    @Test
+    fun theEggChecklistSaysWhatsMissing() {
+        val rng = Random(4)
+        var a = Monster.create(Bestiary.get("emberkit"), 22, rng)
+        while (a.gender == null) a = Monster.create(Bestiary.get("emberkit"), 22, Random(rng.nextInt()))
+        val s = GameState(monsters = listOf(a), gold = 50)
+        val list = Eggs.checklist(s, a, 0L)
+        assertTrue(list.first().second)
+        // No partner, not enough gold or candy: each shows as missing.
+        assertTrue(list.any { "partner" !in it.first && "gold" in it.first && !it.second })
+        assertTrue(list.any { it.first.startsWith("A ") && !it.second })
+        // No other monster of the line: no notes; a same-gender one says why.
+        assertTrue(Eggs.partnerNotes(s, a, 0L).isEmpty())
+        var same = Monster.create(Bestiary.get("emberkit"), 22, Random(9))
+        var seed = 10
+        while (same.gender != a.gender) same = Monster.create(Bestiary.get("emberkit"), 22, Random(seed++))
+        assertTrue(Eggs.partnerNotes(s.copy(monsters = listOf(a, same)), a, 0L).single().endsWith("same gender"))
+    }
 }

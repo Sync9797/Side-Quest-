@@ -13,6 +13,11 @@ object Bonds {
     const val STEPS_PER_POINT = 1_000
     /** Points needed for bond levels 1 to 5. */
     val THRESHOLDS = listOf(15, 40, 80, 140, 220)
+    /** Your buddy (first party slot) walks right beside you: a bond point every this many steps instead. */
+    const val BUDDY_STEPS_PER_POINT = 400
+    /** And it fights closest to you: this many points per battle instead of [PER_BATTLE]. */
+    const val BUDDY_PER_BATTLE = 3
+
     /** Every bond level adds this much to HP, Attack, Defense and Speed, in percent. */
     const val STAT_PCT_PER_LEVEL = 2
 

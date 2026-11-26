@@ -231,7 +231,7 @@ private val topics = listOf(
             ),
             section(
                 "Bonds",
-                "Every monster builds a bond with you: +1 for each battle it fights in and wins, and +1 for every 1,000 steps it spends in your team (party or swaps). Bond hearts show on its page.",
+                "Every monster builds a bond with you: +1 for each battle it fights in and wins, and +1 for every 1,000 steps it spends in your team (party or swaps). Your buddy (the first party slot) bonds fastest: +3 per battle and +1 for every 400 steps. Bond hearts show on its page.",
                 "Each bond level (at 15, 40, 80, 140 and 220 points) adds 2% to its HP, Attack, Defense and Speed. At bond 5 it's Steadfast: once a battle, a blow that would knock it out leaves it at 1 HP instead.",
             ),
             section(

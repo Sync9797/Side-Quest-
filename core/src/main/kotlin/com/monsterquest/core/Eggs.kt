@@ -63,6 +63,35 @@ object Eggs {
     fun compatible(a: Monster, b: Monster): Boolean =
         a.uid != b.uid && a.species.family == b.species.family && a.gender != null && b.gender == a.gender?.opposite
 
+    /**
+     * Everything making an egg with [m] needs, each with whether it's met, in
+     * the order to fix them: its level, a partner, gold, candy and egg space.
+     */
+    fun checklist(state: GameState, m: Monster, nowMs: Long): List<Pair<String, Boolean>> {
+        val partner = m.gender?.opposite?.label?.lowercase() ?: "partner"
+        return listOf(
+            "${m.displayName} at level $BREED_LEVEL+ (Lv ${m.level})" to (m.level >= BREED_LEVEL),
+            "${m.displayName} rested (pairs once a day)" to !resting(m, nowMs),
+            "A $partner of its line at level $BREED_LEVEL+, rested" to partners(state, m, nowMs).isNotEmpty(),
+            "$BREED_GOLD gold (you have ${state.gold})" to (state.gold >= BREED_GOLD),
+            "$BREED_CANDY ${GameEngine.candyName(m.species)} (you have ${GameEngine.candyOf(state, m.species)})" to (GameEngine.candyOf(state, m.species) >= BREED_CANDY),
+            "Room for an egg (${state.eggs.size}/$MAX_EGGS carried)" to (state.eggs.size < MAX_EGGS),
+        )
+    }
+
+    /** Why each other monster of [m]'s line can't be its partner now ("Ember ♂: same gender"), for when none is ready. */
+    fun partnerNotes(state: GameState, m: Monster, nowMs: Long): List<String> =
+        state.monsters.filter { it.uid != m.uid && it.species.family == m.species.family }.map { o ->
+            val why = when {
+                o.gender == null || o.gender != m.gender?.opposite -> "same gender"
+                o.level < BREED_LEVEL -> "level ${o.level}, needs $BREED_LEVEL"
+                o.fainted -> "fainted"
+                resting(o, nowMs) -> "resting after an egg"
+                else -> "ready"
+            }
+            "${o.displayName} ${o.gender?.symbol ?: ""}: $why".replace("  ", " ")
+        }
+
     /** Who [m] can make an egg with right now. */
     fun partners(state: GameState, m: Monster, nowMs: Long): List<Monster> =
         state.monsters.filter { compatible(m, it) && canBreed(it, nowMs) }
@@ -131,7 +160,13 @@ object Eggs {
             eggs = state.eggs + egg,
             monsters = state.monsters.map { if (it.uid == uidA || it.uid == uidB) it.copy(bredAtMs = nowMs) else it },
         )
-        return Update(s, "${a.displayName} and ${b.displayName} made an egg! Walk ${"%.1f".format(egg.meters / 1000)} km to hatch it.")
+        val walk = if (state.settings.imperialUnits) "%.1f miles".format(egg.meters / METERS_PER_MILE) else "%.1f km".format(egg.meters / 1000)
+        return Update(
+            s,
+            "${a.displayName} and ${b.displayName} made a ${egg.species.name} egg! It's in your Bag: walk $walk to hatch it.",
+            rewards = listOf(Reward.Egg(egg.species.family.removeSuffix(" line"))),
+            rewardTitle = "A new egg!",
+        )
     }
 
     /** The eggs walking warms now: the first [WARMING] in your list (a ready egg keeps its spot until it hatches). */

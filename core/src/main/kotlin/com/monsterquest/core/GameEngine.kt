@@ -1173,10 +1173,12 @@ object GameEngine {
                         after
                     },
                 )
-                // Fighting side by side builds the bond.
-                val (bonded, grew) = Bonds.add(s, r.fought, Bonds.PER_BATTLE)
-                s = bonded
-                msg.append(Bonds.grewText(grew))
+                // Fighting side by side builds the bond, your buddy's fastest.
+                val buddy = Buddy.of(s)?.uid
+                val (bonded, grew) = Bonds.add(s, r.fought.filter { it != buddy }, Bonds.PER_BATTLE)
+                val (bonded2, grew2) = if (buddy != null && buddy in r.fought) Bonds.add(bonded, listOf(buddy), Bonds.BUDDY_PER_BATTLE) else bonded to emptyList()
+                s = bonded2
+                msg.append(Bonds.grewText(grew + grew2))
                 // Drops
                 if (r.drops.isNotEmpty()) {
                     // Everything a battle drops comes home, even past the bag's size.
@@ -1888,7 +1890,12 @@ object GameEngine {
         // Every thousand steps together builds the team's bond.
         val bondPoints = (s.stats.totalSteps / Bonds.STEPS_PER_POINT - (s.stats.totalSteps - steps) / Bonds.STEPS_PER_POINT).toInt()
         val away = Adventures.awayUids(s)
-        val (bonded, grew) = Bonds.add(s, s.team.filter { it !in away }, bondPoints)
+        // Your buddy walks right beside you, so its bond grows faster: a point every few hundred steps.
+        val buddyUid = Buddy.of(s)?.uid?.takeIf { it !in away }
+        val buddyPoints = (s.stats.totalSteps / Bonds.BUDDY_STEPS_PER_POINT - (s.stats.totalSteps - steps) / Bonds.BUDDY_STEPS_PER_POINT).toInt()
+        val (bondedTeam, grewTeam) = Bonds.add(s, s.team.filter { it !in away && it != buddyUid }, bondPoints)
+        val (bonded, grewBuddy) = if (buddyUid != null) Bonds.add(bondedTeam, listOf(buddyUid), buddyPoints) else bondedTeam to emptyList()
+        val grew = grewTeam + grewBuddy
         s = bonded
         val walkText = listOfNotNull(
             buddyText.takeIf { it.isNotEmpty() },

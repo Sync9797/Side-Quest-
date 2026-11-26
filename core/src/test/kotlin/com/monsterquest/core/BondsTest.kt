@@ -30,10 +30,12 @@ class BondsTest {
     @Test
     fun walkingTogetherBuildsTheBond() {
         val s = GameEngine.walk(state, 2_500).state
-        s.partyMonsters.forEach { assertEquals(2, it.bond, it.displayName) }
-        // The steps carry over to the next thousand.
+        // The buddy (first slot) bonds every 400 steps, the rest every 1,000.
+        assertEquals(starter.uid, Buddy.of(s)?.uid)
+        s.partyMonsters.forEach { assertEquals(if (it.uid == starter.uid) 6 else 2, it.bond, it.displayName) }
+        // The steps carry over.
         val more = GameEngine.walk(s, 600).state
-        more.partyMonsters.forEach { assertEquals(3, it.bond) }
+        more.partyMonsters.forEach { assertEquals(if (it.uid == starter.uid) 7 else 3, it.bond) }
     }
 
     @Test
@@ -45,9 +47,10 @@ class BondsTest {
         val r = b.result()
         assertTrue(r.fought.isNotEmpty())
         val after = GameEngine.applyBattleResult(state, r, 0).state
-        val expected = if (starter.uid in r.fought) 1 else 0
+        // The buddy (the starter, in the first slot) bonds fastest.
+        val expected = if (starter.uid in r.fought) Bonds.BUDDY_PER_BATTLE else 0
         assertEquals(expected, after.monsters.first { it.uid == starter.uid }.bond)
-        r.fought.forEach { uid -> assertEquals(1, after.monsters.first { it.uid == uid }.bond) }
+        r.fought.forEach { uid -> assertEquals(if (uid == starter.uid) Bonds.BUDDY_PER_BATTLE else 1, after.monsters.first { it.uid == uid }.bond) }
     }
 
     @Test

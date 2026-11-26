@@ -813,7 +813,9 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
                 val prev = com.monsterquest.core.Bonds.THRESHOLDS.getOrNull(bondLevel - 1) ?: 0
                 Bar((m.bond - prev).toFloat() / (nextBond - prev), Color(0xFFE0607E), Modifier.fillMaxWidth().padding(top = 4.dp))
                 Text(
-                    "${nextBond - m.bond} more to bond ${bondLevel + 1}: +1 per battle it fights, +1 per 1,000 steps in your team",
+                    "${nextBond - m.bond} more to bond ${bondLevel + 1}: " + if (com.monsterquest.core.Buddy.of(s)?.uid == m.uid)
+                        "+${com.monsterquest.core.Bonds.BUDDY_PER_BATTLE} per battle and +1 per ${"%,d".format(com.monsterquest.core.Bonds.BUDDY_STEPS_PER_POINT)} steps as your buddy"
+                    else "+1 per battle it fights, +1 per 1,000 steps in your team (your buddy bonds faster)",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -1110,14 +1112,26 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
                             "(at least ${com.monsterquest.core.Eggs.INHERITED_STATS} stats). Both parents rest for a day.",
                         fontSize = 13.sp,
                     )
-                    Text(
-                        "Costs ${com.monsterquest.core.Eggs.BREED_GOLD} gold and ${com.monsterquest.core.Eggs.BREED_CANDY} ${GameEngine.candyName(sp)} (you have $candy) • " +
-                            "Eggs: ${s.eggs.size}/${com.monsterquest.core.Eggs.MAX_EGGS}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 6.dp),
-                    )
-                    if (partners.isEmpty()) Text("No partner is ready: you need a ${m.gender?.opposite?.label?.lowercase() ?: "partner"} of this line at level ${com.monsterquest.core.Eggs.BREED_LEVEL}+ that isn't resting.", color = HpYellow, fontSize = 13.sp)
+                    // What it takes, ticked off: whatever's missing shows in yellow.
+                    Column(Modifier.padding(vertical = 8.dp)) {
+                        com.monsterquest.core.Eggs.checklist(s, m, now).forEach { (label, ok) ->
+                            Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(vertical = 1.dp)) {
+                                Text(if (ok) "✓" else "✗", color = if (ok) HpGreen else HpYellow, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.width(18.dp))
+                                Text(label, fontSize = 13.sp, color = if (ok) MaterialTheme.colorScheme.onSurface else HpYellow)
+                            }
+                        }
+                    }
+                    if (partners.isEmpty()) {
+                        val notes = com.monsterquest.core.Eggs.partnerNotes(s, m, now)
+                        Text(
+                            if (notes.isEmpty()) "You don't have another ${Bestiary.lineOf(sp).first().name} line monster yet: tame a ${m.gender?.opposite?.label?.lowercase() ?: "partner"} of this line."
+                            else "Your others of this line:",
+                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        )
+                        notes.forEach { Text("•  $it", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    } else {
+                        Text("Choose a partner:", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 4.dp))
+                    }
                     partners.forEach { p ->
                         OutlinedButton(
                             onClick = { vm.breed(m.uid, p.uid); breeding = false },
