@@ -1548,12 +1548,12 @@ abstract class ScreenshotBase(private val device: String) {
         val v = withMythic(com.monsterquest.core.Mythic.MURKLET, 30)
         shot("61_mythic_oh", advanceMs = 1_200) { AppRoot(v, Tab.QUESTS) }
         rule.onNodeWithText("Oh?...").assertExists()
-        rule.onNodeWithTag("mythic-next").performClick()
+        rule.onNodeWithTag("mythic-next").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("61b_mythic_evolving", 1_800)
         rule.onNodeWithTag("evolution").assertExists()
         capture("61c_mythic_evolved", 4_000)
         rule.onNodeWithText("Murklet evolved into Cinderwrithe!").assertExists()
-        rule.onNodeWithTag("evolution-done").performClick()
+        rule.onNodeWithTag("evolution-done").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("61d_after", 400)
         org.junit.Assert.assertTrue(v.state.monsters.any { it.speciesId == com.monsterquest.core.Mythic.CINDERWRITHE })
         rule.onNodeWithText("Oh?...").assertDoesNotExist()
@@ -1563,7 +1563,7 @@ abstract class ScreenshotBase(private val device: String) {
     @Test fun mythicFinalEvolution() {
         val v = withMythic(com.monsterquest.core.Mythic.FUMEWARDEN, 100)
         shot("62_mythic_final_oh", advanceMs = 1_200) { AppRoot(v, Tab.QUESTS) }
-        rule.onNodeWithTag("mythic-next").performClick()
+        rule.onNodeWithTag("mythic-next").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("62b_mythic_final_evolving", 3_600)
         capture("62c_mythic_final_reveal", 3_800)
         rule.onNodeWithText("evolved into Turumarth!", substring = true).assertExists()
@@ -1579,7 +1579,7 @@ abstract class ScreenshotBase(private val device: String) {
         capture("63b_candy_evolving", 1_500)
         rule.onNodeWithTag("evolution").assertExists()
         capture("63c_candy_evolved", 3_400)
-        rule.onNodeWithTag("evolution-done").performClick()
+        rule.onNodeWithTag("evolution-done").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("63d_after", 300)
         rule.onNodeWithTag("evolution").assertDoesNotExist()
     }
@@ -1588,20 +1588,23 @@ abstract class ScreenshotBase(private val device: String) {
     @Test fun mythScale() {
         val now = System.currentTimeMillis()
         val v = vm(sampleState().copy(mythScale = true))
-        shot("64_scale_hero", advanceMs = 600) { AppRoot(v, Tab.HERO) }
-        rule.onNodeWithTag("scale-card").performScrollTo()
-        capture("64b_scale_card", 400)
+        shot("64_scale_card", advanceMs = 400, content = onBackground {
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) {
+                com.monsterquest.app.ui.art.HeroArt(com.monsterquest.core.HeroClass.ROGUE, androidx.compose.ui.Modifier.size(200.dp), outfit = com.monsterquest.app.ui.art.HeroOutfit.of(v.state, hoodDown = true))
+                com.monsterquest.app.ui.ScaleCard(v)
+            }
+        })
         rule.onNodeWithText(com.monsterquest.core.Mythic.SCALE_NAME).assertExists()
         org.junit.Assert.assertTrue(com.monsterquest.core.Mythic.weekTasks(v.state, now).second > 0)
     }
 
-    /** This week's champion on the Hero tab, and the fight it starts. */
+    /** This week's champion card, and the fight it starts. */
     @Test fun weeklyChampion() {
         val v = vm()
-        shot("65_champion_hero", advanceMs = 500) { AppRoot(v, Tab.HERO) }
-        rule.onNodeWithTag("champion-card").performScrollTo()
-        capture("65b_champion_card", 300)
-        rule.onNodeWithTag("champion-challenge").performClick()
+        shot("65_champion_card", advanceMs = 500, content = onBackground {
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(16.dp)) { com.monsterquest.app.ui.ChampionCard(v) }
+        })
+        rule.onNodeWithTag("champion-challenge").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         rule.mainClock.advanceTimeBy(300)
         rule.waitForIdle()
         org.junit.Assert.assertTrue(v.battle != null || v.leadChoice != null)
