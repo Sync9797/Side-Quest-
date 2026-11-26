@@ -760,7 +760,7 @@ private fun FighterArt(f: FighterView, modifier: Modifier) {
         // A thug: an evil look of their own for each class.
         f.thug -> ThugArt(cls ?: HeroClass.ROGUE, modifier)
         cls != null -> HeroArt(cls, modifier, portrait = false, outfit = LocalOutfit.current ?: HeroOutfit.classic(cls))
-        sp != null -> MonsterArt(sp, modifier, dim = !f.alive, shiny = f.shiny, idle = false)
+        sp != null -> MonsterArt(sp, modifier, dim = !f.alive, shiny = f.shiny)
     }
 }
 

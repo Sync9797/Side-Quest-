@@ -627,7 +627,7 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
         }
         GameCard(border = if (m.fainted) HpRed else if (inParty) Gold else null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                MonsterArt(sp, Modifier.size(120.dp), dim = m.fainted, shiny = m.shiny)
+                MonsterArt(sp, Modifier.size(120.dp), dim = m.fainted, shiny = m.shiny, idle = true)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(m.displayName, fontWeight = FontWeight.Bold, fontSize = 20.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

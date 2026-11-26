@@ -107,10 +107,11 @@ fun ThugArt(cls: HeroClass, modifier: Modifier) {
 
 /**
  * A monster's artwork. [dim] grays it out (fainted); [silhouette] shows only
- * its shadow (not yet seen). [idle] gives it a little life (see [idleMotion]).
+ * its shadow (not yet seen). [idle] gives it a little life (see [idleMotion]):
+ * on a monster's own page and out on the map, not in lists like the Journal.
  */
 @Composable
-fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false, idle: Boolean = true) {
+fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false, idle: Boolean = false) {
     ArtCanvas(modifier.idleMotion(species, idle && !dim && !silhouette), "monster:${species.id}:$dim:$silhouette:$shiny") { c, w, h ->
         if (silhouette) {
             // Draw normally into a layer, then flood everything drawn with one dark color.

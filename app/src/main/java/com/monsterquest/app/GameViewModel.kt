@@ -1205,7 +1205,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun visitShrine(shrine: Shrine, remote: Boolean = false) {
         val d = distanceTo(shrine.lat, shrine.lon)
-        if (!remote && (d == null || d > World.SHRINE_RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(d, World.SHRINE_RANGE_M))) {
             message = "Get closer to ${shrine.name} (within ${dist(World.SHRINE_RANGE_M)})."
             return
         }
@@ -1228,7 +1228,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun challengeBoss(shrine: Shrine, remote: Boolean = false) {
         val d = distanceTo(shrine.lat, shrine.lon)
-        if (!remote && (d == null || d > World.SHRINE_RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(d, World.SHRINE_RANGE_M))) {
             message = "Get closer to ${shrine.name} (within ${dist(World.SHRINE_RANGE_M)})."
             return
         }
@@ -1320,7 +1320,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun challengeDen(den: com.monsterquest.core.Den, remote: Boolean = false) {
         val d = distanceTo(den.lat, den.lon)
-        if (!remote && (d == null || d > com.monsterquest.core.Dens.RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(d, com.monsterquest.core.Dens.RANGE_M))) {
             message = "Get closer to the ${den.name} (within ${dist(com.monsterquest.core.Dens.RANGE_M)})."
             return
         }
@@ -1359,7 +1359,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun challengeVillain(camp: VillainCamp, remote: Boolean = false) {
         val d = distanceTo(camp.lat, camp.lon)
-        if (!remote && (d == null || d > Villains.RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(d, Villains.RANGE_M))) {
             message = "Get closer to ${camp.leader} (within ${dist(Villains.RANGE_M)})."
             return
         }
@@ -1394,7 +1394,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun buyFromTrader(trader: com.monsterquest.core.Trader, index: Int) {
         val d = distanceTo(trader.lat, trader.lon)
-        if (d == null || d > com.monsterquest.core.Wanderers.RANGE_M) {
+        if (!com.monsterquest.core.World.inReach(d, com.monsterquest.core.Wanderers.RANGE_M)) {
             message = "Get closer to ${trader.name} (within ${dist(com.monsterquest.core.Wanderers.RANGE_M)})."
             return
         }
@@ -1405,7 +1405,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun challengeNomad(nomad: com.monsterquest.core.Nomad, remote: Boolean = false) {
         val d = distanceTo(nomad.lat, nomad.lon)
-        if (!remote && (d == null || d > com.monsterquest.core.Wanderers.RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(d, com.monsterquest.core.Wanderers.RANGE_M))) {
             message = "Get closer to ${nomad.name} (within ${dist(com.monsterquest.core.Wanderers.RANGE_M)})."
             return
         }
@@ -1428,7 +1428,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
     fun enterDungeon(d: com.monsterquest.core.Dungeon, remote: Boolean = false) {
         val dist = distanceTo(d.lat, d.lon)
-        if (!remote && (dist == null || dist > com.monsterquest.core.Dungeons.RANGE_M)) {
+        if (!remote && (!com.monsterquest.core.World.inReach(dist, com.monsterquest.core.Dungeons.RANGE_M))) {
             message = "Walk to the ${d.name} first (within ${dist(com.monsterquest.core.Dungeons.RANGE_M)})."
             return
         }
@@ -1500,7 +1500,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Uses a pharmacy, gym or hospital (you have to be there). */
     fun useFacility(v: com.monsterquest.core.Venue) {
         val d = distanceTo(v.lat, v.lon)
-        if (d == null || d > com.monsterquest.core.Facilities.RANGE_M) {
+        if (!com.monsterquest.core.World.inReach(d, com.monsterquest.core.Facilities.RANGE_M)) {
             message = "Walk to ${v.name ?: v.kind ?: "it"} first (within ${dist(com.monsterquest.core.Facilities.RANGE_M)})."
             return
         }

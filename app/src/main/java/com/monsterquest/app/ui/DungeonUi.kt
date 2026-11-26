@@ -375,7 +375,7 @@ private fun Door(room: RoomKind, hidden: Boolean, modifier: Modifier, onClick: (
 /** A dungeon's entrance on the map: what's inside, before you spend torches. */
 @Composable
 fun DungeonDialog(vm: GameViewModel, d: Dungeon, distance: Double?, onDismiss: () -> Unit) {
-    val inRange = distance != null && distance <= Dungeons.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(distance, Dungeons.RANGE_M)
     val s = vm.state
     AlertDialog(
         onDismissRequest = onDismiss,

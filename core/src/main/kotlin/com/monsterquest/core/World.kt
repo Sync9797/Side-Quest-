@@ -145,6 +145,15 @@ object World {
     }
     /** How close (meters) you must be to use a shrine. */
     const val SHRINE_RANGE_M = 60.0
+
+    /** About how far a place's own ring reaches out around it on the map. */
+    const val PLACE_RING_M = 15.0
+
+    /**
+     * In reach: the place's ring touches your [rangeM] ring (its centre is
+     * within [rangeM] plus [PLACE_RING_M]). Null distance (no location) is never in reach.
+     */
+    fun inReach(distanceM: Double?, rangeM: Double): Boolean = distanceM != null && distanceM <= rangeM + PLACE_RING_M
     const val BOSS_COOLDOWN_MS = 4 * 60 * 60_000L
     /** Each silver shrine can be fought once per open day. */
     const val SILVER_COOLDOWN_MS = 20 * 60 * 60_000L

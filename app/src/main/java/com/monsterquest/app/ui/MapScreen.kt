@@ -676,7 +676,7 @@ internal fun SecretAmbushPopup(vm: GameViewModel, group: List<com.monsterquest.c
                     // A thug and their crew: one monster for each of yours.
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy((-14).dp)) {
                         ThugArt(thug.cls, Modifier.size(96.dp))
-                        group.forEach { m -> MonsterArt(m.species, Modifier.size(64.dp), shiny = m.shiny) }
+                        group.forEach { m -> MonsterArt(m.species, Modifier.size(64.dp), shiny = m.shiny, idle = true) }
                     }
                     Spacer(Modifier.height(8.dp))
                     Text("${thug.title} of the ${thug.crew} jumps you!", fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
@@ -688,7 +688,7 @@ internal fun SecretAmbushPopup(vm: GameViewModel, group: List<com.monsterquest.c
                     )
                 } else {
                 Row(horizontalArrangement = Arrangement.spacedBy((-18).dp)) {
-                    group.forEach { m -> MonsterArt(m.species, Modifier.size(if (group.size == 1) 120.dp else 90.dp), shiny = m.shiny) }
+                    group.forEach { m -> MonsterArt(m.species, Modifier.size(if (group.size == 1) 120.dp else 90.dp), shiny = m.shiny, idle = true) }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -865,7 +865,7 @@ private fun distanceText(m: Double?, imperial: Boolean): String =
 @Composable
 private fun ShrineDialog(vm: GameViewModel, shrine: Shrine, now: Long, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(shrine.lat, shrine.lon)
-    val inRange = dist != null && dist <= World.SHRINE_RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, World.SHRINE_RANGE_M)
     val rec = vm.state.shrines[shrine.id]
     val cooldown = GameEngine.shrineCooldownLeft(vm.state, shrine, now)
     val guardian = shrine.bossSpeciesId?.let { Bestiary.get(it) }
@@ -969,7 +969,7 @@ private fun ShrineDialog(vm: GameViewModel, shrine: Shrine, now: Long, onDismiss
 @Composable
 private fun DenDialog(vm: GameViewModel, den: Den, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(den.lat, den.lon)
-    val inRange = dist != null && dist <= Dens.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, Dens.RANGE_M)
     val imperial = vm.state.settings.imperialUnits
     val landmark = vm.landmarkNear(den.lat, den.lon)
     val street = rememberStreet(den.lat, den.lon)
@@ -981,7 +981,7 @@ private fun DenDialog(vm: GameViewModel, den: Den, onDismiss: () -> Unit) {
         title = { PlaceTitle(GameIcon.PAW, den.name, den.species.element.color(), where) },
         text = {
             Column {
-                MonsterArt(den.species, Modifier.size(110.dp).align(Alignment.CenterHorizontally), shiny = m.shiny, silhouette = !seen)
+                MonsterArt(den.species, Modifier.size(110.dp).align(Alignment.CenterHorizontally), shiny = m.shiny, silhouette = !seen, idle = true)
                 Text(
                     (if (seen) m.species.name else "Something big") + " • Lv ${m.level} • ${den.species.typeLabel}",
                     fontWeight = FontWeight.SemiBold,
@@ -1014,7 +1014,7 @@ private fun DenDialog(vm: GameViewModel, den: Den, onDismiss: () -> Unit) {
 @Composable
 private fun VillainDialog(vm: GameViewModel, camp: VillainCamp, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(camp.lat, camp.lon)
-    val inRange = dist != null && dist <= Villains.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, Villains.RANGE_M)
     val landmark = vm.landmarkNear(camp.lat, camp.lon)
     val street = rememberStreet(camp.lat, camp.lon)
     val where = landmark?.let { (place, gap) -> landmarkText(place, gap, vm.state.settings.imperialUnits) }?.let { w -> street?.let { "$w on $it" } ?: w }
@@ -1034,7 +1034,7 @@ private fun VillainDialog(vm: GameViewModel, camp: VillainCamp, onDismiss: () ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     camp.team.forEach { m ->
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            MonsterArt(m.species, Modifier.size(52.dp))
+                            MonsterArt(m.species, Modifier.size(52.dp), idle = true)
                             Text("Lv ${m.level}", fontSize = 11.sp)
                         }
                     }
@@ -1065,7 +1065,7 @@ private class Entry(
 @Composable
 private fun GuardianPreview(sp: com.monsterquest.core.Species) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        MonsterArt(sp, Modifier.size(72.dp))
+        MonsterArt(sp, Modifier.size(72.dp), idle = true)
         Spacer(Modifier.width(8.dp))
         Column {
             Text("Guardian: ${sp.name}", fontWeight = FontWeight.SemiBold)
@@ -1099,7 +1099,7 @@ private fun NearbyList(
             { GIcon(sh.tier.icon(), Modifier.size(28.dp), sh.tier.color()) },
             sh.name,
             (sh.subtitle ?: sh.tier.label) + " • " + distanceText(d.takeIf { it < Double.MAX_VALUE }, vm.state.settings.imperialUnits),
-            d <= World.SHRINE_RANGE_M,
+            com.monsterquest.core.World.inReach(d, World.SHRINE_RANGE_M),
         ) { onShrine(sh) }
     } + dens.map { den ->
         val d = vm.distanceTo(den.lat, den.lon) ?: Double.MAX_VALUE
@@ -1108,7 +1108,7 @@ private fun NearbyList(
             { MonsterArt(den.species, Modifier.size(40.dp), silhouette = den.monster.speciesId !in vm.state.seen) },
             den.name,
             "Den • Lv ${den.monster.level} • " + distanceText(d.takeIf { it < Double.MAX_VALUE }, vm.state.settings.imperialUnits),
-            d <= Dens.RANGE_M,
+            com.monsterquest.core.World.inReach(d, Dens.RANGE_M),
         ) { onDen(den) }
     } + villains.map { v ->
         val d = vm.distanceTo(v.lat, v.lon) ?: Double.MAX_VALUE
@@ -1117,21 +1117,21 @@ private fun NearbyList(
             { GIcon(GameIcon.SKULL, Modifier.size(28.dp), Color(0xFFF28B9B)) },
             v.leader,
             "${v.tier.label} • ${v.team.size} cursed monsters • " + distanceText(d.takeIf { it < Double.MAX_VALUE }, vm.state.settings.imperialUnits),
-            d <= Villains.RANGE_M,
+            com.monsterquest.core.World.inReach(d, Villains.RANGE_M),
         ) { onVillain(v) }
     } + dungeons.map { dg ->
         val d = far(dg.lat, dg.lon)
         Entry(d, { GIcon(GameIcon.FIGHT, Modifier.size(28.dp), Gold) }, dg.name,
             "Dungeon ${starsText(dg.stars)} • Lv ${dg.level}" + (dg.place?.let { " • $it" } ?: "") + " • " + away(d),
-            d <= com.monsterquest.core.Dungeons.RANGE_M) { onOther(MapPick.DungeonPick(dg)) }
+            com.monsterquest.core.World.inReach(d, com.monsterquest.core.Dungeons.RANGE_M)) { onOther(MapPick.DungeonPick(dg)) }
     } + traders.map { t ->
         val d = far(t.lat, t.lon)
         Entry(d, { GIcon(GameIcon.STORE, Modifier.size(28.dp), Color(0xFF6FCF8A)) }, t.name, "Trader • ${t.offers.size} offers • " + away(d),
-            d <= com.monsterquest.core.Wanderers.RANGE_M) { onOther(MapPick.TraderPick(t)) }
+            com.monsterquest.core.World.inReach(d, com.monsterquest.core.Wanderers.RANGE_M)) { onOther(MapPick.TraderPick(t)) }
     } + nomads.map { n ->
         val d = far(n.lat, n.lon)
         Entry(d, { GIcon(GameIcon.SWORD, Modifier.size(28.dp), Color(0xFF6FA8E8)) }, n.name, "Nomad • Lv ${n.level} • " + away(d),
-            d <= com.monsterquest.core.Wanderers.RANGE_M) { onOther(MapPick.NomadPick(n)) }
+            com.monsterquest.core.World.inReach(d, com.monsterquest.core.Wanderers.RANGE_M)) { onOther(MapPick.NomadPick(n)) }
     } + facilities.map { f ->
         val d = far(f.lat, f.lon)
         Entry(d, {
@@ -1142,7 +1142,7 @@ private fun NearbyList(
             }
         },
             com.monsterquest.core.Facilities.label(f.role), listOfNotNull(f.name ?: f.kind, away(d)).joinToString(" • "),
-            d <= com.monsterquest.core.Facilities.RANGE_M) { onOther(MapPick.FacilityPick(f)) }
+            com.monsterquest.core.World.inReach(d, com.monsterquest.core.Facilities.RANGE_M)) { onOther(MapPick.FacilityPick(f)) }
     }
 
     LazyColumn(Modifier.fillMaxSize().padding(end = 12.dp)) {
@@ -1168,7 +1168,7 @@ private fun NearbyList(
 @Composable
 private fun TraderDialog(vm: GameViewModel, trader: com.monsterquest.core.Trader, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(trader.lat, trader.lon)
-    val inRange = dist != null && dist <= com.monsterquest.core.Wanderers.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, com.monsterquest.core.Wanderers.RANGE_M)
     // Fresh stock from the current state (sold offers drop off).
     val now = System.currentTimeMillis()
     val live = vm.tradersNear(now).find { it.id == trader.id } ?: trader.copy(offers = emptyList())
@@ -1208,7 +1208,7 @@ private fun TraderDialog(vm: GameViewModel, trader: com.monsterquest.core.Trader
 @Composable
 private fun NomadDialog(vm: GameViewModel, nomad: com.monsterquest.core.Nomad, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(nomad.lat, nomad.lon)
-    val inRange = dist != null && dist <= com.monsterquest.core.Wanderers.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, com.monsterquest.core.Wanderers.RANGE_M)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { PlaceTitle(GameIcon.SWORD, nomad.name, Color(0xFF6FA8E8), "Nomad adventurer, Lv ${nomad.level} • ${distanceText(dist, vm.state.settings.imperialUnits)}") },
@@ -1242,7 +1242,7 @@ private fun NomadTeamRow(vm: GameViewModel, team: List<com.monsterquest.core.Mon
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         team.forEach { m ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                MonsterArt(m.species, Modifier.size(48.dp))
+                MonsterArt(m.species, Modifier.size(48.dp), idle = true)
                 Text("Lv ${m.level}", fontSize = 11.sp)
                 Text(com.monsterquest.core.Scouting.starText(com.monsterquest.core.Scouting.stars(m.species)), fontSize = 9.sp, color = Gold)
             }
@@ -1301,7 +1301,7 @@ private fun RisenShrineFx(gameMap: GameMap, risen: com.monsterquest.core.Roaming
 @Composable
 private fun FacilityDialog(vm: GameViewModel, v: com.monsterquest.core.Venue, onDismiss: () -> Unit) {
     val dist = vm.distanceTo(v.lat, v.lon)
-    val inRange = dist != null && dist <= com.monsterquest.core.Facilities.RANGE_M
+    val inRange = com.monsterquest.core.World.inReach(dist, com.monsterquest.core.Facilities.RANGE_M)
     val now = System.currentTimeMillis()
     val used = com.monsterquest.core.Facilities.usedToday(vm.state, v.role, now)
     val closed = !com.monsterquest.core.Facilities.academyOpen(v, now)
