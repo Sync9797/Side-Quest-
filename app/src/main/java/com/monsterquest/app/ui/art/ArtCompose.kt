@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameMillis
+import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -142,9 +142,10 @@ private fun idleOf(sp: Species): Idle = when {
  */
 private fun Modifier.idleMotion(sp: Species, on: Boolean): Modifier = if (!on || ArtQuality.reduced) this else composed {
     val clock = remember { mutableLongStateOf(0L) }
+    // An endless animation: tests (and the system's "remove animations" setting) can pause it.
     LaunchedEffect(Unit) {
-        val start = withFrameMillis { it }
-        while (true) withFrameMillis { clock.longValue = it - start }
+        val start = withInfiniteAnimationFrameMillis { it }
+        while (true) withInfiniteAnimationFrameMillis { clock.longValue = it - start }
     }
     val seed = (sp.id.hashCode() and 0xFFFF) / 65535f * 2f * PI.toFloat()
     val style = idleOf(sp)
