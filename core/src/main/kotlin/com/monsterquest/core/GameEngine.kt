@@ -1108,7 +1108,9 @@ object GameEngine {
         state.hero,
         // Monsters out on adventures can't fight.
         state.partyMonsters.filter { it.uid !in Adventures.awayUids(state) },
-        enemy, encounter, state.inventory, state.storageFull, shrineId, rng, state.equippedGear, state.heroDamage, state.wornArmor,
+        // The weekly champion's No items rule: nothing from the bag in this fight.
+        enemy, encounter, if (encounter == EncounterType.CHAMPION && WeeklyChampion.current(state, System.currentTimeMillis()).rule == ChampionRule.NO_ITEMS) emptyMap() else state.inventory,
+        state.storageFull, shrineId, rng, state.equippedGear, state.heroDamage, state.wornArmor,
         storageRoom = (state.monsterCapacity - state.monsters.size).coerceAtLeast(0),
         extraEnemies = pack,
         ambush = ambush,
@@ -1264,6 +1266,13 @@ object GameEngine {
             if (r.outcome == BattleOutcome.WON && r.goldWon > 0) rewards += Reward.Gold(r.goldWon)
             if (r.heroXp > 0) rewards += Reward.Xp(r.heroXp)
             r.drops.forEach { (item, n) -> rewards += Reward.Items(item, n) }
+        }
+        // The weekly champion: scored by rounds; a prize once a week, a badge for a new record.
+        if (r.encounter == EncounterType.CHAMPION && r.outcome == BattleOutcome.WON) {
+            val u = WeeklyChampion.onWin(s, r.rounds.coerceAtLeast(1), nowMs)
+            s = u.state
+            rewards += u.rewards
+            msg.append(" ").append(u.message)
         }
         // The hidden legendary's first appearance: beaten, it flees and leaves its scale.
         if (r.encounter == EncounterType.OMEN && r.outcome == BattleOutcome.WON && !s.mythScale) {

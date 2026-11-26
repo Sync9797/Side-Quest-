@@ -58,6 +58,8 @@ data class Settings(
     val skippedVersion: String? = null,
     /** Notifications when something in the game is waiting (an adventure back, a rare visitor leaving, an egg ready). */
     val gameNudges: Boolean = true,
+    /** A notification before each High-priority to-do is due (see [GameNudges.TASK_WARNING_MS]). */
+    val priorityAlerts: Boolean = true,
     /** The version whose "What's new" the player has seen (null: none yet). */
     val lastSeenVersion: String? = null,
     /** The map turns with the phone, so what's in front of you is up the screen (else north is up). */
@@ -84,6 +86,8 @@ data class Settings(
     val simpleCasting: Boolean = false,
     /** The Health card on Home is open (true) or folded to one line. */
     val healthOpen: Boolean = false,
+    /** The Phone-free challenge card on Quests is open (true) or folded to one line. */
+    val focusOpen: Boolean = true,
     /** Look up the real weather where you are; it changes which monsters are out. */
     val liveWeather: Boolean = true,
     val battleSpeed: BattleSpeed = BattleSpeed.NORMAL,

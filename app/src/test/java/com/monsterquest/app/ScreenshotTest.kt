@@ -1595,6 +1595,40 @@ abstract class ScreenshotBase(private val device: String) {
         org.junit.Assert.assertTrue(com.monsterquest.core.Mythic.weekTasks(v.state, now).second > 0)
     }
 
+    /** This week's champion on the Hero tab, and the fight it starts. */
+    @Test fun weeklyChampion() {
+        val v = vm()
+        shot("65_champion_hero", advanceMs = 500) { AppRoot(v, Tab.HERO) }
+        rule.onNodeWithTag("champion-card").performScrollTo()
+        capture("65b_champion_card", 300)
+        rule.onNodeWithTag("champion-challenge").performClick()
+        rule.mainClock.advanceTimeBy(300)
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(v.battle != null || v.leadChoice != null)
+    }
+
+    /** A finished line's reward, ready to claim in the Journal. */
+    @Test fun journalRewards() {
+        val g = com.monsterquest.core.BestiaryRewards.lineGoals.first()
+        val base = sampleState()
+        val v = vm(base.copy(caught = base.caught + g.members.map { it.id }, seen = base.seen + g.members.map { it.id }))
+        shot("66_journal_rewards", content = onBackground { com.monsterquest.app.ui.JournalTab(v) })
+        rule.onNodeWithText("${g.name} complete!").assertExists()
+        rule.onNodeWithText("Claim").performClick()
+        rule.mainClock.advanceTimeBy(300)
+        rule.waitForIdle()
+        org.junit.Assert.assertTrue(g.id in v.state.bestiaryClaimed)
+    }
+
+    /** The Phone-free challenge folds to one line. */
+    @Test fun focusFolds() {
+        val v = vm()
+        shot("67_focus_open", advanceMs = 300) { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithTag("focus-header").performScrollTo().performClick()
+        capture("67b_focus_folded", 600)
+        org.junit.Assert.assertFalse(v.state.settings.focusOpen)
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }

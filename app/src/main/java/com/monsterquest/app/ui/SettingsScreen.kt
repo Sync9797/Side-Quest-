@@ -360,6 +360,11 @@ fun SettingsScreen(vm: GameViewModel, initialHelp: Boolean = false, onClose: () 
                     "A notification when something is waiting: your adventure team is back, a rare visitor is about to leave, or an egg is ready. At most 3 a day, never between 10 PM and 8 AM.",
                     prefs.gameNudges,
                 ) { on -> vm.updateSettings { it.copy(gameNudges = on) } }
+                ToggleRow(
+                    "High-priority to-dos",
+                    "A notification 30 minutes before a High-priority to-do is due, even at night.",
+                    prefs.priorityAlerts,
+                ) { on -> vm.updateSettings { it.copy(priorityAlerts = on) } }
                 // The last crash, kept on this phone only: share it to help fix it.
                 vm.lastCrash?.let { report ->
                     Spacer(Modifier.height(8.dp))

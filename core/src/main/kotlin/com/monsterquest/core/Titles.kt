@@ -8,7 +8,7 @@ object Titles {
     const val MYTHBREAKER = "Mythbreaker"
 
     /** Best first. */
-    private val ORDER = listOf(MYTHBREAKER, CENTURION)
+    private val ORDER = listOf(MYTHBREAKER, CENTURION) + Element.typed.map { BestiaryRewards.typeTitle(it) }
 
     /** The title to show by the hero's name, or null. */
     fun shown(state: GameState): String? = ORDER.firstOrNull { it in state.titles }

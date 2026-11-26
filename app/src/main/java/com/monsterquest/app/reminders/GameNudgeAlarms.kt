@@ -21,6 +21,7 @@ import com.monsterquest.core.GameState
  */
 object GameNudgeAlarms {
     const val CHANNEL = "game_nudges"
+    const val TASK_CHANNEL = "priority_tasks"
     private const val ACTION = "com.monsterquest.app.nudges.RING"
     private const val PREFS = "game_nudges"
     private const val KEY_SCHEDULED = "scheduled"
@@ -53,7 +54,13 @@ object GameNudgeAlarms {
         val id = intent.getStringExtra("id") ?: return
         val nowMs = System.currentTimeMillis()
         val state = SaveRepository(context).load()
-        if (!GameNudges.stillDue(state, id, nowMs) || GameNudges.inQuietHours(nowMs)) return
+        if (!GameNudges.stillDue(state, id, nowMs)) return
+        // A High-priority to-do is your own deadline: no quiet hours and no daily limit.
+        if (GameNudges.isTask(id)) {
+            show(context, id, intent.getStringExtra("title").orEmpty(), intent.getStringExtra("text").orEmpty())
+            return
+        }
+        if (GameNudges.inQuietHours(nowMs)) return
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val today = java.time.LocalDate.now().toEpochDay()
         val sent = if (prefs.getLong(KEY_DAY, -1) == today) prefs.getInt(KEY_SENT, 0) else 0
@@ -74,7 +81,15 @@ object GameNudgeAlarms {
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val n = Notification.Builder(context, CHANNEL)
+        val task = GameNudges.isTask(id)
+        if (task) {
+            nm.createNotificationChannel(
+                NotificationChannel(TASK_CHANNEL, "High-priority to-dos", NotificationManager.IMPORTANCE_HIGH).apply {
+                    description = "A heads-up 30 minutes before a High-priority to-do is due."
+                },
+            )
+        }
+        val n = Notification.Builder(context, if (task) TASK_CHANNEL else CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_focus)
             .setContentTitle(title)
             .setContentText(text)

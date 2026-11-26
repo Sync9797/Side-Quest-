@@ -352,6 +352,19 @@ fun MapScreen(vm: GameViewModel) {
                         val stars = com.monsterquest.core.Stars.of(vm.state.hero.level)
                         add(MapSprite("hero", loc.first, loc.second, at = { glide.value }, image = sprite("player_${vm.state.hero.heroClass}_${outfit}_${stars}_${com.monsterquest.core.Titles.CENTURION in vm.state.titles}", 60, 60) { c, w, h -> drawPlayerOn(c, w, h, vm.state.hero.heroClass, outfit, stars, centurion = com.monsterquest.core.Titles.CENTURION in vm.state.titles) }, wDp = 60, hDp = 60, anchorY = 0.86f) {})
                     }
+                    // Your buddy walks at your side, a few steps to the left.
+                    val buddy = com.monsterquest.core.Buddy.of(vm.state)
+                    if (loc != null && buddy != null && !buddy.fainted) {
+                        val sp = buddy.species
+                        add(
+                            MapSprite(
+                                "buddy", loc.first, loc.second,
+                                at = { glide.value?.let { (la, lo) -> la - 0.00002 to lo - 0.00009 } },
+                                image = sprite("buddy_${sp.id}_${buddy.shiny}", 40, 40) { c, w, h -> com.monsterquest.app.ui.art.drawMonster(c, w, h, sp, shiny = buddy.shiny) },
+                                wDp = 40, hDp = 40, anchorY = 0.95f, trot = true,
+                            ),
+                        )
+                    }
                     focus?.takeIf { it.pin }?.let { f ->
                         add(MapSprite("focus", f.lat, f.lon, sprite("focus_pin", 30, 40) { c, w, h -> drawFocusPin(c, w, h) }, 30, 40, anchorY = 1f) { f.details() })
                     }

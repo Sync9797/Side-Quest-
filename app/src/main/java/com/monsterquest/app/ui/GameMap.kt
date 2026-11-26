@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.composed
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculateRotation
@@ -595,7 +596,26 @@ class MapSprite(
     /** Where it stands right now, when it moves smoothly (the hero gliding between GPS fixes). */
     val at: (() -> Pair<Double, Double>?)? = null,
     val onClick: (() -> Unit)? = null,
+    /** Trots along in little hops (the buddy walking beside the hero). */
+    val trot: Boolean = false,
 )
+
+/** Little hops, a step every half second, with a squash as it lands. Pauses in tests and with animations off. */
+private fun Modifier.trot(): Modifier = composed {
+    val clock = remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val start = androidx.compose.animation.core.withInfiniteAnimationFrameMillis { it }
+        while (true) androidx.compose.animation.core.withInfiniteAnimationFrameMillis { clock.longValue = it - start }
+    }
+    graphicsLayer {
+        val t = clock.longValue / 1000f
+        val hop = kotlin.math.abs(kotlin.math.sin(t * PI.toFloat() * 2f))
+        translationY = -hop * size.height * 0.07f
+        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f)
+        scaleY = 1f - (1f - hop) * 0.05f
+        scaleX = 1f + (1f - hop) * 0.03f
+    }
+}
 
 /**
  * Draws [sprites] where they stand. They re-place themselves as the camera
@@ -613,6 +633,7 @@ fun MapSprites(gm: GameMap, sprites: List<MapSprite>) {
                     modifier = Modifier
                         .size(s.wDp.dp, s.hDp.dp)
                         .graphicsLayer { alpha = s.alpha }
+                        .then(if (s.trot && !com.monsterquest.app.ui.art.ArtQuality.reduced) Modifier.trot() else Modifier)
                         .then(
                             if (click != null) Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },

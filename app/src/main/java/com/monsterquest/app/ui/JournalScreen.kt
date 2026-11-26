@@ -3,6 +3,7 @@ package com.monsterquest.app.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +84,8 @@ fun JournalTab(vm: GameViewModel) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+                Spacer(Modifier.height(8.dp))
+                JournalRewards(vm)
             }
         }
         items(all, key = { it.id }) { sp ->
@@ -90,6 +93,60 @@ fun JournalTab(vm: GameViewModel) {
         }
     }
     open?.let { sp -> JournalEntry(vm, sp) { open = null } }
+}
+
+/**
+ * Rewards for finishing pages: each type's page (a Farwisp and a title) and
+ * each evolution line (gold, a crystal and candy). Ready ones first, to claim.
+ */
+@Composable
+private fun JournalRewards(vm: GameViewModel) {
+    val s = vm.state
+    val ready = com.monsterquest.core.BestiaryRewards.claimable(s)
+    var open by remember { mutableStateOf(false) }
+    GameCard(border = if (ready.isNotEmpty()) Gold else null, modifier = Modifier.testTag("journal-rewards")) {
+        Column {
+            Row(Modifier.fillMaxWidth().clickable { open = !open }, verticalAlignment = Alignment.CenterVertically) {
+                GIcon(GameIcon.CHEST, Modifier.size(20.dp), Gold)
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Journal rewards", fontWeight = FontWeight.SemiBold)
+                    val done = com.monsterquest.core.BestiaryRewards.all.count { it.id in s.bestiaryClaimed }
+                    Text(
+                        if (ready.isNotEmpty()) "${ready.size} ready to claim!" else "$done of ${com.monsterquest.core.BestiaryRewards.all.size} claimed. Finish a type's page or a whole line.",
+                        fontSize = 12.sp, color = if (ready.isNotEmpty()) Gold else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(if (open) "▴" else "▾", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            ready.forEach { g ->
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("${g.name} complete!", fontWeight = FontWeight.SemiBold, color = Gold, fontSize = 13.sp)
+                        Text(g.reward, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    SmallButton("Claim", { vm.claimBestiary(g.id) })
+                }
+            }
+            DropdownReveal(open) {
+                Column(Modifier.padding(top = 8.dp)) {
+                    Text("Type pages", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    com.monsterquest.core.BestiaryRewards.typeGoals.forEach { g ->
+                        val (have, total) = com.monsterquest.core.BestiaryRewards.progress(s, g)
+                        val claimed = g.id in s.bestiaryClaimed
+                        LabeledBar(if (claimed) "${g.name} ✓ ${com.monsterquest.core.BestiaryRewards.typeTitle(g.type!!)}" else g.name, have, total, g.type!!.color(), Modifier.padding(top = 4.dp))
+                    }
+                    val lines = com.monsterquest.core.BestiaryRewards.lineGoals
+                    val linesDone = lines.count { com.monsterquest.core.BestiaryRewards.complete(s, it) }
+                    Text("Evolution lines: $linesDone of ${lines.size} complete", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+                    Text(
+                        "Each whole line caught: ${com.monsterquest.core.BestiaryRewards.LINE_GOLD} gold, a Resonant Crystal and ${com.monsterquest.core.BestiaryRewards.LINE_CANDY} of its candy.",
+                        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

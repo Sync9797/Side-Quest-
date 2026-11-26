@@ -1041,6 +1041,22 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Evolves for candy, and plays the evolution. */
     fun evolve(uid: String) = playEvolution(uid, GameEngine.evolve(state, uid))
 
+    /** Fights this week's champion (One monster rule: no swaps). */
+    fun challengeChampion() {
+        if (state.monsters.none { !it.fainted }) {
+            message = "You need a monster who can fight."
+            return
+        }
+        val c = com.monsterquest.core.WeeklyChampion.current(state, System.currentTimeMillis())
+        startBattle(
+            com.monsterquest.core.WeeklyChampion.monster(c), EncounterType.CHAMPION, null,
+            swapLimit = if (c.rule == com.monsterquest.core.ChampionRule.ONE_MONSTER) 0 else null,
+        )
+    }
+
+    /** Claims a completed Journal page's reward. */
+    fun claimBestiary(id: String) = apply(com.monsterquest.core.BestiaryRewards.claim(state, id))
+
     /** The hidden legendary's "Oh?..." pop-up was answered: it evolves (by level, never for candy). */
     fun mythicEvolve(uid: String) = playEvolution(uid, com.monsterquest.core.Mythic.evolve(state, uid))
 

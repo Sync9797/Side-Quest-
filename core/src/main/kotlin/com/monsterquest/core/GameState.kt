@@ -341,6 +341,14 @@ data class GameState(
     val caught: Set<String> = emptySet(),
     /** Species caught in their shiny colors. */
     val shinyCaught: Set<String> = emptySet(),
+    /** Journal rewards already claimed (see [BestiaryRewards]). */
+    val bestiaryClaimed: Set<String> = emptySet(),
+    /** This week's champion fight (see [WeeklyChampion]). */
+    val championWeek: ChampionWeek? = null,
+    /** Fewest rounds ever to beat a weekly champion, per rule. */
+    val championRecords: Map<ChampionRule, Int> = emptyMap(),
+    /** Champion's Badges: one for each new record. */
+    val championBadges: Int = 0,
     /** Epoch day -> steps walked (last ~90 days). */
     val stepHistory: Map<Long, Int> = emptyMap(),
     /** Epoch day -> quests completed that day. */
@@ -385,6 +393,10 @@ data class GameState(
     /** The buddy (first party slot) the walk toward its next candy counts for, and how far you've gone. */
     val buddyUid: String? = null,
     val buddyMeters: Double = 0.0,
+    /** Distance toward the buddy's next dig (see [Buddy.DIG_METERS]). */
+    val buddyDigMeters: Double = 0.0,
+    /** Digs so far (each rolls its own luck). */
+    val buddyDigs: Int = 0,
     /** Species pinned in the Journal (see [Wanted]). */
     val wanted: Set<String> = emptySet(),
     /** This week's mystery monster (see [Mystery]). */

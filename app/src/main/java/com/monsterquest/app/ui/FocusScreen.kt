@@ -18,6 +18,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,12 +66,23 @@ fun FocusCard(vm: GameViewModel) {
         // Start either way; without notifications the session still works, it's just silent.
         vm.startFocus(minutes)
     }
+    val open = vm.state.settings.focusOpen
     GameCard(border = MpBlue) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Tap the title to fold the card to one line (remembered).
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable { vm.updateSettings { it.copy(focusOpen = !open) } }
+                .testTag("focus-header"),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             GIcon(GameIcon.PHONE_OFF, Modifier.size(20.dp), MpBlue)
             Spacer(Modifier.width(8.dp))
-            Text("Phone-free challenge", style = MaterialTheme.typography.titleMedium)
+            Text("Phone-free challenge", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(if (open) "▴" else "▾", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        DropdownReveal(open) {
+        Column {
         Text(
             "Start a timer and put your phone down. The screen stays on with the timer; stay in the game until time's up to earn rewards.",
             fontSize = 13.sp,
@@ -121,6 +134,8 @@ fun FocusCard(vm: GameViewModel) {
             enabled = !full,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(if (full) "Box storage full ($MAX_LOOT_BOXES). Open one in the Bag" else "Start $minutes-minute session") }
+        }
+        }
     }
 }
 

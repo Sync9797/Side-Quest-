@@ -29,7 +29,9 @@ enum class EncounterType {
     /** The champion at the end of a dungeon (a hero of one of the classes) and their monsters. */
     DUNGEON_BOSS,
     /** The hidden legendary's first appearance (see [Mythic]): it can't be tamed, and flees when beaten. */
-    OMEN;
+    OMEN,
+    /** The weekly champion (see [WeeklyChampion]): a one-on-one boss fight, scored by rounds. Can't be tamed. */
+    CHAMPION;
 
     /** Enemy HP multiplier. */
     val hpMultiplier: Double
@@ -550,6 +552,8 @@ data class BattleResult(
     val tamed: List<Monster> = listOfNotNull(captured),
     /** A Snap Bind landed: the rest of the pack scattered (and now flees from you on the map). */
     val scattered: Boolean = false,
+    /** Rounds fought (the weekly champion is scored by them). */
+    val rounds: Int = 0,
     /** Your monsters who stepped into the fight (their bond grows). */
     val fought: Set<String> = emptySet(),
 )
@@ -855,6 +859,7 @@ class Battle(
                 "${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}!"
             EncounterType.DUNGEON_GUARD -> "The dungeon's guardians rise: ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}! They can't be tamed."
             EncounterType.DUNGEON_BOSS -> "${trainer ?: "The champion"} blocks the way out with ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}!"
+            EncounterType.CHAMPION -> "This week's champion, ${enemy.name} (Lv ${enemy.level}), steps into the ring!"
             EncounterType.OMEN -> "Oh? Something small and strange wobbles out of the water... ${enemy.name} (Lv ${enemy.level})!"
             EncounterType.NOMAD -> "${trainer ?: "The nomad"} steps up${if (thug != null) " to fight" else ""} with ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}" +
                 (if (enemyBench.isNotEmpty()) ", with ${enemyBench.size} more waiting!" else "!")
@@ -999,6 +1004,7 @@ class Battle(
         encounter == EncounterType.NOMAD -> "The nomad's monsters are loyal partners. Win the challenge instead."
         encounter == EncounterType.DUNGEON_GUARD -> "Cursed guardians can't be tamed. Fight your way through."
         encounter == EncounterType.DUNGEON_BOSS -> "The champion's monsters stay loyal. Beat them all."
+        encounter == EncounterType.CHAMPION -> "A champion can't be tamed. Win the bout!"
         encounter == EncounterType.OMEN -> "It slips away from every throw. Maybe it can't be caught yet..."
         captureLocked -> "Defeat this boss first. Then it can be tamed on a later visit."
         capturedKeys.size >= storageRoom -> "Monster storage is full. Release a monster or upgrade storage."
@@ -2376,6 +2382,7 @@ class Battle(
             standing = allies.count { !it.isHero && it.alive },
             tamed = captured,
             scattered = scattered,
+            rounds = round,
             fought = fought.filter { it in partyUids }.toSet(),
         )
     }

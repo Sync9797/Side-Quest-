@@ -19,6 +19,24 @@ object GameNudges {
     val QUIET_UNTIL: LocalTime = LocalTime.of(8, 0)
     /** Evening reminder time for a ready egg left unhatched. */
     val EGG_TIME: LocalTime = LocalTime.of(18, 0)
+    /** How long before a High-priority to-do is due to remind you. */
+    const val TASK_WARNING_MS = 30 * 60_000L
+
+    /** A High-priority to-do's nudge: not held to the daily limit or the quiet hours (it's your deadline). */
+    fun isTask(nudgeId: String): Boolean = nudgeId.startsWith("task:")
+
+    /** High-priority to-dos still open with a due time ahead: one notification [TASK_WARNING_MS] before each (or soon, if that's passed). */
+    fun taskNudges(state: GameState, nowMs: Long): List<Nudge> {
+        if (!state.settings.priorityAlerts) return emptyList()
+        return state.tasks.mapNotNull { t ->
+            val due = t.dueAt ?: return@mapNotNull null
+            if (t.completed || t.priority != Priority.HIGH || due <= nowMs) return@mapNotNull null
+            val at = maxOf(due - TASK_WARNING_MS, nowMs + 60_000L)
+            val mins = ((due - at) / 60_000L).coerceAtLeast(1)
+            Nudge("task:${t.id}:$due", at, "High priority: ${t.title}", "Due in $mins minute${if (mins == 1L) "" else "s"}. Finish it and tick it off in the game.")
+        }
+    }
+
     /** How long before a rare visitor leaves to remind you. */
     const val VISITOR_WARNING_MS = 30 * 60_000L
 
@@ -34,7 +52,10 @@ object GameNudges {
     }
 
     /** Everything worth a notification from now on, in time order (only what hasn't happened yet). */
-    fun upcoming(state: GameState, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): List<Nudge> {
+    fun upcoming(state: GameState, nowMs: Long, zone: ZoneId = ZoneId.systemDefault()): List<Nudge> =
+        (gameUpdates(state, nowMs, zone) + taskNudges(state, nowMs)).sortedBy { it.atMs }
+
+    private fun gameUpdates(state: GameState, nowMs: Long, zone: ZoneId): List<Nudge> {
         if (!state.settings.gameNudges) return emptyList()
         val out = mutableListOf<Nudge>()
         for (a in state.adventures) {
@@ -72,6 +93,11 @@ object GameNudges {
 
     /** Whether a nudge still applies when its time comes (the adventure not claimed, the visitor not met, the egg not hatched). */
     fun stillDue(state: GameState, nudgeId: String, nowMs: Long): Boolean {
+        if (isTask(nudgeId)) {
+            // "task:<id>:<due>": still open, still High priority, and not yet past due.
+            val t = state.tasks.find { "task:${it.id}:${it.dueAt}" == nudgeId } ?: return false
+            return state.settings.priorityAlerts && !t.completed && t.priority == Priority.HIGH && (t.dueAt ?: 0L) > nowMs
+        }
         if (!state.settings.gameNudges) return false
         return when {
             nudgeId.startsWith("adv:") -> state.adventures.any { "adv:${it.adventure.id}:${it.startMs}" == nudgeId && it.done(nowMs) }
