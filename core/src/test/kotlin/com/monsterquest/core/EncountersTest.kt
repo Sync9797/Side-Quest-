@@ -564,10 +564,10 @@ class EncountersTest {
         assertEquals(2, gain.state.hero.level)
         assertTrue(gain.state.bagCount > gain.state.bagCapacity)
         assertEquals(GameEngine.levelBox(2), gain.boxItems)
-        // ...but nothing more can be bought or picked up until there's room.
+        // ...and nothing more can be bought until there's room, though earned items are still kept.
         val rich = gain.state.copy(gold = 1_000)
         assertEquals(rich, GameEngine.buy(rich, Item.POTION).state)
-        assertEquals(rich.inventory, GameEngine.addItems(rich, mapOf(Item.MANA_DRAUGHT to 1)).first.inventory)
+        assertEquals(1, GameEngine.addItems(rich, mapOf(Item.MANA_DRAUGHT to 1)).first.count(Item.MANA_DRAUGHT))
     }
 
     @Test

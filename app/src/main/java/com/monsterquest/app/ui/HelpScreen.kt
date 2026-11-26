@@ -103,7 +103,7 @@ private val topics = listOf(
         listOf(
             section(
                 "Walking and torches",
-                "Every 1,000 steps lights a torch. You can hold 10 to start, 5 more every 10 levels, up to 30 at level 40; once full, walking and the morning gift stop adding them until you spend some (chests and other rewards can still take you up to 5 over). You also get 3 every morning. Torches let you into dungeons.",
+                "Every 1,000 steps lights a torch. You can hold 10 to start, 5 more every 10 levels, up to 30 at level 40; once full, walking and the morning gift stop adding them until you spend some. You never hold more than your limit: torches earned from chests, champions or long phone-free sessions that don't fit become 25 gold each. You also get 3 every morning. Torches let you into dungeons.",
                 "Walking heals: every 100 steps restores 10 HP for your hero and battle party and 2 Energy. It also opens loot boxes, warms eggs and earns buddy candy.",
                 "Choose where steps come from in Settings: the phone's step counter, Samsung Health, Health Connect or GPS.",
             ),
@@ -157,7 +157,7 @@ private val topics = listOf(
                 "Darkness: the deep half of a 4- or 5-star dungeon is pitch dark, and every door shows \"?\". One torch lights the way for 3 rooms.",
                 "Dead ends: some doors lead nowhere (they always look unknown until lit). Light a torch to find a hidden way on, or turn back: you lose a room and face new doors.",
                 "Vaults: some treasuries are too dark to see into. Light a torch for the rich chest (twice the gold, more potions and crystals, better gear), or feel your way to the plain one.",
-                "Loot: if your bag has room when you go in, everything you find in a dungeon comes home, even past your bag's size (the same for adventures). Once your bag is over its size, nothing more fits until you make room. Go in with a full bag and you can't keep what you find.",
+                "Loot: everything you find in a dungeon comes home, even past your bag's size, and the same for adventures, loot boxes, shrines and every other reward: nothing you earn is ever lost to a full bag. An over-full bag only stops buying, forging and taking gear off until you make room.",
                 "At the end waits a champion: a Warrior, Mage or Rogue with their monsters. Beat them for +1 Attack, Magic or Speed for good (once a day, up to 10 per stat for each star rank) and a roll on the reward pool.",
                 "Leave whenever you like and keep what you found. If your team falls, you lose half of it.",
             ),

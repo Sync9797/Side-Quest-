@@ -570,14 +570,14 @@ private fun PartyWalk(vm: GameViewModel, step: Int, modifier: Modifier) {
 }
 
 /**
- * Before a dungeon or an adventure: everything found comes home if the bag
- * has room now (even past its size); with a full bag, nothing found can be kept.
+ * Before a dungeon or an adventure: everything found comes home, even past
+ * the bag's size; a full bag only means buying waits until there's room.
  */
 @Composable
 internal fun BagNote(s: com.monsterquest.core.GameState) {
     if (s.bagFull) {
         Text(
-            "Your bag is full (${s.bagCount}/${s.bagCapacity}). Make room first, or you won't be able to keep any items you find.",
+            "Your bag is full (${s.bagCount}/${s.bagCapacity}). Everything you find still comes home, but you can't buy anything until you make room.",
             fontSize = 12.sp, color = HpRed, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(top = 8.dp),
         )

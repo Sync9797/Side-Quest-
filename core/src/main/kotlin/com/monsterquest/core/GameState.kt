@@ -626,6 +626,8 @@ data class GameState(
                 gold = s.gold + lures * RETIRED_LURE_GOLD,
             )
         }
+        // Torches never sit above the cap: any held over it (from when rewards could overflow) become gold.
+        s = Torches.clamp(s)
         return s.withJournal()
     }
 }

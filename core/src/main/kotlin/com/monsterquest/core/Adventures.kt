@@ -140,8 +140,7 @@ object Adventures {
         val active = ActiveAdventure(adventure, ids, nowMs, chance, bagFullAtStart = state.bagFull)
         return Update(
             state.copy(adventures = state.adventures + active),
-            "${team.joinToString { it.displayName }} set out: ${adventure.title}. Back in ${adventure.durationMs / 60_000} min." +
-                if (state.bagFull) " Your bag is full: they can't bring back any items." else "",
+            "${team.joinToString { it.displayName }} set out: ${adventure.title}. Back in ${adventure.durationMs / 60_000} min.",
         )
     }
 
@@ -178,7 +177,7 @@ object Adventures {
             val gold = 20 * d + adv.recommendedLevel * 2 * d + rng.nextInt(10 * d + 1)
             s = s.copy(gold = s.gold + gold)
             val loot = GameEngine.rollLoot(s, d + 1, rng).let { if (d >= 3) it.copy(parts = GameEngine.rollParts(d - 1, rng, s.hero.level)) else it }
-            val granted = GameEngine.grantLoot(s, loot, overfill = !active.bagFullAtStart)
+            val granted = GameEngine.grantLoot(s, loot)
             Update(
                 granted.state,
                 "${adv.title}: success! $teamNames brought back +$gold gold, ${granted.message}. Each monster +$xpEach XP." +

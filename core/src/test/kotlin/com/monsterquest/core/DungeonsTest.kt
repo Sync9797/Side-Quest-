@@ -234,7 +234,7 @@ class DungeonsTest {
     }
 
     @Test
-    fun dungeonLootComesHomeEvenPastTheBagUnlessYouWentInFull() {
+    fun dungeonLootAlwaysComesHomeEvenPastTheBag() {
         val base = start()
         val d = some(base, 2)
         val room = base.bagCapacity - base.bagCount
@@ -245,16 +245,16 @@ class DungeonsTest {
         val out = Dungeons.leave(s).state
         assertEquals(base.bagCount + room + 10, out.bagCount)
         assertTrue(out.bagCount > out.bagCapacity)
-        // Over the bag's size, nothing else fits afterwards.
-        assertEquals(out.inventory, GameEngine.addItems(out, mapOf(Item.POTION to 1)).first.inventory)
-        // Went in full: you're told, and loot only fits if there's room.
+        // Over the bag's size, nothing more can be bought.
+        assertEquals("Bag is full (${out.bagCount}/${out.bagCapacity}).", GameEngine.buy(out.copy(gold = 9_999), Item.POTION).message)
+        // Went in full: you're told, and everything found still comes home.
         val full = base.copy(inventory = base.inventory + (Item.POTION to (base.inventory[Item.POTION] ?: 0) + room))
         assertTrue(full.bagFull)
         val entered = Dungeons.enter(full, d)
         assertTrue("bag is full" in entered.message)
         var f = entered.state.copy(dungeonRun = entered.state.dungeonRun!!.copy(items = mapOf(Item.GREATER_POTION to 5)))
         f = Dungeons.leave(f).state
-        assertEquals(full.bagCount, f.bagCount)
+        assertEquals(full.bagCount + 5, f.bagCount)
     }
 
     /** A run of a [stars]-star dungeon, trying seeds until [ok] holds at some step. */

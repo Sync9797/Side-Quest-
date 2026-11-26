@@ -13,8 +13,8 @@ object Torches {
     const val MORNING = 3
     /** The most torches anyone can hold (level 40 and up). */
     const val MAX = 30
-    /** Earned rewards (chests, long focus sessions) can go this far over the cap. */
-    const val REWARD_OVERFLOW = 5
+    /** What each earned torch that doesn't fit under the cap pays instead. */
+    const val GOLD_PER_SPARE_TORCH = 25
 
     /** How many torches a hero of [level] can hold: 10, then 5 more every 10 levels, up to [MAX] at 40. */
     fun cap(level: Int): Int = (10 + 5 * ((level.coerceAtLeast(1)) / 10)).coerceAtMost(MAX)
@@ -24,15 +24,31 @@ object Torches {
     fun full(state: GameState): Boolean = state.torches >= cap(state)
 
     /**
-     * Adds torches up to the hero's cap (walking, the morning gift). An earned
-     * [reward] can go [REWARD_OVERFLOW] over it so a prize is never wasted.
-     * Never takes away torches already held above the cap.
+     * Adds torches, never past the hero's cap. Walking and the morning gift
+     * just stop at the cap; an earned [reward] (a dungeon's haul, a long
+     * focus session) pays [GOLD_PER_SPARE_TORCH] gold for each torch that
+     * doesn't fit, so a prize is never wasted.
      */
     fun add(state: GameState, n: Int, reward: Boolean = false): GameState {
         if (n <= 0) return state
-        val limit = cap(state) + if (reward) REWARD_OVERFLOW else 0
-        if (state.torches >= limit) return state
-        return state.copy(torches = minOf(state.torches + n, limit))
+        val room = (cap(state) - state.torches).coerceAtLeast(0)
+        val fit = minOf(n, room)
+        val spare = if (reward) n - fit else 0
+        return state.copy(torches = state.torches + fit, gold = state.gold + spare * GOLD_PER_SPARE_TORCH)
+    }
+
+    /** " (2 torches past your limit became 50 gold)" when an earned [n] torches won't all fit, else "". */
+    fun spareText(state: GameState, n: Int): String {
+        val spare = (n - (cap(state) - state.torches).coerceAtLeast(0)).coerceAtLeast(0)
+        if (spare <= 0) return ""
+        return " ($spare torch${if (spare == 1) "" else "es"} past your limit of ${cap(state)} became ${spare * GOLD_PER_SPARE_TORCH} gold)"
+    }
+
+    /** Brings a hero holding more torches than the cap (from before it was strict) down to it, paying gold for the rest. */
+    fun clamp(state: GameState): GameState {
+        val over = state.torches - cap(state)
+        if (over <= 0) return state
+        return state.copy(torches = cap(state), gold = state.gold + over * GOLD_PER_SPARE_TORCH)
     }
 
     /** Walking: steps build toward the next torch. Returns the state and how many torches were earned. */

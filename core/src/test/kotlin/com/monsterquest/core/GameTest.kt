@@ -87,9 +87,14 @@ class GameTest {
     }
 
     @Test
-    fun bagCapacityLimitsLoot() {
+    fun bagCapacityLimitsBuyingButNeverEarnedLoot() {
         val s = started().copy(inventory = mapOf(Item.POTION to STARTING_BAG_CAPACITY - 1))
-        val (after, lost) = GameEngine.addItems(s, mapOf(Item.MANA_DRAUGHT to 3))
+        // Earned items always fit, even past the bag's size.
+        val (kept, none) = GameEngine.addItems(s, mapOf(Item.MANA_DRAUGHT to 3))
+        assertEquals(STARTING_BAG_CAPACITY + 2, kept.bagCount)
+        assertEquals(0, none)
+        // Only an explicit no-overfill add stops at the bag's size.
+        val (after, lost) = GameEngine.addItems(s, mapOf(Item.MANA_DRAUGHT to 3), overfill = false)
         assertEquals(STARTING_BAG_CAPACITY, after.bagCount)
         assertEquals(2, lost)
         assertEquals("Bag is full (20/20).", GameEngine.buy(after.copy(gold = 999), Item.POTION).message)

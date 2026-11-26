@@ -460,7 +460,13 @@ object GameEngine {
      * all go in even past the bag's size (what a dungeon run or an adventure
      * that set out with room brought back). Once over, nothing else fits.
      */
-    fun addItems(state: GameState, items: Map<Item, Int>, overfill: Boolean = false): Pair<GameState, Int> {
+    /**
+     * Adds [items] to the Bag. Earned items always fit, even past the bag's
+     * size (an over-full bag only stops buying, forging and taking gear
+     * off); pass [overfill] false only where the caller has already checked
+     * for room. Returns the state and how many didn't fit (0 when overfilling).
+     */
+    fun addItems(state: GameState, items: Map<Item, Int>, overfill: Boolean = true): Pair<GameState, Int> {
         var inv = state.inventory
         var space = state.bagCapacity - state.bagCount
         var lost = 0
@@ -1173,8 +1179,8 @@ object GameEngine {
                 msg.append(Bonds.grewText(grew))
                 // Drops
                 if (r.drops.isNotEmpty()) {
-                    // In a dungeon you entered with room in your bag, everything you find comes home.
-                    val (withDrops, lost) = addItems(s, r.drops, overfill = s.dungeonRun?.let { !it.bagFullAtStart } == true)
+                    // Everything a battle drops comes home, even past the bag's size.
+                    val (withDrops, lost) = addItems(s, r.drops)
                     s = withDrops
                     msg.append(" Found: ").append(r.drops.entries.joinToString { "${it.key.label} x${it.value}" }).append(".")
                     if (lost > 0) msg.append(" (Bag full: $lost item(s) left behind.)")
@@ -1503,7 +1509,8 @@ object GameEngine {
         if (count <= 0) emptyMap() else mapOf(Armory.randomArmorPartType(rng) to count)
 
     /** Adds loot to the save (respecting bag space) and describes it. */
-    fun grantLoot(state: GameState, loot: Loot, overfill: Boolean = false): Update {
+    /** Adds earned loot: everything is kept, even past the bag's size (see [addItems]). */
+    fun grantLoot(state: GameState, loot: Loot, overfill: Boolean = true): Update {
         var s = state
         val parts = mutableListOf<String>()
         val rewards = mutableListOf<Reward>()
@@ -1996,8 +2003,9 @@ object GameEngine {
             }
             // Two hours off the phone: a bundle of torches for the dungeons.
             if (f.minutes >= 120) {
+                val spare = Torches.spareText(s, FOCUS_JACKPOT_TORCHES)
                 s = Torches.add(s, FOCUS_JACKPOT_TORCHES, reward = true)
-                msg.append(" +$FOCUS_JACKPOT_TORCHES torches for the dungeons.")
+                msg.append(" +$FOCUS_JACKPOT_TORCHES torches for the dungeons$spare.")
                 // A rare monster heads your way: it finds you on your next battery-saver walk.
                 rareVisitor(s, nowMsForVisitor(f), rng)?.let { v ->
                     s = addVisitor(s, v, nowMsForVisitor(f))

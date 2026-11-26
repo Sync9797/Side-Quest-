@@ -283,6 +283,23 @@ object Dungeons {
     /** Torches you can light inside: the ones you carry plus any found in this dungeon. */
     fun torchesAtHand(state: GameState): Int = state.torches + (state.dungeonRun?.torches ?: 0)
 
+    /**
+     * Torches found in a dungeon, kept under the hero's cap counting the ones
+     * already at hand; any that don't fit become gold in the haul instead.
+     * Returns the run, how many torches were added and the gold paid instead.
+     */
+    private fun findTorches(state: GameState, run: DungeonRun, n: Int): Triple<DungeonRun, Int, Int> {
+        val room = (Torches.cap(state) - state.torches - run.torches).coerceAtLeast(0)
+        val fit = minOf(n, room)
+        val gold = (n - fit) * Torches.GOLD_PER_SPARE_TORCH
+        return Triple(run.copy(torches = run.torches + fit, gold = run.gold + gold), fit, gold)
+    }
+
+    private fun torchText(n: Int, fit: Int, gold: Int): String =
+        if (fit == n) "$n torch${if (n == 1) "" else "es"}"
+        else if (fit == 0) "$gold gold (your torches are full)"
+        else "$fit torch${if (fit == 1) "" else "es"} and $gold gold (your torches are full)"
+
     /** Uses one torch: one found in this dungeon first, then one you brought. Null if there are none. */
     private fun lightTorch(state: GameState, run: DungeonRun): Pair<GameState, DungeonRun>? = when {
         run.torches > 0 -> state to run.copy(torches = run.torches - 1)
@@ -365,7 +382,7 @@ object Dungeons {
         val full = state.bagFull
         val run = DungeonRun(
             d,
-            last = "You light a torch and step into the ${d.name}." + if (full) " Your bag is full: you can't carry out anything you find." else "",
+            last = "You light a torch and step into the ${d.name}." + if (full) " Your bag is full: everything you find still comes home, but make room before you buy anything." else "",
             bagFullAtStart = full,
         )
         return Update(state.copy(torches = state.torches - d.torchCost, dungeonRun = run), run.last)
@@ -547,9 +564,11 @@ object Dungeons {
         if (rich || rng.nextDouble() < 0.35) item(if (d.stars >= 3 || rich) Item.RESONANT_CRYSTAL else Item.BINDING_CRYSTAL, 1 + rng.nextInt(3))
         if (rng.nextDouble() < 0.3 + 0.05 * d.stars) {
             val n = 1 + (if (rng.nextDouble() < d.stars / 6.0) 1 else 0)
-            r = r.copy(torches = r.torches + n)
-            found += "$n torch${if (n == 1) "" else "es"}"
-            loot += Reward.Torches(n)
+            val (withTorches, fit, spare) = findTorches(state, r, n)
+            r = withTorches
+            found += torchText(n, fit, spare)
+            if (fit > 0) loot += Reward.Torches(fit)
+            if (spare > 0) loot += Reward.Gold(spare)
         }
         val spells = GameEngine.pageCandidates(state)
         if (spells.isNotEmpty() && rng.nextDouble() < (if (rich) 0.7 else 0.35)) {
@@ -665,7 +684,13 @@ object Dungeons {
         if (hit(3)) Armory.rollArmor(d.level, rng, luck = 20 + 10 * d.stars, minimum = GearRarity.RARE).let { r = r.copy(armor = r.armor + it); got += "${it.rarity.label} ${it.name}"; loot += Reward.ArmorDrop(it) }
         if (hit(4)) GameEngine.pageCandidates(s).randomOrNull(rng)?.let { r = r.copy(pages = r.pages + (it.id to (r.pages[it.id] ?: 0) + 3)); got += "3 ${it.name} pages"; loot += Reward.Pages(it.id, 3, learned = false) }
         if (hit(5)) { item(Item.RESONANT_CRYSTAL, 3); got += "3 Resonant Crystals" }
-        if (hit(6)) { r = r.copy(torches = r.torches + 2); got += "2 torches"; loot += Reward.Torches(2) }
+        if (hit(6)) {
+            val (withTorches, fit, spare) = findTorches(s, r, 2)
+            r = withTorches
+            got += torchText(2, fit, spare)
+            if (fit > 0) loot += Reward.Torches(fit)
+            if (spare > 0) loot += Reward.Gold(spare)
+        }
         if (hit(7)) { item(Item.INCUBATOR, 1); got += "an Incubator" }
         if (hit(8)) { item(Item.GOLDEN_BERRY, 1); got += "a Golden Berry" }
         if (hit(9)) { item(Item.MOOD_CRYSTAL, 1); got += "a Mood Crystal" }
@@ -701,6 +726,7 @@ object Dungeons {
     private fun bank(state: GameState, run: DungeonRun, half: Boolean): Update {
         fun cut(n: Int) = if (half) n / 2 else n
         var s = state.copy(gold = state.gold + cut(run.gold))
+        val torchNote = Torches.spareText(s, cut(run.torches))
         s = Torches.add(s, cut(run.torches), reward = true)
         val loot = GameEngine.Loot(
             items = run.items.mapValues { cut(it.value) }.filterValues { it > 0 },
@@ -708,13 +734,14 @@ object Dungeons {
             armor = if (half) run.armor.take(run.armor.size / 2) else run.armor,
             pages = run.pages.mapValues { cut(it.value) }.filterValues { it > 0 },
         )
-        val granted = GameEngine.grantLoot(s, loot, overfill = !run.bagFullAtStart)
+        // Everything found comes home, even past the bag's size.
+        val granted = GameEngine.grantLoot(s, loot)
         val total = listOfNotNull(
             cut(run.gold).takeIf { it > 0 }?.let { "$it gold" },
             cut(run.torches).takeIf { it > 0 }?.let { "$it torch${if (it == 1) "" else "es"}" },
             granted.message.takeIf { it.isNotBlank() && it != "nothing" },
         )
-        return Update(granted.state, if (total.isEmpty()) "" else "Banked: ${total.joinToString()}.")
+        return Update(granted.state, if (total.isEmpty()) "" else "Banked: ${total.joinToString()}$torchNote.")
     }
 }
 

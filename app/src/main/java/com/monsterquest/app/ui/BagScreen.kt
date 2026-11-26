@@ -79,10 +79,10 @@ fun BagScreen(vm: GameViewModel) {
         SectionTitle("Bag ${s.bagCount}/${s.bagCapacity}")
         LabeledBar("Space", s.bagCount, s.bagCapacity, if (s.bagFull) HpRed else MpBlue)
         if (s.bagCount > s.bagCapacity) {
-            // Level-up boxes can overfill the bag; nothing is lost, but nothing more fits until there's room.
+            // Rewards can overfill the bag; nothing earned is ever lost, but buying waits until there's room.
             Text(
-                "Your bag is over full (${s.bagCount}/${s.bagCapacity}). You keep everything, but you can't pick up or buy " +
-                    "anything until you use, sell or drop ${s.bagCount - s.bagCapacity + 1} item(s).",
+                "Your bag is over full (${s.bagCount}/${s.bagCapacity}). You keep everything you find, but you can't buy, forge " +
+                    "or take gear off until you use, sell or drop ${s.bagCount - s.bagCapacity + 1} item(s).",
                 fontSize = 12.sp,
                 color = HpRed,
                 modifier = Modifier.padding(top = 4.dp),

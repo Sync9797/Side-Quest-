@@ -61,12 +61,15 @@ class TorchesTest {
         assertEquals(cap, walked.torches)
         assertEquals(0, walked.torchSteps)
         assertTrue(Torches.full(walked))
-        // A reward goes a little over, never more.
-        assertEquals(cap + 3, Torches.add(walked, 3, reward = true).torches)
-        assertEquals(cap + Torches.REWARD_OVERFLOW, Torches.add(walked, 99, reward = true).torches)
-        // Torches held above the cap are never taken away.
-        val over = walked.copy(torches = cap + 4)
-        assertEquals(cap + 4, Torches.add(over, 2).torches)
-        assertEquals(cap + 4, Torches.morning(over, at(7) + 86_400_000L, utc)!!.state.torches)
+        // An earned reward never goes over the cap: what doesn't fit becomes gold.
+        val rewarded = Torches.add(walked, 3, reward = true)
+        assertEquals(cap, rewarded.torches)
+        assertEquals(walked.gold + 3 * Torches.GOLD_PER_SPARE_TORCH, rewarded.gold)
+        assertTrue("3 torches past your limit" in Torches.spareText(walked, 3))
+        // A save holding more than the cap (from before) is brought down to it, with gold for the rest.
+        val over = walked.copy(torches = cap + 5)
+        val fixed = GameState.fromJson(over.toJson())
+        assertEquals(cap, fixed.torches)
+        assertEquals(over.gold + 5 * Torches.GOLD_PER_SPARE_TORCH, fixed.gold)
     }
 }
