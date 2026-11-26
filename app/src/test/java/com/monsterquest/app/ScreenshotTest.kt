@@ -1624,7 +1624,8 @@ abstract class ScreenshotBase(private val device: String) {
     @Test fun focusFolds() {
         val v = vm()
         shot("67_focus_open", advanceMs = 300) { AppRoot(v, Tab.QUESTS) }
-        rule.onNodeWithTag("focus-header").performScrollTo().performClick()
+        // Click without scrolling: on the cover screen the card sits in a list item taller than the screen.
+        rule.onNodeWithTag("focus-header").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         capture("67b_focus_folded", 600)
         org.junit.Assert.assertFalse(v.state.settings.focusOpen)
     }
