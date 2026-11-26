@@ -1,0 +1,769 @@
+
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
+Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
+If the parent project does not need the plugin, add 'apply false' to the plugin line.
+See: https://docs.gradle.org/current/userguide/plugins.html#sec:subprojects_plugins_dsl
+The Kotlin plugin was loaded in the following projects: ':app', ':core'
+> Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :core:compileKotlin UP-TO-DATE
+> Task :core:compileJava NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:processDebugManifestForPackage
+> Task :app:preDebugUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileDebugUnitTest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:mergeDebugAssets
+> Task :app:processDebugResources
+> Task :app:packageDebugUnitTestForUnitTest
+> Task :app:generateDebugUnitTestConfig
+
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Adaptive.kt:107:27 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Adaptive.kt:114:30 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/Backdrop.kt:164:38 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/BattleFx.kt:147:34 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/BattleFx.kt:148:27 Condition is always 'true'.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/EvolutionUi.kt:226:25 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/EvolutionUi.kt:227:25 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/EvolutionUi.kt:228:25 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/EvolutionUi.kt:229:25 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/GameMap.kt:391:21 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/MapScreen.kt:640:26 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/ArtPainter.kt:90:51 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/ArtPainter.kt:139:75 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/Side-Quest-/Side-Quest-/app/src/main/java/com/monsterquest/app/ui/art/CharacterArt.kt:1328:67 'fun computeBounds(p0: RectF, p1: Boolean): Unit' is deprecated. Deprecated in Java.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes
+> Task :app:bundleDebugClassesToRuntimeJar
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :app:processDebugUnitTestJavaRes
+
+> Task :app:testDebugUnitTest
+
+CoverScreenshots > mapTiltsAndProjects STARTED
+
+CoverScreenshots > levelUps STARTED
+
+CoverScreenshots > heroSkills STARTED
+
+CoverScreenshots > heroLooks STARTED
+
+CoverScreenshots > heroMagic STARTED
+
+CoverScreenshots > starter STARTED
+
+CoverScreenshots > drivingWarning STARTED
+
+CoverScreenshots > questList STARTED
+
+CoverScreenshots > potionPreview STARTED
+
+CoverScreenshots > batterySaver STARTED
+
+CoverScreenshots > battleFx STARTED
+
+CoverScreenshots > whoStarts STARTED
+
+CoverScreenshots > heldWeapons STARTED
+
+CoverScreenshots > journal STARTED
+
+CoverScreenshots > battle STARTED
+
+CoverScreenshots > starterGift STARTED
+
+CoverScreenshots > itemAnimations STARTED
+
+CoverScreenshots > foldUnfold STARTED
+
+CoverScreenshots > tutorialDungeon STARTED
+
+CoverScreenshots > health STARTED
+
+CoverScreenshots > outfits STARTED
+
+CoverScreenshots > farwisp STARTED
+
+CoverScreenshots > focusFolds STARTED
+
+CoverScreenshots > dashboard STARTED
+
+CoverScreenshots > battlePotionPreview STARTED
+
+CoverScreenshots > lookForOldSaveAndMirror STARTED
+
+CoverScreenshots > quests STARTED
+
+CoverScreenshots > packBattle STARTED
+
+CoverScreenshots > placeDetails STARTED
+
+CoverScreenshots > mythicFinalEvolution STARTED
+
+CoverScreenshots > weeklyChampion STARTED
+
+CoverScreenshots > centurion STARTED
+
+CoverScreenshots > heroMenu STARTED
+
+CoverScreenshots > mythScale STARTED
+
+CoverScreenshots > adventureReady STARTED
+
+CoverScreenshots > shopSell STARTED
+
+CoverScreenshots > bagGear STARTED
+
+CoverScreenshots > monsters STARTED
+
+CoverScreenshots > bindingSeal STARTED
+
+CoverScreenshots > bindingBurst STARTED
+
+CoverScreenshots > bindingTrace STARTED
+
+CoverScreenshots > dungeonDark STARTED
+
+CoverScreenshots > dungeonRoom STARTED
+
+CoverScreenshots > dungeonTrap STARTED
+
+CoverScreenshots > adventures STARTED
+
+CoverScreenshots > bag STARTED
+
+CoverScreenshots > map STARTED
+
+CoverScreenshots > help STARTED
+
+CoverScreenshots > hero STARTED
+
+CoverScreenshots > focus STARTED
+
+CoverScreenshots > store STARTED
+
+CoverScreenshots > firstStar STARTED
+
+CoverScreenshots > lightMonsters STARTED
+
+CoverScreenshots > battleNotCaughtMark STARTED
+
+CoverScreenshots > exoticOutfits STARTED
+
+CoverScreenshots > secretAmbush STARTED
+
+CoverScreenshots > saveBackup STARTED
+
+CoverScreenshots > thugAmbush STARTED
+
+CoverScreenshots > battleTabletop STARTED
+
+CoverScreenshots > lightHero STARTED
+
+CoverScreenshots > candyEvolution STARTED
+
+CoverScreenshots > candyEvolution FAILED
+    java.lang.AssertionError: Failed: assertDoesNotExist.
+    Reason: Did not expect any node but found '1' node that satisfies: (TestTag = 'evolution')
+    Node found:
+    Node #16705 at (l=0.0, t=0.0, r=1032.0, b=2646.0)px, Tag: 'evolution'
+    Focused = 'false'
+    Text = '[Zapmouse evolved into Voltrat!, Electric]'
+    Actions = [OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution, ClearTextSubstitution, GetTextLayoutResult]
+    MergeDescendants = 'true'
+    Has 1 child, 1 sibling
+        at androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExist(SemanticsNodeInteraction.kt:100)
+        at com.monsterquest.app.ScreenshotBase.candyEvolution(ScreenshotTest.kt:1591)
+        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+        at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+        at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+        at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+        at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+        at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+        at org.junit.rules.ExternalResource$1.evaluate(ExternalResource.java:54)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1$evaluate$1.invoke(AndroidComposeTestRule.android.kt:272)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1$evaluate$1.invoke(AndroidComposeTestRule.android.kt:271)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.withDisposableContent(ComposeUiTest.android.kt:505)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1$1$1.invoke(ComposeUiTest.android.kt:333)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withComposeIdlingResource(ComposeUiTest.android.kt:385)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withComposeIdlingResource(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1$1.invoke(ComposeUiTest.android.kt:332)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withWindowRecomposer(ComposeUiTest.android.kt:359)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withWindowRecomposer(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1.invoke(ComposeUiTest.android.kt:331)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withTestCoroutines(ComposeUiTest.android.kt:372)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withTestCoroutines(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1.invoke(ComposeUiTest.android.kt:330)
+        at androidx.compose.ui.test.IdlingStrategy.withStrategy(IdlingStrategy.android.kt:52)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1.invoke(ComposeUiTest.android.kt:329)
+        at androidx.compose.ui.test.IdlingResourceRegistry.withRegistry(IdlingResourceRegistry.jvm.kt:155)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1.invoke(ComposeUiTest.android.kt:328)
+        at androidx.compose.ui.test.ComposeRootRegistry.withRegistry(ComposeRootRegistry.android.kt:146)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.runTest(ComposeUiTest.android.kt:327)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1.evaluate(AndroidComposeTestRule.android.kt:271)
+        at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+        at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:502)
+        at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:285)
+        at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:104)
+        at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+        at java.base/java.lang.Thread.run(Thread.java:840)
+
+CoverScreenshots > mapDark STARTED
+
+CoverScreenshots > mapFood STARTED
+
+CoverScreenshots > denCatch STARTED
+
+CoverScreenshots > newMonsters STARTED
+
+CoverScreenshots > scholarsTome STARTED
+
+CoverScreenshots > batchRelease STARTED
+
+CoverScreenshots > moveTutor STARTED
+
+CoverScreenshots > reminders STARTED
+
+CoverScreenshots > lookSetup STARTED
+
+CoverScreenshots > thugLooks STARTED
+
+CoverScreenshots > helpSearch STARTED
+
+CoverScreenshots > mythicEvolution STARTED
+
+CoverScreenshots > lightBattle STARTED
+
+CoverScreenshots > starters STARTED
+
+CoverScreenshots > mapWeather STARTED
+
+CoverScreenshots > lootPopup STARTED
+
+CoverScreenshots > stepWeek STARTED
+
+CoverScreenshots > settings STARTED
+
+CoverScreenshots > reorderMoves STARTED
+
+CoverScreenshots > furcloak STARTED
+
+CoverScreenshots > eggsReady STARTED
+
+CoverScreenshots > morningRecap STARTED
+
+CoverScreenshots > mythicLine STARTED
+
+CoverScreenshots > journalRewards STARTED
+
+CoverScreenshots > moveDetails STARTED
+
+CoverScreenshots > bootSplash STARTED
+
+CoverScreenshots > battleCaughtMark STARTED
+
+CoverScreenshots > lightQuests STARTED
+
+CoverScreenshots > bestiary STARTED
+
+CoverScreenshots > evolutionsA STARTED
+
+CoverScreenshots > evolutionsB STARTED
+
+CoverScreenshots > whatsNew STARTED
+
+CoverScreenshots > lightSettings STARTED
+
+CoverScreenshots > exoticChests STARTED
+
+CoverScreenshots > battleSwap STARTED
+
+InnerScreenshots > mapTiltsAndProjects STARTED
+
+InnerScreenshots > levelUps STARTED
+
+InnerScreenshots > heroSkills STARTED
+
+InnerScreenshots > heroLooks STARTED
+
+InnerScreenshots > heroMagic STARTED
+
+InnerScreenshots > starter STARTED
+
+InnerScreenshots > drivingWarning STARTED
+
+InnerScreenshots > questList STARTED
+
+InnerScreenshots > potionPreview STARTED
+
+InnerScreenshots > batterySaver STARTED
+
+InnerScreenshots > battleFx STARTED
+
+InnerScreenshots > whoStarts STARTED
+
+InnerScreenshots > heldWeapons STARTED
+
+InnerScreenshots > journal STARTED
+
+InnerScreenshots > battle STARTED
+
+InnerScreenshots > starterGift STARTED
+
+InnerScreenshots > itemAnimations STARTED
+
+InnerScreenshots > foldUnfold STARTED
+
+InnerScreenshots > tutorialDungeon STARTED
+
+InnerScreenshots > health STARTED
+
+InnerScreenshots > outfits STARTED
+
+InnerScreenshots > farwisp STARTED
+
+InnerScreenshots > focusFolds STARTED
+
+InnerScreenshots > dashboard STARTED
+
+InnerScreenshots > battlePotionPreview STARTED
+
+InnerScreenshots > lookForOldSaveAndMirror STARTED
+
+InnerScreenshots > quests STARTED
+
+InnerScreenshots > packBattle STARTED
+
+InnerScreenshots > placeDetails STARTED
+
+InnerScreenshots > mythicFinalEvolution STARTED
+
+InnerScreenshots > weeklyChampion STARTED
+
+InnerScreenshots > centurion STARTED
+
+InnerScreenshots > heroMenu STARTED
+
+InnerScreenshots > mythScale STARTED
+
+InnerScreenshots > adventureReady STARTED
+
+InnerScreenshots > shopSell STARTED
+
+InnerScreenshots > bagGear STARTED
+
+InnerScreenshots > monsters STARTED
+
+InnerScreenshots > bindingSeal STARTED
+
+InnerScreenshots > bindingBurst STARTED
+
+InnerScreenshots > bindingTrace STARTED
+
+InnerScreenshots > dungeonDark STARTED
+
+InnerScreenshots > dungeonRoom STARTED
+
+InnerScreenshots > dungeonTrap STARTED
+
+InnerScreenshots > adventures STARTED
+
+InnerScreenshots > bag STARTED
+
+InnerScreenshots > map STARTED
+
+InnerScreenshots > help STARTED
+
+InnerScreenshots > hero STARTED
+
+InnerScreenshots > focus STARTED
+
+InnerScreenshots > store STARTED
+
+InnerScreenshots > firstStar STARTED
+
+InnerScreenshots > lightMonsters STARTED
+
+InnerScreenshots > battleNotCaughtMark STARTED
+
+InnerScreenshots > exoticOutfits STARTED
+
+InnerScreenshots > secretAmbush STARTED
+
+InnerScreenshots > saveBackup STARTED
+
+InnerScreenshots > thugAmbush STARTED
+
+InnerScreenshots > battleTabletop STARTED
+
+InnerScreenshots > lightHero STARTED
+
+InnerScreenshots > candyEvolution STARTED
+
+InnerScreenshots > mapDark STARTED
+
+InnerScreenshots > mapFood STARTED
+
+InnerScreenshots > denCatch STARTED
+
+InnerScreenshots > newMonsters STARTED
+
+InnerScreenshots > scholarsTome STARTED
+
+InnerScreenshots > batchRelease STARTED
+
+InnerScreenshots > moveTutor STARTED
+
+InnerScreenshots > reminders STARTED
+
+InnerScreenshots > lookSetup STARTED
+
+InnerScreenshots > thugLooks STARTED
+
+InnerScreenshots > helpSearch STARTED
+
+InnerScreenshots > mythicEvolution STARTED
+
+InnerScreenshots > lightBattle STARTED
+
+InnerScreenshots > starters STARTED
+
+InnerScreenshots > mapWeather STARTED
+
+InnerScreenshots > lootPopup STARTED
+
+InnerScreenshots > stepWeek STARTED
+
+InnerScreenshots > settings STARTED
+
+InnerScreenshots > reorderMoves STARTED
+
+InnerScreenshots > furcloak STARTED
+
+InnerScreenshots > eggsReady STARTED
+
+InnerScreenshots > morningRecap STARTED
+
+InnerScreenshots > mythicLine STARTED
+
+InnerScreenshots > journalRewards STARTED
+
+InnerScreenshots > moveDetails STARTED
+
+InnerScreenshots > bootSplash STARTED
+
+InnerScreenshots > battleCaughtMark STARTED
+
+InnerScreenshots > lightQuests STARTED
+
+InnerScreenshots > bestiary STARTED
+
+InnerScreenshots > evolutionsA STARTED
+
+InnerScreenshots > evolutionsB STARTED
+
+InnerScreenshots > whatsNew STARTED
+
+InnerScreenshots > lightSettings STARTED
+
+InnerScreenshots > exoticChests STARTED
+
+InnerScreenshots > battleSwap STARTED
+
+MonsterGalleryTest > renderEverySpecies STARTED
+
+PhoneScreenshots > mapTiltsAndProjects STARTED
+
+PhoneScreenshots > levelUps STARTED
+
+PhoneScreenshots > heroSkills STARTED
+
+PhoneScreenshots > heroLooks STARTED
+
+PhoneScreenshots > heroMagic STARTED
+
+PhoneScreenshots > starter STARTED
+
+PhoneScreenshots > drivingWarning STARTED
+
+PhoneScreenshots > questList STARTED
+
+PhoneScreenshots > potionPreview STARTED
+
+PhoneScreenshots > batterySaver STARTED
+
+PhoneScreenshots > battleFx STARTED
+
+PhoneScreenshots > whoStarts STARTED
+
+PhoneScreenshots > heldWeapons STARTED
+
+PhoneScreenshots > journal STARTED
+
+PhoneScreenshots > battle STARTED
+
+PhoneScreenshots > starterGift STARTED
+
+PhoneScreenshots > itemAnimations STARTED
+
+PhoneScreenshots > foldUnfold STARTED
+
+PhoneScreenshots > tutorialDungeon STARTED
+
+PhoneScreenshots > health STARTED
+
+PhoneScreenshots > outfits STARTED
+
+PhoneScreenshots > farwisp STARTED
+
+PhoneScreenshots > focusFolds STARTED
+
+PhoneScreenshots > dashboard STARTED
+
+PhoneScreenshots > battlePotionPreview STARTED
+
+PhoneScreenshots > lookForOldSaveAndMirror STARTED
+
+PhoneScreenshots > quests STARTED
+
+PhoneScreenshots > packBattle STARTED
+
+PhoneScreenshots > placeDetails STARTED
+
+PhoneScreenshots > mythicFinalEvolution STARTED
+
+PhoneScreenshots > weeklyChampion STARTED
+
+PhoneScreenshots > centurion STARTED
+
+PhoneScreenshots > heroMenu STARTED
+
+PhoneScreenshots > mythScale STARTED
+
+PhoneScreenshots > adventureReady STARTED
+
+PhoneScreenshots > shopSell STARTED
+
+PhoneScreenshots > bagGear STARTED
+
+PhoneScreenshots > monsters STARTED
+
+PhoneScreenshots > bindingSeal STARTED
+
+PhoneScreenshots > bindingBurst STARTED
+
+PhoneScreenshots > bindingTrace STARTED
+
+PhoneScreenshots > dungeonDark STARTED
+
+PhoneScreenshots > dungeonRoom STARTED
+
+PhoneScreenshots > dungeonTrap STARTED
+
+PhoneScreenshots > adventures STARTED
+
+PhoneScreenshots > bag STARTED
+
+PhoneScreenshots > map STARTED
+
+PhoneScreenshots > help STARTED
+
+PhoneScreenshots > hero STARTED
+
+PhoneScreenshots > focus STARTED
+
+PhoneScreenshots > store STARTED
+
+PhoneScreenshots > firstStar STARTED
+
+PhoneScreenshots > lightMonsters STARTED
+
+PhoneScreenshots > battleNotCaughtMark STARTED
+
+PhoneScreenshots > exoticOutfits STARTED
+
+PhoneScreenshots > secretAmbush STARTED
+
+PhoneScreenshots > saveBackup STARTED
+
+PhoneScreenshots > thugAmbush STARTED
+
+PhoneScreenshots > battleTabletop STARTED
+
+PhoneScreenshots > lightHero STARTED
+
+PhoneScreenshots > candyEvolution STARTED
+
+PhoneScreenshots > candyEvolution FAILED
+    java.lang.AssertionError: Failed: assertDoesNotExist.
+    Reason: Did not expect any node but found '1' node that satisfies: (TestTag = 'evolution')
+    Node found:
+    Node #70029 at (l=0.0, t=0.0, r=1233.0, b=2673.0)px, Tag: 'evolution'
+    Focused = 'false'
+    Text = '[Zapmouse evolved into Voltrat!, Electric]'
+    Actions = [OnClick, RequestFocus, SetTextSubstitution, ShowTextSubstitution, ClearTextSubstitution, GetTextLayoutResult]
+    MergeDescendants = 'true'
+    Has 1 child, 1 sibling
+        at androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExist(SemanticsNodeInteraction.kt:100)
+        at com.monsterquest.app.ScreenshotBase.candyEvolution(ScreenshotTest.kt:1591)
+        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+        at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+        at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+        at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
+        at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+        at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:56)
+        at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+        at org.junit.rules.ExternalResource$1.evaluate(ExternalResource.java:54)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1$evaluate$1.invoke(AndroidComposeTestRule.android.kt:272)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1$evaluate$1.invoke(AndroidComposeTestRule.android.kt:271)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.withDisposableContent(ComposeUiTest.android.kt:505)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1$1$1.invoke(ComposeUiTest.android.kt:333)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withComposeIdlingResource(ComposeUiTest.android.kt:385)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withComposeIdlingResource(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1$1.invoke(ComposeUiTest.android.kt:332)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withWindowRecomposer(ComposeUiTest.android.kt:359)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withWindowRecomposer(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1$1.invoke(ComposeUiTest.android.kt:331)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.withTestCoroutines(ComposeUiTest.android.kt:372)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.access$withTestCoroutines(ComposeUiTest.android.kt:219)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1$1.invoke(ComposeUiTest.android.kt:330)
+        at androidx.compose.ui.test.IdlingStrategy.withStrategy(IdlingStrategy.android.kt:52)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1$1.invoke(ComposeUiTest.android.kt:329)
+        at androidx.compose.ui.test.IdlingResourceRegistry.withRegistry(IdlingResourceRegistry.jvm.kt:155)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$runTest$1.invoke(ComposeUiTest.android.kt:328)
+        at androidx.compose.ui.test.ComposeRootRegistry.withRegistry(ComposeRootRegistry.android.kt:146)
+        at androidx.compose.ui.test.AndroidComposeUiTestEnvironment.runTest(ComposeUiTest.android.kt:327)
+        at androidx.compose.ui.test.junit4.AndroidComposeTestRule$apply$1.evaluate(AndroidComposeTestRule.android.kt:271)
+        at org.junit.runners.ParentRunner$3.evaluate(ParentRunner.java:306)
+        at org.robolectric.RobolectricTestRunner$HelperTestRunner$1.evaluate(RobolectricTestRunner.java:502)
+        at org.robolectric.internal.SandboxTestRunner$2.lambda$evaluate$2(SandboxTestRunner.java:285)
+        at org.robolectric.internal.bytecode.Sandbox.lambda$runOnMainThread$0(Sandbox.java:104)
+        at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+        at java.base/java.lang.Thread.run(Thread.java:840)
+
+PhoneScreenshots > mapDark STARTED
+
+PhoneScreenshots > mapFood STARTED
+
+PhoneScreenshots > denCatch STARTED
+
+PhoneScreenshots > newMonsters STARTED
+
+PhoneScreenshots > scholarsTome STARTED
+
+PhoneScreenshots > batchRelease STARTED
+
+PhoneScreenshots > moveTutor STARTED
+
+PhoneScreenshots > reminders STARTED
+
+PhoneScreenshots > lookSetup STARTED
+
+PhoneScreenshots > thugLooks STARTED
+
+PhoneScreenshots > helpSearch STARTED
+
+PhoneScreenshots > mythicEvolution STARTED
+
+PhoneScreenshots > lightBattle STARTED
+
+PhoneScreenshots > starters STARTED
+
+PhoneScreenshots > mapWeather STARTED
+
+PhoneScreenshots > lootPopup STARTED
+
+PhoneScreenshots > stepWeek STARTED
+
+PhoneScreenshots > settings STARTED
+
+PhoneScreenshots > reorderMoves STARTED
+
+PhoneScreenshots > furcloak STARTED
+
+PhoneScreenshots > eggsReady STARTED
+
+PhoneScreenshots > morningRecap STARTED
+
+PhoneScreenshots > mythicLine STARTED
+
+PhoneScreenshots > journalRewards STARTED
+
+PhoneScreenshots > moveDetails STARTED
+
+PhoneScreenshots > bootSplash STARTED
+
+PhoneScreenshots > battleCaughtMark STARTED
+
+PhoneScreenshots > lightQuests STARTED
+
+PhoneScreenshots > bestiary STARTED
+
+PhoneScreenshots > evolutionsA STARTED
+
+PhoneScreenshots > evolutionsB STARTED
+
+PhoneScreenshots > whatsNew STARTED
+
+PhoneScreenshots > lightSettings STARTED
+
+PhoneScreenshots > exoticChests STARTED
+
+PhoneScreenshots > battleSwap STARTED
+
+PlacesTilesTest > placesAndWaterLandInTheirTile STARTED
+
+WidgetSizeTest > dateCardOnlyWhenItFitsOtherwiseTheList STARTED
+
+WidgetSummaryTest > summary STARTED
+
+WidgetSummaryTest > questsTorchesAndActions STARTED
+
+WidgetSummaryTest > questsFollowTheQuestsScreen STARTED
+
+294 tests completed, 2 failed
+
+> Task :app:testDebugUnitTest FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/render-1795720616498.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/Side-Quest-/Side-Quest-/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1m 53s
+28 actionable tasks: 26 executed, 2 up-to-date
