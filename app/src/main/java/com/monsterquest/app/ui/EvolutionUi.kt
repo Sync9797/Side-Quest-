@@ -63,15 +63,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Turns whatever is drawn into a flat white shape, [amount] of the way (0 = untouched, 1 = pure white). */
-private fun Modifier.whiten(amount: Float): Modifier =
-    if (amount <= 0f) this else this
-        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-        .drawWithContent {
-            drawContent()
-            drawRect(Color.White.copy(alpha = amount.coerceIn(0f, 1f)), blendMode = BlendMode.SrcAtop)
-        }
-
 /**
  * An evolution, played full screen: the monster glows, then flickers between
  * its old and new shapes as white silhouettes, faster and faster, until a
@@ -149,7 +140,7 @@ fun EvolutionScreen(show: EvolutionShow, onDone: () -> Unit) {
             )
             Spacer(Modifier.height(18.dp))
             val sp = if (showNew) show.into else show.from
-            MonsterArt(sp, Modifier.size(if (grand && showNew) 240.dp else 210.dp).whiten(white), shiny = show.shiny, idle = done)
+            MonsterArt(sp, Modifier.size(if (grand && showNew) 240.dp else 210.dp), shiny = show.shiny, idle = done, whiteness = white)
             Spacer(Modifier.height(16.dp))
             if (p >= 0.8f) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -209,7 +200,7 @@ fun MythicOhPopup(vm: GameViewModel) {
                 .padding(22.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            MonsterArt(m.species, Modifier.size(150.dp).whiten(0.15f + 0.3f * pulse), shiny = m.shiny)
+            MonsterArt(m.species, Modifier.size(150.dp), shiny = m.shiny, whiteness = 0.15f + 0.3f * pulse)
             Spacer(Modifier.height(12.dp))
             Text("Oh?...", color = Gold, fontSize = 30.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(14.dp))

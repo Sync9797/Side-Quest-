@@ -359,9 +359,10 @@ fun MapScreen(vm: GameViewModel) {
                         add(
                             MapSprite(
                                 "buddy", loc.first, loc.second,
-                                at = { glide.value?.let { (la, lo) -> la - 0.00002 to lo - 0.00009 } },
-                                image = sprite("buddy_${sp.id}_${buddy.shiny}", 40, 40) { c, w, h -> com.monsterquest.app.ui.art.drawMonster(c, w, h, sp, shiny = buddy.shiny) },
-                                wDp = 40, hDp = 40, anchorY = 0.95f, trot = true,
+                                // Same spot as the hero, drawn a body's width to its left (on screen, so it stays beside them at any zoom).
+                                at = { glide.value },
+                                image = sprite("buddy_${sp.id}_${buddy.shiny}", 34, 34) { c, w, h -> com.monsterquest.app.ui.art.drawMonster(c, w, h, sp, shiny = buddy.shiny) },
+                                wDp = 34, hDp = 34, anchorX = 1.55f, anchorY = 0.92f, trot = true,
                             ),
                         )
                     }

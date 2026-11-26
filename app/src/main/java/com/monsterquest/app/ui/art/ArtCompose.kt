@@ -62,14 +62,16 @@ private object ArtCache {
 
 /** Draws cached art identified by [key]; the same key must always draw the same picture. */
 @Composable
-private fun ArtCanvas(modifier: Modifier, key: String, draw: (android.graphics.Canvas, Float, Float) -> Unit) {
+private fun ArtCanvas(modifier: Modifier, key: String, whiteness: Float = 0f, draw: (android.graphics.Canvas, Float, Float) -> Unit) {
+    // Turned white (an evolution's silhouette): the tint covers only the picture's own pixels.
+    val filter = if (whiteness > 0f) androidx.compose.ui.graphics.ColorFilter.tint(Color.White.copy(alpha = whiteness.coerceIn(0f, 1f)), androidx.compose.ui.graphics.BlendMode.SrcAtop) else null
     // Clip so glows and halos never paint over neighboring UI.
     Spacer(
         modifier.clipToBounds().drawWithCache {
             val w = size.width.toInt()
             val h = size.height.toInt()
             val image = if (w > 0 && h > 0) ArtCache.get(key, w, h, draw).asImageBitmap() else null
-            onDrawBehind { image?.let { drawImage(it) } }
+            onDrawBehind { image?.let { drawImage(it, colorFilter = filter) } }
         },
     )
 }
@@ -111,8 +113,12 @@ fun ThugArt(cls: HeroClass, modifier: Modifier) {
  * on a monster's own page and out on the map, not in lists like the Journal.
  */
 @Composable
-fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false, idle: Boolean = false) {
-    ArtCanvas(modifier.idleMotion(species, idle && !dim && !silhouette), "monster:${species.id}:$dim:$silhouette:$shiny") { c, w, h ->
+fun MonsterArt(
+    species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false, idle: Boolean = false,
+    /** 0 to 1: how white it glows (an evolution's flickering silhouette). */
+    whiteness: Float = 0f,
+) {
+    ArtCanvas(modifier.idleMotion(species, idle && !dim && !silhouette), "monster:${species.id}:$dim:$silhouette:$shiny", whiteness) { c, w, h ->
         if (silhouette) {
             // Draw normally into a layer, then flood everything drawn with one dark color.
             val layer = c.saveLayer(0f, 0f, w, h, null)

@@ -1575,7 +1575,8 @@ abstract class ScreenshotBase(private val device: String) {
         val mouse = Monster.create(Bestiary.get("zapmouse"), 30, Random(4), evolve = false)
         val v = vm(base.copy(monsters = base.monsters + mouse, candy = base.candy + (mouse.species.family to 99)))
         shot("63_candy_evolution_start", advanceMs = 100) { AppRoot(v, Tab.QUESTS) }
-        v.evolve(mouse.uid)
+        rule.runOnIdle { v.evolve(mouse.uid) }
+        org.junit.Assert.assertNotNull("evolve said: ${v.message}", v.evolutionShow)
         capture("63b_candy_evolving", 1_500)
         rule.onNodeWithTag("evolution").assertExists()
         capture("63c_candy_evolved", 3_400)
