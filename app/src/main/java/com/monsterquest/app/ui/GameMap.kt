@@ -595,9 +595,9 @@ class MapSprite(
     val alpha: Float = 1f,
     /** Where it stands right now, when it moves smoothly (the hero gliding between GPS fixes). */
     val at: (() -> Pair<Double, Double>?)? = null,
-    val onClick: (() -> Unit)? = null,
     /** Trots along in little hops (the buddy walking beside the hero). */
     val trot: Boolean = false,
+    val onClick: (() -> Unit)? = null,
 )
 
 /** Little hops, a step every half second, with a squash as it lands. Pauses in tests and with animations off. */
