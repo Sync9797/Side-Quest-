@@ -105,6 +105,11 @@ kotlin {
 
 // Show which check failed (file and line) in the build log when a screenshot test fails.
 tasks.withType<Test>().configureEach {
+    // CI downloads Robolectric's Android jars once and caches them: run offline from there.
+    System.getenv("ROBOLECTRIC_JARS")?.let { dir ->
+        systemProperty("robolectric.offline", "true")
+        systemProperty("robolectric.dependency.dir", dir)
+    }
     testLogging {
         events("started", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
