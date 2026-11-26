@@ -102,26 +102,39 @@ jobs:
       # Robolectric's Android jars: downloaded once (with retries) and cached, so
       # the screenshot tests run offline instead of each fetching them from
       # Maven Central, which often answers 429 (too many requests).
-      - name: Cache Robolectric's Android jars
-        uses: actions/cache@v4
+      - name: Restore Robolectric's Android jars
+        id: jars-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/robolectric-jars
           key: robolectric-android-all-14-10818077-15-12650502-i7
 
       - name: Download Robolectric's Android jars
+        id: jars
         shell: bash
         run: |
           mkdir -p ~/robolectric-jars
+          ok=true
           for v in 14-robolectric-10818077-i7 15-robolectric-12650502-i7; do
             f=~/robolectric-jars/android-all-instrumented-$v.jar
             [ -s "$f" ] && continue
             for i in 1 2 3 4 5 6; do
               curl -fsSL --retry 3 -o "$f.part" "https://repo1.maven.org/maven2/org/robolectric/android-all-instrumented/$v/android-all-instrumented-$v.jar" && mv "$f.part" "$f" && break
-              sleep $((i * 15))
+              sleep $((i * 20))
             done
-            [ -s "$f" ] || { echo "Could not download $v"; exit 1; }
+            [ -s "$f" ] || { echo "Could not download $v: the tests will fetch it themselves."; ok=false; }
           done
-          echo "ROBOLECTRIC_JARS=$HOME/robolectric-jars" >> "$GITHUB_ENV"
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          # Offline only when every jar is here.
+          if [ "$ok" = true ]; then echo "ROBOLECTRIC_JARS=$HOME/robolectric-jars" >> "$GITHUB_ENV"; fi
+
+      # Saved straight away, so a later failure in this run doesn't lose them.
+      - name: Save Robolectric's Android jars
+        if: steps.jars.outputs.ok == 'true' && steps.jars-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/robolectric-jars
+          key: robolectric-android-all-14-10818077-15-12650502-i7
 
       # Render every screen at foldable/phone sizes and publish the PNGs to the
       # `screenshots` branch for layout review.
