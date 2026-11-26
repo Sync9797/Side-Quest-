@@ -106,7 +106,7 @@ kotlin {
 // Show which check failed (file and line) in the build log when a screenshot test fails.
 tasks.withType<Test>().configureEach {
     testLogging {
-        events("failed")
+        events("started", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
