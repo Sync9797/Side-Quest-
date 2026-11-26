@@ -42,7 +42,7 @@ object Achievements {
         a("tame_100", "Master Tamer", "Tame 100 monsters.", 100, 1500, mapOf(Item.PRISMATIC_CRYSTAL to 2)) { it.stats.monstersTamed },
         a("journal_25", "Field Notes", "Catch 25 different species.", 25, 500) { it.caught.size },
         a("journal_60", "Naturalist", "Catch 60 different species.", 60, 1500, mapOf(Item.TREAT to 3)) { it.caught.size },
-        a("journal_all", "Living Journal", "Catch every species.", Bestiary.all.size, 5000, mapOf(Item.PERFECT_ORB to 1)) { it.caught.size },
+        a("journal_all", "Living Journal", "Catch every species.", Bestiary.all.size, 5000, mapOf(Item.PERFECT_ORB to 1)) { s -> s.caught.count { Bestiary.isListed(it) } },
         a("all_types", "Seven Colors", "Catch at least one monster of every type.", Element.typed.size, 600) { caughtTypes(it) },
         a("shiny_1", "Something Shiny", "Catch a shiny monster.", 1, 500) { it.shinyCaught.size },
         a("legend_1", "Legend", "Catch a legendary monster.", 1, 2000) { s -> s.caught.count { id -> runCatching { Bestiary.get(id).rarity == Rarity.LEGENDARY }.getOrDefault(false) } },

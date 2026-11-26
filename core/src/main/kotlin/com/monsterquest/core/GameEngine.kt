@@ -674,6 +674,7 @@ object GameEngine {
      */
     fun evolve(state: GameState, uid: String): Update {
         val m = state.monsters.find { it.uid == uid } ?: return Update(state, "Monster not found.")
+        if (Mythic.inLine(m.speciesId)) return Update(state, "${m.displayName} won't evolve for candy. It grows in its own time.")
         val into = m.species.evolvesTo?.let { Bestiary.get(it) } ?: return Update(state, "${m.displayName} doesn't evolve.")
         val at = m.species.evolveLevel ?: return Update(state, "${m.displayName} doesn't evolve.")
         if (m.level < at) return Update(state, "${m.displayName} can evolve at level $at.")
@@ -1073,6 +1074,14 @@ object GameEngine {
         return state.copy(huntTokens = state.huntTokens - 1) to enemy
     }
 
+    /** Spends a hunt token: like [startHunt], but the hidden legendary may answer instead (see [Mythic.maybeEncounter]). */
+    fun startHuntWithOmen(state: GameState, nowMs: Long, rng: Random = Random.Default): Triple<GameState, Monster?, EncounterType> {
+        if (state.huntTokens <= 0) return Triple(state, null, EncounterType.WILD)
+        Mythic.maybeEncounter(state, nowMs, rng)?.let { (m, type) -> return Triple(state.copy(huntTokens = state.huntTokens - 1), m, type) }
+        val (s, m) = startHunt(state, rng)
+        return Triple(s, m, EncounterType.WILD)
+    }
+
     fun newBattle(
         state: GameState,
         enemy: Monster,
@@ -1255,6 +1264,11 @@ object GameEngine {
             if (r.outcome == BattleOutcome.WON && r.goldWon > 0) rewards += Reward.Gold(r.goldWon)
             if (r.heroXp > 0) rewards += Reward.Xp(r.heroXp)
             r.drops.forEach { (item, n) -> rewards += Reward.Items(item, n) }
+        }
+        // The hidden legendary's first appearance: beaten, it flees and leaves its scale.
+        if (r.encounter == EncounterType.OMEN && r.outcome == BattleOutcome.WON && !s.mythScale) {
+            s = Mythic.onOmenBeaten(s)
+            msg.append(" ").append(Mythic.FLEE_TEXT)
         }
         if (r.encounter == EncounterType.THUG && r.outcome == BattleOutcome.WON) {
             val rng = Random(nowMs)

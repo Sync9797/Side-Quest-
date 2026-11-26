@@ -104,6 +104,8 @@ sealed interface MoveEffect {
     data class StatusBonus(val multiplier: Double) : MoveEffect
     /** Earth's weight: damage comes from the user's Defense (and its raised stages) instead of its Attack. */
     data object DefenseStrike : MoveEffect
+    /** Strikes as its own type or [other], whichever hits the target harder. */
+    data class EitherType(val other: Element) : MoveEffect
 }
 
 /**
@@ -448,6 +450,11 @@ object Moves {
         m("razor_leaves", "Razor Leaves", Element.EARTH, 55, 95, "Leaves slice every foe: high critical-hit chance.", MoveEffect.HitsAllFoes, MoveEffect.HighCrit),
         m("boulder_trap", "Boulder Trap", Element.EARTH, 50, 80, "Boulders pin the foe down: always lowers its Speed.", MoveEffect.LowerFoe(listOf(BattleStat.SPEED), 1.0)),
         m("verdant_blade", "Verdant Blade", Element.EARTH, 90, desc = "A leaf sharp as a blade: high critical-hit chance.", fx = *arrayOf(MoveEffect.HighCrit)),
+        // ---- The hidden legendary's signature moves, one per stage (see Mythic) ----
+        m("little_tide", "Little Tide", Element.WATER, 40, desc = "A playful splash. Raises its own Speed.", fx = *arrayOf(MoveEffect.RaiseSelf(listOf(BattleStat.SPEED), 1))),
+        m("pyre_mirror", "Pyre Mirror", Element.FIRE, 75, desc = "A wall of flame that hits the foe and shields the user: raises its Defense. 20% chance to burn.", fx = *arrayOf(MoveEffect.RaiseSelf(listOf(BattleStat.DEFENSE), 1), MoveEffect.Inflict(Status.BURN, 0.2, 4, 4))),
+        m("steamheart_storm", "Steamheart Storm", Element.FIRE, 110, 90, "Fire and water at once, on every foe: strikes as whichever type hits harder. 30% chance to burn.", MoveEffect.EitherType(Element.WATER), MoveEffect.HitsAllFoes, MoveEffect.Inflict(Status.BURN, 0.3, 4, 4)),
+        m("genesis_bloom", "Genesis Bloom", Element.MYTHICAL, 160, desc = "Remakes the battlefield: never misses, hits every foe, heals the whole team 25% and clears the user's status. The user must rest next turn.", fx = *arrayOf(MoveEffect.SureHit, MoveEffect.HitsAllFoes, MoveEffect.TeamHeal(25), MoveEffect.CureSelf, MoveEffect.Recharge)),
     )
 
     /** When every move is out of uses: a weak, desperate hit with recoil. */
@@ -467,6 +474,7 @@ object Moves {
         Element.FLIGHT to listOf(1 to "beak_strike", 4 to "swoop_strike", 7 to "gale_puff", 10 to "feather_flurry", 12 to "iron_wing", 12 to "wind_wall", 15 to "tailwind", 17 to "lullaby", 22 to "wind_tunnel", 25 to "razor_gale", 27 to "flying_kick", 30 to "roost", 32 to "wild_wind", 38 to "dive_bomb", 6 to "wing_flick", 14 to "rising_strike", 21 to "updraft", 29 to "wind_slash", 36 to "soaring_strike", 44 to "ascent", 52 to "cyclone_fury", 60 to "talon_storm", 9 to "wing_strike", 48 to "reckless_dive", 56 to "sky_strike"),
         Element.GAS to listOf(1 to "puff", 3 to "toxic_barrage", 6 to "noxious_cloud", 9 to "venom_fang", 12 to "toxic_veil", 14 to "spore_cloud", 17 to "toxic_wave", 20 to "corrode", 23 to "smog_screen", 25 to "filth_shot", 27 to "cleansing_breath", 30 to "acid_rain", 38 to "miasma_burst", 6 to "noxious_spit", 14 to "venom_surge", 21 to "drowsy_mist", 29 to "toxic_cloud", 36 to "sludge_shot", 44 to "plague_fang", 52 to "caustic_burst", 60 to "pandemic", 4 to "caustic_mist", 11 to "numbing_spores", 16 to "ooze_shot"),
         Element.CORRUPT to listOf(1 to "feral_growl", 4 to "sucker_punch", 8 to "hex_barrage", 10 to "dark_wave", 12 to "shadow_veil", 16 to "corruptive_bite", 19 to "dusk_slash", 24 to "night_terror", 27 to "dark_pact", 30 to "umbral_claw", 33 to "soul_drain", 38 to "void_pulse", 6 to "low_blow", 14 to "spiteful_jab", 21 to "eye_gouge", 29 to "backstab", 36 to "rend", 44 to "dread_howl", 48 to "life_absorb", 52 to "hollowing_strike", 60 to "doomfall", 26 to "gloom_orb", 32 to "shadow_pulse"),
+        Element.MYTHICAL to listOf(100 to "genesis_bloom"),
         Element.EARTH to listOf(1 to "seed_bomb", 3 to "rock_blast", 6 to "mulch", 10 to "sap", 12 to "stoneskin", 12 to "stone_wall", 15 to "stone_hurl", 18 to "thorn_trap", 22 to "mega_sap", 25 to "ground_pound", 8 to "thorn_lash", 34 to "ground_rupture", 38 to "jagged_edge", 40 to "leaf_storm", 6 to "stone_knuckle", 14 to "bedrock_press", 21 to "mud_fling", 29 to "shield_bash", 36 to "rockslide", 44 to "iron_root", 52 to "mountain_crush", 60 to "titan_slam", 17 to "razor_leaves", 19 to "boulder_trap", 30 to "verdant_blade"),
     )
 
@@ -494,6 +502,7 @@ object Moves {
         "Impling" to listOf(10 to "ember_barrage", 30 to "lava_spray"),
         "Mimic" to listOf(8 to "frenzy_swipes", 20 to "jagged_edge"),
         "Prism Fairy" to listOf(8 to "cleansing_wave", 20 to "quick_bolt"),
+        "Murklet" to listOf(1 to "little_tide", 30 to "pyre_mirror", 60 to "steamheart_storm", 100 to "genesis_bloom"),
     )
 
     /** Knockdown: Earth monsters learn it at 20, almost everyone else at 24. */
@@ -521,6 +530,17 @@ object Moves {
 
     /** Moves a monster of [species] knows at [level], with the level each was learned. */
     fun learnable(species: Species): List<Pair<Int, Move>> =
+        if (species.id == Mythic.TURUMARTH) everyMove else ownLearnable(species)
+
+    /** Turumarth can learn every move there is, at the earliest level anything learns it. */
+    private val everyMove: List<Pair<Int, Move>> by lazy {
+        val firstLevel = HashMap<String, Int>()
+        (learnsets.values.flatten() + familyMoves.values.flatten() + listOf(SMACK_DOWN_EARTH_LEVEL to "smack_down"))
+            .forEach { (lvl, id) -> firstLevel[id] = minOf(firstLevel[id] ?: lvl, lvl) }
+        all.map { (firstLevel[it.id] ?: 1) to it }.sortedBy { it.first }
+    }
+
+    private fun ownLearnable(species: Species): List<Pair<Int, Move>> =
         // Dual types also learn their second type's moves.
         (learnsets.getValue(species.element) + (species.secondary?.let { learnsets.getValue(it) } ?: emptyList()) +
             learnsets.getValue(Element.NEUTRAL) + familyMovesFor(species) + smackDownFor(species))

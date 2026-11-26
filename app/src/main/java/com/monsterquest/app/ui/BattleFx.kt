@@ -302,7 +302,7 @@ private fun DrawScope.drawBolt(element: Element, color: Color, from: Offset, to:
             drawPath(rock, Color(0xFF7A6A4E))
             drawPath(rock, Color(0xFF2E3D1C), style = Stroke(2.dp.toPx()))
         }
-        Element.NEUTRAL -> {
+        Element.NEUTRAL, Element.MYTHICAL -> {
             drawCircle(color.copy(alpha = 0.45f), r * 1.8f, head)
             drawCircle(color, r * 0.9f, head)
         }

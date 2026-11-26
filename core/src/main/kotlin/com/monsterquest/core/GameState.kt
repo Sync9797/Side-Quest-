@@ -301,6 +301,8 @@ data class GameState(
     val offhandGear: Gear? = null,
     /** The free Farwisp has been given (see [Farwisp.gift]). */
     val farwispGifted: Boolean = false,
+    /** The hidden legendary's scale, worn on the chest: it can now roam (see [Mythic]). */
+    val mythScale: Boolean = false,
     /** The highest star whose celebration has been shown (see [Stars.due]). */
     val starsCelebrated: Int = 0,
     /** How the hero looks (null until the setup screen has been seen). */

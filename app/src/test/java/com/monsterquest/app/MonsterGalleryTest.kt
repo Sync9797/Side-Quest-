@@ -16,7 +16,7 @@ import java.io.File
 class MonsterGalleryTest {
     @Test fun renderEverySpecies() {
         val dir = File("build/screenshots").apply { mkdirs() }
-        for (sp in Bestiary.all) {
+        for (sp in Bestiary.everything) {
             val bmp = Bitmap.createBitmap(160, 160, Bitmap.Config.ARGB_8888)
             drawMonster(Canvas(bmp), 160f, 160f, sp)
             File(dir, "gallery_${sp.id}.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }

@@ -199,7 +199,7 @@ data class Gear(
                 Element.GAS -> "Venom "
                 Element.CORRUPT -> "Shadow "
                 Element.EARTH -> "Thorn "
-                Element.NEUTRAL -> ""
+                Element.NEUTRAL, Element.MYTHICAL -> ""
             }
             relic?.let { return it.title }
             val cursedName = curse?.let { "${if (cursed) "Cursed " else ""}${it.label} " } ?: ""

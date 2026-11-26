@@ -101,6 +101,10 @@ fun AppRoot(vm: GameViewModel, initialTab: Tab = Tab.QUESTS, initialSettings: Bo
         else if (calm && vm.farwispIntro && vm.state.starterChosen && !com.monsterquest.core.ExoticChests.due(vm.state) && vm.exoticReveal == null) FarwispIntro(vm)
         // After an update: what changed (not while an update offer is up).
         if (vm.availableUpdate == null && !com.monsterquest.core.Looks.due(vm.state) && !vm.farwispIntro) vm.whatsNew?.let { WhatsNewDialog(vm, it) }
+        // The hidden legendary reached its evolution level: "Oh?..." (not mid-battle or mid-dungeon).
+        if (calm && vm.evolutionShow == null && com.monsterquest.core.Mythic.dueToEvolve(vm.state) != null) MythicOhPopup(vm)
+        // An evolution playing, over everything.
+        vm.evolutionShow?.let { EvolutionScreen(it) { vm.finishEvolution() } }
     }
 }
 

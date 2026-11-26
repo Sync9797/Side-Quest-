@@ -87,6 +87,7 @@ fun typeColor(e: com.monsterquest.core.Element): Color = when (e) {
     com.monsterquest.core.Element.GAS -> Color(0xFF5B7334)
     com.monsterquest.core.Element.CORRUPT -> Color(0xFF5B4580)
     com.monsterquest.core.Element.EARTH -> Color(0xFF5E7A36)
+    com.monsterquest.core.Element.MYTHICAL -> Color(0xFF6A4E9A)
 }
 
 private val DarkScheme = darkColorScheme(

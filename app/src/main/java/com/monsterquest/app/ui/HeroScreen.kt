@@ -245,6 +245,8 @@ fun HeroScreen(vm: GameViewModel) {
 
     }
     val progress: @Composable () -> Unit = {
+        // The hidden legendary's scale, and how this week is going.
+        ScaleCard(vm)
         AchievementsCard(vm)
         // Bag and monster storage upgrades (free ones every few levels, and bought ones) live in the Store.
         if (s.pendingUpgrades > 0) {

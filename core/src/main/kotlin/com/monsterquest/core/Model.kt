@@ -30,7 +30,13 @@ enum class Element(val label: String) {
     GAS("Gas"),
     CORRUPT("Corrupt"),
     /** Earth and grass: stone, roots and leaves. */
-    EARTH("Earth");
+    EARTH("Earth"),
+    /**
+     * Mythical: outside the wheel. Only one hidden line has it. It beats
+     * Corrupt, Gas and itself, its attacks are never resisted, and only
+     * another Mythical hits it hard.
+     */
+    MYTHICAL("Mythical");
 
     /** The two types this type deals extra damage to. */
     val beats: List<Element>
@@ -42,12 +48,14 @@ enum class Element(val label: String) {
             EARTH -> listOf(WATER, CORRUPT)
             FLIGHT -> listOf(EARTH, GAS)
             ELECTRIC -> listOf(WATER, FLIGHT)
+            MYTHICAL -> listOf(CORRUPT, GAS, MYTHICAL)
             NEUTRAL -> emptyList()
         }
 
     /** The two types that beat this type. */
     val weakTo: List<Element>
-        get() = entries.filter { this in it.beats }
+        // The wheel's own weaknesses: the hidden Mythical type isn't listed against the seven.
+        get() = entries.filter { this in it.beats && (it != MYTHICAL || this == MYTHICAL) }
 
     /** Damage multiplier when an attack of this type hits [defender]. */
     fun multiplierAgainst(defender: Element): Double = when {
@@ -60,7 +68,8 @@ enum class Element(val label: String) {
     fun multiplierAgainst(defender: List<Element>): Double = defender.fold(1.0) { m, t -> m * multiplierAgainst(t) }
 
     companion object {
-        val typed: List<Element> = entries.filter { it != NEUTRAL }
+        /** The seven types of the wheel (not Normal, and not the one-off Mythical). */
+        val typed: List<Element> = entries.filter { it != NEUTRAL && it != MYTHICAL }
     }
 }
 

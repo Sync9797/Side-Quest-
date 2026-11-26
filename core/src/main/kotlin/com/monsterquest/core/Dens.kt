@@ -71,7 +71,7 @@ object Dens {
         Element.ELECTRIC -> "Static Hollow"
         Element.GAS -> "Fume Cave"
         Element.CORRUPT -> "Shadow Hollow"
-        Element.NEUTRAL -> "Beast Den"
+        Element.NEUTRAL, Element.MYTHICAL -> "Beast Den"
     }
 
     /** Base per-throw taming chance: rarer monsters are harder. Over 5-10 throws that's roughly a coin flip. */

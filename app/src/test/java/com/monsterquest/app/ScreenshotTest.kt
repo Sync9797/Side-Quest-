@@ -1518,6 +1518,83 @@ abstract class ScreenshotBase(private val device: String) {
         })
     }
 
+    /** The hidden legendary's line, as drawn in the game: normal, then fainted and shiny. */
+    @Test fun mythicLine() {
+        val line = com.monsterquest.core.Mythic.LINE.map { Bestiary.get(it) }
+        shot("60_mythic_line", advanceMs = 600, content = onBackground {
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(12.dp)) {
+                androidx.compose.foundation.layout.Row {
+                    line.forEach { com.monsterquest.app.ui.art.MonsterArt(it, androidx.compose.ui.Modifier.size(84.dp)) }
+                }
+                androidx.compose.foundation.layout.Row {
+                    line.forEach { com.monsterquest.app.ui.art.MonsterArt(it, androidx.compose.ui.Modifier.size(84.dp), dim = true) }
+                }
+                androidx.compose.foundation.layout.Row {
+                    line.forEach { com.monsterquest.app.ui.art.MonsterArt(it, androidx.compose.ui.Modifier.size(84.dp), shiny = true) }
+                }
+                com.monsterquest.app.ui.art.MonsterArt(line[3], androidx.compose.ui.Modifier.size(300.dp))
+            }
+        })
+    }
+
+    private fun withMythic(id: String, level: Int, extra: (GameState) -> GameState = { it }): GameViewModel {
+        val base = sampleState()
+        val m = Monster.create(Bestiary.get(id), level, Random(9), evolve = false)
+        return vm(extra(base.copy(monsters = base.monsters + m)))
+    }
+
+    /** Murklet reaches level 30: "Oh?...", then Next plays the evolution into Cinderwrithe. */
+    @Test fun mythicEvolution() {
+        val v = withMythic(com.monsterquest.core.Mythic.MURKLET, 30)
+        shot("61_mythic_oh", advanceMs = 1_200) { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithText("Oh?...").assertExists()
+        rule.onNodeWithTag("mythic-next").performClick()
+        capture("61b_mythic_evolving", 1_800)
+        rule.onNodeWithTag("evolution").assertExists()
+        capture("61c_mythic_evolved", 4_000)
+        rule.onNodeWithText("Murklet evolved into Cinderwrithe!").assertExists()
+        rule.onNodeWithTag("evolution-done").performClick()
+        capture("61d_after", 400)
+        org.junit.Assert.assertTrue(v.state.monsters.any { it.speciesId == com.monsterquest.core.Mythic.CINDERWRITHE })
+        rule.onNodeWithText("Oh?...").assertDoesNotExist()
+    }
+
+    /** Level 100: the last evolution into Turumarth shakes the screen as stars rush in. */
+    @Test fun mythicFinalEvolution() {
+        val v = withMythic(com.monsterquest.core.Mythic.FUMEWARDEN, 100)
+        shot("62_mythic_final_oh", advanceMs = 1_200) { AppRoot(v, Tab.QUESTS) }
+        rule.onNodeWithTag("mythic-next").performClick()
+        capture("62b_mythic_final_evolving", 3_600)
+        capture("62c_mythic_final_reveal", 3_800)
+        rule.onNodeWithText("evolved into Turumarth!", substring = true).assertExists()
+    }
+
+    /** Every monster evolving for candy now gets the evolution screen too. */
+    @Test fun candyEvolution() {
+        val base = sampleState()
+        val mouse = Monster.create(Bestiary.get("zapmouse"), 30, Random(4), evolve = false)
+        val v = vm(base.copy(monsters = base.monsters + mouse, candy = base.candy + (mouse.species.family to 99)))
+        shot("63_candy_evolution_start", advanceMs = 100) { AppRoot(v, Tab.QUESTS) }
+        v.evolve(mouse.uid)
+        capture("63b_candy_evolving", 1_500)
+        rule.onNodeWithTag("evolution").assertExists()
+        capture("63c_candy_evolved", 3_400)
+        rule.onNodeWithTag("evolution-done").performClick()
+        capture("63d_after", 300)
+        rule.onNodeWithTag("evolution").assertDoesNotExist()
+    }
+
+    /** The scale on the hero's chest, and the tracker for this week's tasks. */
+    @Test fun mythScale() {
+        val now = System.currentTimeMillis()
+        val v = vm(sampleState().copy(mythScale = true))
+        shot("64_scale_hero", advanceMs = 600) { AppRoot(v, Tab.HERO) }
+        rule.onNodeWithTag("scale-card").performScrollTo()
+        capture("64b_scale_card", 400)
+        rule.onNodeWithText(com.monsterquest.core.Mythic.SCALE_NAME).assertExists()
+        org.junit.Assert.assertTrue(com.monsterquest.core.Mythic.weekTasks(v.state, now).second > 0)
+    }
+
     /** Help search: one word finds every point that mentions it. */
     @Test fun helpSearch() {
         shot("45_help_search", advanceMs = 300) { com.monsterquest.app.ui.HelpScreen(onBack = {}) }

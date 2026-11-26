@@ -155,6 +155,11 @@ object Lore {
         "miasma_hydra" to "A many-headed serpent of poison mist. Cut off one head and two more grow back.",
         "dread_lich" to "An ancient sorcerer who cheated death. Its very presence drains the will to fight.",
         "worldroot_colossus" to "Its roots hold the world together. Legends say forests grow wherever it has walked.",
+        // The hidden line
+        "murklet" to "A blob of living water. Look closely and something small is curled up inside it.",
+        "cinderwrithe" to "Molten slime with a young dragon coiled inside, its eyes glowing through the goo.",
+        "fumewarden" to "It burst out of its slime as a sea-dragon of fire and water, wreathed in steam.",
+        "turumarth" to "Six heads and a body of living fire. Old stories say it guards the deepest waters of the world.",
     )
 
     /** The lore for [species] (every species has some). */
@@ -182,11 +187,11 @@ object MaxStats {
 
     fun total(species: Species): Int = of(species).values.sum()
 
-    private val ranking: List<String> by lazy { Bestiary.all.sortedByDescending { total(it) }.map { it.id } }
+    private val ranking: List<String> by lazy { Bestiary.everything.sortedByDescending { total(it) }.map { it.id } }
 
     /** 1 = the highest stat total of every species. */
     fun rank(species: Species): Int = ranking.indexOf(species.id) + 1
 
     /** The highest max of [stat] among all species (to draw bars against). */
-    fun best(stat: Stat): Int = Bestiary.all.maxOf { of(it).getValue(stat) }
+    fun best(stat: Stat): Int = Bestiary.everything.maxOf { of(it).getValue(stat) }
 }

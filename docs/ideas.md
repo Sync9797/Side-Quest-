@@ -74,3 +74,19 @@ Ideas for later. None of these are planned yet.
     portraits if at all.
   - If it's picked up, redraw the setup screen's face, eye and hair options in
     the new style so every saved look carries over.
+
+## Future legendaries
+
+Saved from the design round for the hidden four-stage legendary (Turumarth
+won). Each is a four-stage line, Water, then Fire, then Fire and Water, then
+Mythical, with a weak first stage and a fourth that tops the game. Art is in
+[ideas-art](ideas-art/).
+
+- **Phoenix** (`legendary-phoenix.png`): a water heron chick that catches fire
+  as a firebird, burns as steam, and ends as a phoenix made of the night sky.
+- **Kitsune** (`legendary-kitsune.png`): a fox that grows a new tail at every
+  stage, from a single dewdrop-tipped tail to a crown of nine.
+- **Sky whale** (`legendary-sky-whale.png`): a brook tadpole, a lava-shelled
+  calf, a whale that swims through steam clouds, and finally a whale that
+  swims through the stars.
+- Names are placeholders: give each line original names when it's built.

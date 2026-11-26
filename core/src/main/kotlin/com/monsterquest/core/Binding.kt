@@ -85,6 +85,7 @@ object Binding {
             Element.CORRUPT -> "Hook" to pts(0.7f, 0.05f, 0.7f, 0.6f) + arc(0.5, 0.6, 0.2, 0.0, Math.PI, 8) + pts(0.3f, 0.42f)
             Element.EARTH -> "Steps" to pts(0.05f, 0.9f, 0.05f, 0.65f, 0.35f, 0.65f, 0.35f, 0.4f, 0.65f, 0.4f, 0.65f, 0.15f, 0.95f, 0.15f)
             Element.NEUTRAL -> "Diamond" to pts(0.5f, 0.05f, 0.9f, 0.5f, 0.5f, 0.95f, 0.1f, 0.5f, 0.5f, 0.05f)
+            Element.MYTHICAL -> "Crown" to pts(0.1f, 0.85f, 0.1f, 0.3f, 0.3f, 0.6f, 0.5f, 0.1f, 0.7f, 0.6f, 0.9f, 0.3f, 0.9f, 0.85f)
         }
         2 -> when (e) {
             Element.FIRE -> "Torch" to pts(0.2f, 0.2f, 0.5f, 0.9f, 0.8f, 0.2f, 0.55f, 0.45f)
@@ -95,6 +96,7 @@ object Binding {
             Element.CORRUPT -> "Rune" to pts(0.2f, 0.9f, 0.2f, 0.1f, 0.8f, 0.5f, 0.25f, 0.5f)
             Element.EARTH -> "Boulder" to pts(0.2f, 0.9f, 0.1f, 0.45f, 0.35f, 0.1f, 0.7f, 0.15f, 0.9f, 0.5f, 0.75f, 0.9f, 0.25f, 0.9f)
             Element.NEUTRAL -> "Arch" to (pts(0.1f, 0.9f) + arc(0.5, 0.55, 0.4, Math.PI, 2 * Math.PI) + pts(0.9f, 0.9f))
+            Element.MYTHICAL -> "Eye" to (arc(0.5, 0.85, 0.5, -Math.PI * 0.8, -Math.PI * 0.2, 10) + arc(0.5, 0.15, 0.5, Math.PI * 0.2, Math.PI * 0.8, 10))
         }
         else -> base(e)
     }
@@ -108,6 +110,7 @@ object Binding {
         Element.CORRUPT -> "Crescent" to crescent()
         Element.EARTH -> "Peaks" to pts(0.02f, 0.9f, 0.3f, 0.28f, 0.5f, 0.62f, 0.72f, 0.18f, 0.98f, 0.9f)
         Element.NEUTRAL -> "Ring" to circle()
+        Element.MYTHICAL -> "Star" to pts(0.5f, 0.02f, 0.62f, 0.38f, 0.98f, 0.38f, 0.69f, 0.6f, 0.8f, 0.96f, 0.5f, 0.74f, 0.2f, 0.96f, 0.31f, 0.6f, 0.02f, 0.38f, 0.38f, 0.38f, 0.5f, 0.02f)
     }
 
     /** Fit [p] into the unit square with a margin, keeping its shape. */

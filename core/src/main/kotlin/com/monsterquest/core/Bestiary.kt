@@ -380,7 +380,35 @@ object Bestiary {
     }.map { sp -> evolvedNames[sp.id]?.let { sp.copy(name = it) } ?: sp }
         .map { sp -> dualTypes[sp.id]?.let { sp.copy(secondary = it) } ?: sp }
 
-    private val byId = all.associateBy { it.id }
+    /**
+     * The hidden legendary's line (see [Mythic]): kept out of [all], so it's
+     * not in the Journal, the wild, shrines or any count. It evolves only by
+     * level, at 30, 60 and 100. Stage 1 is the weakest monster in the game;
+     * stage 4 the strongest.
+     */
+    val hidden: List<Species> = listOf(
+        Triple(Mythic.MURKLET, "Murklet", StatBlock(30, 9, 9, 8, 8)),
+        Triple(Mythic.CINDERWRITHE, "Cinderwrithe", StatBlock(120, 40, 34, 30, 17)),
+        Triple(Mythic.FUMEWARDEN, "Fumewarden", StatBlock(140, 50, 48, 40, 32)),
+        Triple(Mythic.TURUMARTH, "Turumarth", StatBlock(170, 62, 62, 50, 45)),
+    ).mapIndexed { i, (id, name, base) ->
+        val element = listOf(Element.WATER, Element.FIRE, Element.FIRE, Element.MYTHICAL)[i]
+        Species(
+            id = id, name = name, element = element, rarity = Rarity.LEGENDARY, base = base,
+            special = Skill("${id}_special", Mythic.SIGNATURES[i].second, element, SkillKind.MAGICAL, 40 + i * 40),
+            bossOnly = true, family = "Murklet line", stage = i + 1, stages = 4,
+            evolvesTo = Mythic.LINE.getOrNull(i + 1), evolveLevel = Mythic.EVOLVE_LEVELS.getOrNull(i),
+            secondary = if (i == 2) Element.WATER else null,
+        )
+    }
+
+    /** The listed roster plus the hidden line: for looking species up, never for showing or counting them. */
+    val everything: List<Species> = all + hidden
+
+    /** Shown in the Journal and counted (not the hidden line). */
+    fun isListed(id: String): Boolean = id in byId && id !in Mythic.LINE
+
+    private val byId = everything.associateBy { it.id }
 
     /** Journal number: the order of [all], so mythics and then legendaries come last. */
     fun number(sp: Species): Int = all.indexOfFirst { it.id == sp.id } + 1
@@ -484,5 +512,5 @@ object Bestiary {
     fun trained(rng: Random, level: Int): Species = evolvedFor(randomWild(rng, level), level)
 
     /** The full evolution line containing [species]. */
-    fun lineOf(species: Species): List<Species> = all.filter { it.family == species.family }.sortedBy { it.stage }
+    fun lineOf(species: Species): List<Species> = everything.filter { it.family == species.family }.sortedBy { it.stage }
 }

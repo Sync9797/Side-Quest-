@@ -363,6 +363,9 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** The surprise attack is a rare visitor (easier to tame). */
     private var secretVisitor = false
 
+    /** The surprise attack is the hidden legendary: its first appearance (OMEN) or, roaming, a WILD one. */
+    private var secretMythic: EncounterType? = null
+
     private fun rollSecretEncounter(steps: Int) {
         val rng = kotlin.random.Random.Default
         // With the battery saver on, monsters and thugs notice you more often.
@@ -373,6 +376,15 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         if (!hit || !batterySaver || !state.settings.ambushes || battle != null || secretAmbush != null || tooFast(now)) return
         resumeSaverAfterBattle = true
         if (state.focus != null || state.monsters.isEmpty() || now - lastBattleEndMs < com.monsterquest.core.SecretEncounters.COOLDOWN_MS) return
+        // The hidden legendary, once it's due (or out roaming on a weekend), may wobble out of the water instead.
+        com.monsterquest.core.Mythic.maybeEncounter(state, now, rng)?.let { (m, type) ->
+            secretThug = null
+            secretVisitor = false
+            secretMythic = type
+            secretAmbush = listOf(m)
+            return
+        }
+        secretMythic = null
         // A rare visitor on its way (after a two-hour phone-free session or a weather event) finds you first.
         GameEngine.takeVisitor(state, now, rng)?.let { (s, m) ->
             set(s)
@@ -409,8 +421,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         batterySaver = false
         val visitor = secretVisitor
         secretVisitor = false
+        val mythic = secretMythic
+        secretMythic = null
         startBattle(
-            group.first(), if (thug != null) EncounterType.THUG else EncounterType.WILD, null, group.drop(1), ambush = true, thug = thug,
+            group.first(), mythic ?: if (thug != null) EncounterType.THUG else EncounterType.WILD, null, group.drop(1), ambush = true, thug = thug,
             captureBoost = if (visitor) GameEngine.VISITOR_CATCH_BOOST else 1.0,
         )
     }
@@ -1020,7 +1034,33 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun release(uid: String) = apply(GameEngine.release(state, uid))
     fun releaseMany(uids: List<String>) = apply(GameEngine.releaseMany(state, uids))
     fun candyLevelUp(uid: String) = apply(GameEngine.candyLevelUp(state, uid))
-    fun evolve(uid: String) = apply(GameEngine.evolve(state, uid))
+    /** An evolution playing on screen (see EvolutionScreen); its message shows when it ends. */
+    var evolutionShow by mutableStateOf<EvolutionShow?>(null)
+        private set
+
+    /** Evolves for candy, and plays the evolution. */
+    fun evolve(uid: String) = playEvolution(uid, GameEngine.evolve(state, uid))
+
+    /** The hidden legendary's "Oh?..." pop-up was answered: it evolves (by level, never for candy). */
+    fun mythicEvolve(uid: String) = playEvolution(uid, com.monsterquest.core.Mythic.evolve(state, uid))
+
+    private fun playEvolution(uid: String, u: Update) {
+        val before = state.monsters.find { it.uid == uid }
+        val after = u.state.monsters.find { it.uid == uid }
+        if (before == null || after == null || before.speciesId == after.speciesId) return apply(u)
+        set(u.state)
+        evolutionShow = EvolutionShow(before.displayName, before.species, after.species, after.shiny, u.message)
+    }
+
+    /** The evolution has played: say what happened. */
+    fun finishEvolution() {
+        val e = evolutionShow ?: return
+        evolutionShow = null
+        message = e.message
+    }
+
+    @VisibleForTesting
+    fun debugEvolutionShow(show: EvolutionShow?) { evolutionShow = show }
     fun rename(uid: String, name: String) = apply(GameEngine.rename(state, uid, name))
     fun feedTreat(uid: String) = apply(GameEngine.feedTreat(state, uid))
     fun rerollPersonality(uid: String) = apply(GameEngine.rerollPersonality(state, uid))
@@ -1235,13 +1275,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             message = "You need a monster first."
             return
         }
-        val (s, enemy) = GameEngine.startHunt(state)
+        // The hidden legendary may answer a hunt instead (see Mythic).
+        val (s, enemy, type) = GameEngine.startHuntWithOmen(state, System.currentTimeMillis())
         if (enemy == null) {
             message = "No hunt tokens. Complete quests or visit shrines to earn more."
             return
         }
         set(s)
-        startBattle(enemy, EncounterType.WILD, null)
+        startBattle(enemy, type, null)
     }
 
     // ---- villains -----------------------------------------------------------
@@ -1628,3 +1669,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         nomadRun = null
     }
 }
+
+/** An evolution to play on screen: [name] turning from [from] into [into]; [message] shows after. */
+data class EvolutionShow(
+    val name: String,
+    val from: com.monsterquest.core.Species,
+    val into: com.monsterquest.core.Species,
+    val shiny: Boolean,
+    val message: String,
+)

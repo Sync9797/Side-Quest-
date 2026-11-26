@@ -27,12 +27,14 @@ enum class EncounterType {
     /** A dungeon's cursed guardians: an even fight, and they can't be tamed. */
     DUNGEON_GUARD,
     /** The champion at the end of a dungeon (a hero of one of the classes) and their monsters. */
-    DUNGEON_BOSS;
+    DUNGEON_BOSS,
+    /** The hidden legendary's first appearance (see [Mythic]): it can't be tamed, and flees when beaten. */
+    OMEN;
 
     /** Enemy HP multiplier. */
     val hpMultiplier: Double
         get() = when (this) {
-            WILD, VILLAIN, THUG, NOMAD, DUNGEON_GUARD -> 1.0
+            WILD, VILLAIN, THUG, NOMAD, DUNGEON_GUARD, OMEN -> 1.0
             DUNGEON_BOSS -> 1.3
             DEN -> Dens.HP_MULTIPLIER
             SILVER_BOSS -> 2.2
@@ -831,7 +833,7 @@ class Battle(
     var current: Combatant? = null
         private set
 
-    val isBoss: Boolean get() = encounter !in setOf(EncounterType.WILD, EncounterType.DEN) + EVEN_MATCHES
+    val isBoss: Boolean get() = encounter !in setOf(EncounterType.WILD, EncounterType.DEN, EncounterType.OMEN) + EVEN_MATCHES
     val captureLocked: Boolean
         get() = encounter == EncounterType.BOSS_CHALLENGE || encounter == EncounterType.VILLAIN || encounter == EncounterType.DEN ||
             encounter in EVEN_MATCHES
@@ -853,6 +855,7 @@ class Battle(
                 "${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}!"
             EncounterType.DUNGEON_GUARD -> "The dungeon's guardians rise: ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}! They can't be tamed."
             EncounterType.DUNGEON_BOSS -> "${trainer ?: "The champion"} blocks the way out with ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}!"
+            EncounterType.OMEN -> "Oh? Something small and strange wobbles out of the water... ${enemy.name} (Lv ${enemy.level})!"
             EncounterType.NOMAD -> "${trainer ?: "The nomad"} steps up${if (thug != null) " to fight" else ""} with ${enemyMonsters.joinToString { "${it.displayName} (Lv ${it.level})" }}" +
                 (if (enemyBench.isNotEmpty()) ", with ${enemyBench.size} more waiting!" else "!")
         }
@@ -996,6 +999,7 @@ class Battle(
         encounter == EncounterType.NOMAD -> "The nomad's monsters are loyal partners. Win the challenge instead."
         encounter == EncounterType.DUNGEON_GUARD -> "Cursed guardians can't be tamed. Fight your way through."
         encounter == EncounterType.DUNGEON_BOSS -> "The champion's monsters stay loyal. Beat them all."
+        encounter == EncounterType.OMEN -> "It slips away from every throw. Maybe it can't be caught yet..."
         captureLocked -> "Defeat this boss first. Then it can be tamed on a later visit."
         capturedKeys.size >= storageRoom -> "Monster storage is full. Release a monster or upgrade storage."
         orbs().isEmpty() -> "No Binding Crystals left."
@@ -1919,7 +1923,10 @@ class Battle(
         var count = 0
         var dealt = 0
         while (count < hits && t.alive) {
-            dealt += strike(a, t, power, move.type, useMagic = false, verb = null, style = style, extraCrit = crit, pierce = pierce, useDefense = useDefense)
+            // Steamheart Storm and the like: whichever of its types hits harder.
+            val type = move.effects.filterIsInstance<MoveEffect.EitherType>().firstOrNull()
+                ?.let { e -> listOf(move.type, e.other).maxBy { it.multiplierAgainst(t.types) } } ?: move.type
+            dealt += strike(a, t, power, type, useMagic = false, verb = null, style = style, extraCrit = crit, pierce = pierce, useDefense = useDefense)
             count++
         }
         moveDealt += dealt
@@ -2041,7 +2048,7 @@ class Battle(
                     log += "The whole team's ${fx.stats.joinToString(" and ") { it.label }} rose!"
                 }
                 is MoveEffect.MultiHit, MoveEffect.HighCrit, MoveEffect.SureHit, MoveEffect.HitsAllFoes, MoveEffect.Pierce, is MoveEffect.LifeDrain,
-                is MoveEffect.SmackDown, is MoveEffect.StatusBonus, MoveEffect.DefenseStrike, is MoveEffect.RecoilPct, MoveEffect.HpScaled -> {}
+                is MoveEffect.SmackDown, is MoveEffect.StatusBonus, MoveEffect.DefenseStrike, is MoveEffect.EitherType, is MoveEffect.RecoilPct, MoveEffect.HpScaled -> {}
                 MoveEffect.Swift -> if (a.alive) {
                     a.swift = true
                     log += "${a.name} will move first next round!"

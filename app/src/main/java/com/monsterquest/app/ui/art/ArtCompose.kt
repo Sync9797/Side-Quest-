@@ -12,6 +12,15 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameMillis
+import androidx.compose.ui.composed
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlin.math.PI
+import kotlin.math.sin
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -96,10 +105,13 @@ fun ThugArt(cls: HeroClass, modifier: Modifier) {
     ArtCanvas(modifier, "thug:$cls") { c, w, h -> drawThug(c, w, h, cls) }
 }
 
-/** A monster's artwork. [dim] grays it out (fainted); [silhouette] shows only its shadow (not yet seen). */
+/**
+ * A monster's artwork. [dim] grays it out (fainted); [silhouette] shows only
+ * its shadow (not yet seen). [idle] gives it a little life (see [idleMotion]).
+ */
 @Composable
-fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false) {
-    ArtCanvas(modifier, "monster:${species.id}:$dim:$silhouette:$shiny") { c, w, h ->
+fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silhouette: Boolean = false, shiny: Boolean = false, idle: Boolean = true) {
+    ArtCanvas(modifier.idleMotion(species, idle && !dim && !silhouette), "monster:${species.id}:$dim:$silhouette:$shiny") { c, w, h ->
         if (silhouette) {
             // Draw normally into a layer, then flood everything drawn with one dark color.
             val layer = c.saveLayer(0f, 0f, w, h, null)
@@ -108,6 +120,43 @@ fun MonsterArt(species: Species, modifier: Modifier, dim: Boolean = false, silho
             c.restoreToCount(layer)
         } else {
             drawMonster(c, w, h, species, dim, shiny)
+        }
+    }
+}
+
+/** How a monster moves at rest: each kind its own way. */
+private enum class Idle { BREATHE, FLOAT, SQUISH, FLICKER }
+
+private fun idleOf(sp: Species): Idle = when {
+    sp.element == Element.FLIGHT || sp.secondary == Element.FLIGHT || sp.element == Element.ELECTRIC -> Idle.FLOAT
+    sp.element == Element.WATER || sp.element == Element.GAS -> Idle.SQUISH
+    sp.element == Element.FIRE || sp.element == Element.MYTHICAL -> Idle.FLICKER
+    else -> Idle.BREATHE
+}
+
+/**
+ * Subtle life for a monster at rest: earth and shadow creatures breathe,
+ * fliers and sparks float, water and gas wobble like jelly, fire flickers.
+ * Each species is out of step with the others, and only the drawing layer
+ * moves (the art itself is a cached picture), so it costs next to nothing.
+ */
+private fun Modifier.idleMotion(sp: Species, on: Boolean): Modifier = if (!on || ArtQuality.reduced) this else composed {
+    val clock = remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        val start = withFrameMillis { it }
+        while (true) withFrameMillis { clock.longValue = it - start }
+    }
+    val seed = (sp.id.hashCode() and 0xFFFF) / 65535f * 2f * PI.toFloat()
+    val style = idleOf(sp)
+    graphicsLayer {
+        val t = clock.longValue / 1000f
+        fun wave(period: Float) = sin(t * 2f * PI.toFloat() / period + seed)
+        transformOrigin = TransformOrigin(0.5f, 1f)
+        when (style) {
+            Idle.BREATHE -> { val b = wave(3.2f); scaleY = 1f + 0.022f * b; scaleX = 1f - 0.008f * b }
+            Idle.FLOAT -> { translationY = wave(2.6f) * size.height * 0.025f; rotationZ = wave(5.2f) * 1.2f }
+            Idle.SQUISH -> { val b = wave(2.2f); scaleY = 1f - 0.035f * b; scaleX = 1f + 0.03f * b }
+            Idle.FLICKER -> { val b = wave(2.8f) * 0.018f + sin(t * 11f + seed) * 0.006f; scaleY = 1f + b; scaleX = 1f - b * 0.4f }
         }
     }
 }
@@ -163,6 +212,7 @@ fun Element.icon(): GameIcon = when (this) {
     Element.CORRUPT -> GameIcon.MOON
     Element.EARTH -> GameIcon.LEAF
     Element.NEUTRAL -> GameIcon.RING
+    Element.MYTHICAL -> GameIcon.STAR
 }
 
 fun Element.color(): Color = Color(palette(this).light)

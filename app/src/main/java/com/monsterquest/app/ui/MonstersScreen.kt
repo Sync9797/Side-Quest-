@@ -701,11 +701,12 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
             } else {
                 LabeledBar("XP", m.xp, m.xpToNext, XpPurple)
             }
-            sp.evolveLevel?.let { lvl -> if (m.level < lvl) Text("Can evolve at Lv $lvl", fontSize = 12.sp, color = XpPurple) }
+            sp.evolveLevel?.takeIf { !com.monsterquest.core.Mythic.inLine(sp.id) }?.let { lvl -> if (m.level < lvl) Text("Can evolve at Lv $lvl", fontSize = 12.sp, color = XpPurple) }
         }
 
         // Evolution is the player's choice, paid for with candy of the monster's line.
-        val into = m.canEvolveTo
+        // The hidden legendary evolves only by level, with its own "Oh?..." pop-up: no candy card.
+        val into = m.canEvolveTo?.takeIf { !com.monsterquest.core.Mythic.inLine(m.speciesId) }
         if (into != null) {
             val cost = GameEngine.evolveCost(m)
             val have = GameEngine.candyOf(s, sp)
@@ -982,7 +983,8 @@ private fun MonsterDetail(vm: GameViewModel, m: Monster, onBack: (() -> Unit)?) 
             "Strong vs ${sp.strongAgainst.joinToString(" & ") { it.label }} • Weak to ${sp.weakTo.joinToString(" & ") { it.label }}",
             fontSize = 13.sp,
         )
-        val line = Bestiary.lineOf(sp)
+        // The hidden legendary keeps its future forms secret.
+        val line = Bestiary.lineOf(sp).takeIf { !com.monsterquest.core.Mythic.inLine(sp.id) }.orEmpty()
         if (line.size > 1) {
             Text(
                 "Evolution: " + line.joinToString(" → ") { x ->

@@ -34,6 +34,7 @@ internal fun palette(e: Element): TypePalette = when (e) {
     Element.CORRUPT -> TypePalette(Argb.hex("8a6bb8"), Argb.hex("cdb8ec"), Argb.hex("2d2142"))
     Element.EARTH -> TypePalette(Argb.hex("7a9a4a"), Argb.hex("cfe09a"), Argb.hex("2e3d1c"))
     Element.NEUTRAL -> TypePalette(Argb.hex("9aa9a5"), Argb.hex("dfe6e3"), Argb.hex("2f3a38"))
+    Element.MYTHICAL -> TypePalette(Argb.hex("b79ceb"), Argb.hex("efe6ff"), Argb.hex("22183a"))
 }
 
 private val GOLD = Argb.hex("ebc678")
@@ -107,11 +108,13 @@ data class HeroOutfit(
     val look: Appearance? = null,
     /** Show the face with the hood lowered (menus); battles and dungeons keep it up. */
     val hoodDown: Boolean = false,
+    /** The hidden legendary's scale, worn on the chest like a badge (see Mythic). */
+    val scale: Boolean = false,
 ) {
     companion object {
         /** The player's hero as it is now; [hoodDown] for menus, false in battles and dungeons. */
         fun of(s: GameState, hoodDown: Boolean) =
-            of(s.equippedGear, s.equippedArmor, s.equippedPieces).copy(offhand = s.offhandGear?.type, look = s.appearance, hoodDown = hoodDown)
+            of(s.equippedGear, s.equippedArmor, s.equippedPieces).copy(offhand = s.offhandGear?.type, look = s.appearance, hoodDown = hoodDown, scale = s.mythScale)
 
         fun of(gear: Gear?, armor: Armor?, pieces: Map<ArmorSlot, Armor> = emptyMap()) = HeroOutfit(
             gear?.type, gear?.rarity ?: GearRarity.NORMAL, gear?.element ?: Element.NEUTRAL,
@@ -226,6 +229,7 @@ internal fun drawHero(c: Canvas, w: Float, h: Float, cls: HeroClass, portrait: B
     ArtPainter.fill(c, "M150 112Q160 117 150 127Q140 117 150 112Z", Argb.hex("8fb58a"))
     ArtPainter.stroke(c, "M150 113V126", Argb.hex("e6c277"), 1.2f)
     ArtPainter.stroke(c, "M150 112Q160 117 150 127Q140 117 150 112Z", Argb.hex("e6c277"), 1.2f)
+    if (outfit.scale) drawScaleBadge(c)
     // Hood up: the face is lost in shadow, only the eyes catch the light.
     if (!showFace) ArtPainter.stroke(c, "M139 96H147M157 96H165", Argb.hex("edce83"), 3f)
     if (helmRarity == null && !showFace) ArtPainter.fill(c, "M145 58L151 47L158 60L151 70Z", Argb.hex("e6c277"))
@@ -443,6 +447,16 @@ private fun drawFurCollar(c: Canvas, trimColor: Int?) {
     ArtPainter.stroke(c, "M118 114L126 120M130 110L136 118M172 110L166 118M184 114L176 120M146 116L151 122L156 116", Argb.hex("8e7c62"), 1.2f, 0.8f)
     ArtPainter.stroke(c, ruff, INK, 1.6f, 0.75f)
     trimColor?.let { ArtPainter.stroke(c, "M114 124L124 130L132 126L142 132L151 126L160 132L170 126L178 130L188 124", it, 1.6f, 0.7f) }
+}
+
+/** The Murk Scale on the left of the chest: a sea-blue scale shading to ember, in a gold rim. */
+private fun drawScaleBadge(c: Canvas) {
+    val scale = "M139 135Q147 139 146 148Q143 156 139 158Q135 156 132 148Q131 139 139 135Z"
+    ArtPainter.glow(c, 139f, 147f, 13f, Argb.hex("7ac6f0"), 0.35f)
+    ArtPainter.fill(c, scale, ArtPainter.linear(133f, 136f, 145f, 158f, Argb.hex("4f8fc9"), Argb.hex("e0704a")))
+    ArtPainter.stroke(c, "M135 146Q139 141 143 146M135.5 151Q139 147 142.5 151", Argb.hex("173653"), 1f, 0.6f)
+    ArtPainter.stroke(c, "M135 140Q137 137 140 137", Argb.hex("e8f6ff"), 1.4f, 0.8f)
+    ArtPainter.stroke(c, scale, Argb.hex("ebc678"), 1.4f)
 }
 
 /** Off-hand weapons too big for the hip ride across the back. */
@@ -1134,6 +1148,10 @@ private fun drawShinySparkles(c: Canvas) {
 
 /** Draws a monster into [w]x[h]. [dim] grays it out (fainted / locked); [shiny] uses its rare colors. */
 internal fun drawMonster(c: Canvas, w: Float, h: Float, sp: Species, dim: Boolean = false, shiny: Boolean = false) {
+    if (com.monsterquest.core.Mythic.inLine(sp.id)) {
+        MythicArt.draw(c, w, h, sp, dim, shiny)
+        return
+    }
     if (sp.bossOnly) {
         drawLegendary(c, w, h, sp, dim, shiny)
         return
@@ -1385,7 +1403,7 @@ private fun drawAura(c: Canvas, e: Element, p: TypePalette, power: Float) {
             ArtPainter.fill(c, "M30 160L38 150L46 158L40 166Z", p.dark, a + 0.2f)
             ArtPainter.fill(c, "M160 156L170 150L174 162L164 166Z", p.dark, a + 0.2f)
         }
-        Element.NEUTRAL -> {
+        Element.NEUTRAL, Element.MYTHICAL -> {
             ArtPainter.stroke(c, "M100 30V46M100 194V180M30 120H44M170 120H156M50 70L60 80M150 70L140 80", p.light, 2.5f, a)
         }
     }
