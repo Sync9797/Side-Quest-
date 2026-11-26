@@ -17,6 +17,12 @@ import kotlin.math.min
 object ArtQuality {
     @Volatile
     var reduced: Boolean = false
+
+    /**
+     * Running under the screenshot tests: endless motion (idle monsters, the
+     * buddy's trot) stays still there, so each screen settles and can be captured.
+     */
+    val stillForTests: Boolean = android.os.Build.FINGERPRINT == "robolectric"
 }
 
 internal object ArtPainter {

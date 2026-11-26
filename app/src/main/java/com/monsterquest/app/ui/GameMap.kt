@@ -633,7 +633,7 @@ fun MapSprites(gm: GameMap, sprites: List<MapSprite>) {
                     modifier = Modifier
                         .size(s.wDp.dp, s.hDp.dp)
                         .graphicsLayer { alpha = s.alpha }
-                        .then(if (s.trot && !com.monsterquest.app.ui.art.ArtQuality.reduced) Modifier.trot() else Modifier)
+                        .then(if (s.trot && !com.monsterquest.app.ui.art.ArtQuality.reduced && !com.monsterquest.app.ui.art.ArtQuality.stillForTests) Modifier.trot() else Modifier)
                         .then(
                             if (click != null) Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },

@@ -141,7 +141,7 @@ private fun idleOf(sp: Species): Idle = when {
  * Each species is out of step with the others, and only the drawing layer
  * moves (the art itself is a cached picture), so it costs next to nothing.
  */
-private fun Modifier.idleMotion(sp: Species, on: Boolean): Modifier = if (!on || ArtQuality.reduced) this else composed {
+private fun Modifier.idleMotion(sp: Species, on: Boolean): Modifier = if (!on || ArtQuality.reduced || ArtQuality.stillForTests) this else composed {
     val clock = remember { mutableLongStateOf(0L) }
     // An endless animation: tests (and the system's "remove animations" setting) can pause it.
     LaunchedEffect(Unit) {
